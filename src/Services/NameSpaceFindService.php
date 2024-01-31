@@ -55,11 +55,11 @@ class NameSpaceFindService
         $composer = require base_path() . '/vendor/autoload.php';
         $jsonContents = file_get_contents('composer.json');
         if ($jsonContents === false) {
-            throw new FileNotFoundException("composer.json not found");
+            throw new FileNotFoundException('composer.json not found');
         }
-        /** @var array{autoload: array{"psr-4": array<string, string>}} $composerJson */
+        /** @var object{autoload: object{"psr-4": array<string, string>}} $composerJson */
         $composerJson = json_decode($jsonContents);
-        $psr4 = $composerJson['autoload']['psr-4'];
+        $psr4 = $composerJson->autoload->{'psr-4'};
 
         /** @var class-string $class */
         foreach (array_keys($composer->getClassMap()) as $class) {
