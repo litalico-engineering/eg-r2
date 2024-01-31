@@ -47,10 +47,6 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "scripts": {
-        "post-autoload-dump": [
-            "@clear",
-            "@prepare"
-        ],
         "test": [
             "./vendor/bin/phpunit --configuration phpunit.xml"
         ],
@@ -65,7 +61,6 @@
         ]
     },
     "scripts-descriptions": {
-        "post-autoload-dump": "",
         "test": "Runs all tests using PHPUnit",
         "lint": "Runs Code Static Analysis using PHPStan",
         "fix-cs": "Fixes PHP code style using PHP-CS-Fixer",
