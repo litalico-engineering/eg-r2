@@ -1,0 +1,67 @@
+{
+    "name": "litalico-engineering/eg-r2",
+    "type": "library",
+    "description": "Easy request validation and route generation from open API specifications (for Laravel)",
+    "version": "0.0.1",
+    "require": {
+        "php": "^8.2|^8.3",
+        "illuminate/console": "^9.0|^10.0",
+        "illuminate/support": "^9.0|^10.0",
+        "illuminate/validation": "^9.0|^10.0",
+        "nette/php-generator": "^4.1",
+        "zircote/swagger-php": "^4.8"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.46",
+        "orchestra/testbench": "^8.20",
+        "phpstan/phpstan": "^1.10",
+        "phpunit/phpunit": "^10.5",
+        "spaze/phpstan-disallowed-calls": "^3.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Litalico\\EgR2\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Database\\Seeders\\phpunit\\": "database/seeders/phpunit/",
+            "Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": [],
+            "providers": [
+                "Litalico\\EgR2\\Console\\Commands\\GenerateRoute"
+            ]
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "platform": {
+            "php": "8.2.2"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "post-autoload-dump": [
+            "@clear",
+            "@prepare"
+        ],
+        "serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@build",
+            "@php vendor/bin/testbench serve"
+        ],
+        "lint": [
+            "@php vendor/bin/phpstan analyse"
+        ],
+        "test": [
+            "@php vendor/bin/phpunit"
+        ]
+    }
+}
