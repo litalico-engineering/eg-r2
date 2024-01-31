@@ -16,6 +16,7 @@ use OpenApi\Generator;
 use ReflectionClass;
 use ReflectionException;
 use RuntimeException;
+use function is_array;
 
 /**
  * @package Litalico\EgR2\Console\Commands
@@ -73,8 +74,9 @@ class GenerateRoute extends Command
 
         $namespaces = config('eg_r2.namespaces', []);
         if (is_array($namespaces) === false) {
-            $message = sprintf("Invalid configuration namespace. namespace: %s", var_export($namespaces, true));
+            $message = sprintf('Invalid configuration namespace. namespace: %s', var_export($namespaces, true));
             $this->error($message);
+
             throw new RuntimeException($message);
         }
 
@@ -167,7 +169,7 @@ class GenerateRoute extends Command
     private function getRoutePath(): string
     {
         /** @var string $path */
-        $path = config('eg_r2.route_path', base_path("routes/eg_r2.php"));
+        $path = config('eg_r2.route_path', base_path('routes/eg_r2.php'));
 
         return $path;
     }

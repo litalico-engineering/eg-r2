@@ -9,3 +9,4 @@ clover.xml
 phpunit-ci.xml
 /.php-cs-fixer.cache
 /.phpstan
+/.fixer-diff.status

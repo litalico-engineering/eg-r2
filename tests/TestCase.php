@@ -24,8 +24,8 @@ abstract class TestCase extends BaseTestCase
     protected function getEnvironmentSetUp($app): void
     {
         $app['config']->set('eg_r2', [
-            'namespaces' =>  [],
-            'route_path' => base_path("routes/eg_r2.php"),
+            'namespaces' => [],
+            'route_path' => base_path('routes/eg_r2.php'),
         ]);
     }
 }

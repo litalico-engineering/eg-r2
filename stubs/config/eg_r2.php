@@ -22,5 +22,5 @@ return [
     |
     | Specify the path to the root definition file automatically generated from the OpenAPI specification
     */
-    'route_path' => base_path("routes/eg_r2.php"),
+    'route_path' => base_path('routes/eg_r2.php'),
 ];

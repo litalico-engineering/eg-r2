@@ -13,7 +13,7 @@ use Litalico\EgR2\Console\Commands\GenerateRoute;
  */
 class GenerateRouteServiceProvider extends ServiceProvider
 {
-    const STUB_DIR = __DIR__.'/../../stubs';
+    public const STUB_DIR = __DIR__.'/../../stubs';
 
     /**
      * @inheritDoc
