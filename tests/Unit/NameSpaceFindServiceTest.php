@@ -9,6 +9,7 @@ use Litalico\EgR2\Console\Commands\GenerateRoute;
 use Litalico\EgR2\Providers\GenerateRouteServiceProvider;
 use Tests\TestCase;
 use Litalico\EgR2\Services\NameSpaceFindService;
+use Illuminate\Foundation\Application;
 
 /**
  * @package Tests\Unit
@@ -29,6 +30,8 @@ class NameSpaceFindServiceTest extends TestCase
     public function testGetNameSpaces(): void
     {
         setup:
+        // Change base path
+        new Application(realpath(__DIR__.'/../../'));
         $instance = new NameSpaceFindService();
 
         when:
@@ -48,6 +51,8 @@ class NameSpaceFindServiceTest extends TestCase
     public function testGetClassesOfNameSpace(string $namespace, array $expected): void
     {
         setup:
+        // Change base path
+        new Application(realpath(__DIR__.'/../../'));
         $instance = new NameSpaceFindService();
 
         when:
