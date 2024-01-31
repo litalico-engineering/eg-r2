@@ -1,0 +1,16 @@
+includes:
+  - ./vendor/spaze/phpstan-disallowed-calls/extension.neon
+parameters:
+  level: 9
+  paths:
+    - ./src/
+  checkMissingIterableValueType: true
+  checkGenericClassInNonGenericObjectType: false
+  excludePaths:
+    - tests/**/*.php
+  tmpDir: .phpstan
+  reportUnmatchedIgnoredErrors: false
+  disallowedFunctionCalls:
+    -
+      function: 'collect()'
+      message: 'use new Collection instead'

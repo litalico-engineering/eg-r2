@@ -1,0 +1,11 @@
+/vendor
+.env
+.phpunit.result.cache
+.phpunit.cache
+/.idea
+/.vscode
+clover.xml
+/coverage
+phpunit-ci.xml
+/.php-cs-fixer.cache
+/.phpstan

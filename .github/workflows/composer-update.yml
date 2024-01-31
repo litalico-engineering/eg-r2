@@ -1,0 +1,67 @@
+name: composer update workflow
+on:
+  schedule:
+    - cron: "0 1 10 * *" # 10th of every month at 10:00 JST
+  workflow_dispatch:
+
+jobs:
+  composer-update-job:
+    name: composer update job.
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+      - name: Get PHP version
+        id: php-version
+        run: |
+          echo "PHP_VERSION=`jq -r '.config.platform.php' composer.json`" >> $GITHUB_ENV
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+      - name: composer update
+        run: |
+          composer update
+      - name: check diff
+        id: git-check-diff
+        run: |
+          git diff --cached --exit-code --quiet
+      - name: Set timestamp
+        id: set-context
+        run: |
+          echo "timestamp=$(date "+%Y%m%d%H%M%S" -r composer.lock)" >> $GITHUB_OUTPUT
+      - name: composer-lock-diff install
+        run: |
+          composer global require davidrjonas/composer-lock-diff
+      - name: Run composer-lock-diff
+        run: |
+          $(composer config --global --absolute home)/vendor/bin/composer-lock-diff --md | tee -a /var/tmp/composer-lock-diff.log
+        shell: bash
+      - name: Read composer-lock-diff.log
+        id: composer-lock-diff
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: /var/tmp/composer-lock-diff.log
+      - name: Create Pull Request
+        id: create-pull-request
+        if: steps.composer-lock-diff.outputs.content != ''
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: composer update
+          title: composer update @ ${{ steps.set-context.outputs.timestamp }}
+          body: ${{ steps.composer-lock-diff.outputs.content }}
+          branch: composer-outdated/${{ steps.set-context.outputs.timestamp }}
+      - name: Trigger Test Workflow
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'test.yml',
+              ref: 'composer-outdated/${{ steps.set-context.outputs.timestamp }}'
+            })

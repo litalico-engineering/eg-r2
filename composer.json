@@ -25,7 +25,6 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Database\\Seeders\\phpunit\\": "database/seeders/phpunit/",
             "Tests\\": "tests/"
         }
     },
@@ -52,16 +51,24 @@
             "@clear",
             "@prepare"
         ],
-        "serve": [
-            "Composer\\Config::disableProcessTimeout",
-            "@build",
-            "@php vendor/bin/testbench serve"
+        "test": [
+            "./vendor/bin/phpunit --configuration phpunit.xml"
         ],
         "lint": [
-            "@php vendor/bin/phpstan analyse"
+            "./vendor/bin/phpstan analyze"
         ],
-        "test": [
-            "@php vendor/bin/phpunit"
+        "fix-cs": [
+            "php-cs-fixer fix --config=.php-cs-fixer.dist.php --verbose"
+        ],
+        "coverage": [
+            "./vendor/bin/phpunit --configuration phpunit.xml --coverage-clover coverage.xml"
         ]
+    },
+    "scripts-descriptions": {
+        "post-autoload-dump": "",
+        "test": "Runs all tests using PHPUnit",
+        "lint": "Runs Code Static Analysis using PHPStan",
+        "fix-cs": "Fixes PHP code style using PHP-CS-Fixer",
+        "coverage": "Obtaining Code Coverage"
     }
 }

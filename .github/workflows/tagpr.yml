@@ -1,0 +1,56 @@
+name: tagpr
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  tagpr:
+    runs-on: ubuntu-latest
+    outputs:
+      tagpr-tag: ${{ steps.tagpr.outputs.tag }}
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+
+      - name: Get PHP version
+        id: php-version
+        run: |
+          echo "PHP_VERSION=`jq -r '.config.platform.php' composer.json`" >> $GITHUB_ENV
+
+      - name: Restore composer modules
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            ./vendor
+          key: ${{ runner.os }}-vendor-${{ runner.arch }}-${{ env.PHP_VERSION }}-${{ hashFiles('./composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-vendor-${{ runner.arch }}-${{ env.PHP_VERSION }}-${{ hashFiles('./composer.lock') }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          ini-values: pcov.directory=packages
+
+      - name: Create Env
+        run: |
+          cp .env.ci .env
+
+      - name: Composer install
+        run: |
+          composer config --global -a http-basic.github.com x-access-token "${{ steps.generate_token.outputs.token }}"
+          composer install -n --prefer-dist
+
+      - name: Cache composer modules
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            ./vendor
+          key: ${{ runner.os }}-vendor-${{ runner.arch }}-${{ env.PHP_VERSION }}-${{ hashFiles('./composer.lock') }}
+
+      - id: tagpr
+        name: Run tagpr
+        uses: Songmu/tagpr@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
