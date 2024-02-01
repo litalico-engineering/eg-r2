@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Generator;
+use Illuminate\Foundation\Application;
 use Litalico\EgR2\Console\Commands\GenerateRoute;
 use Litalico\EgR2\Providers\GenerateRouteServiceProvider;
-use Tests\TestCase;
 use Litalico\EgR2\Services\NameSpaceFindService;
-use Illuminate\Foundation\Application;
+use Tests\TestCase;
 
 /**
  * @package Tests\Unit
