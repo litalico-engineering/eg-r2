@@ -32,7 +32,7 @@
         "laravel": {
             "dont-discover": [],
             "providers": [
-                "Litalico\\EgR2\\Console\\Commands\\GenerateRoute"
+                "Litalico\\EgR2\\Providers\\GenerateRouteServiceProvider"
             ]
         }
     },
@@ -65,5 +65,20 @@
         "lint": "Runs Code Static Analysis using PHPStan",
         "fix-cs": "Fixes PHP code style using PHP-CS-Fixer",
         "coverage": "Obtaining Code Coverage"
+    },
+    "archive": {
+        "exclude": [
+            ".gitignore",
+            ".gitattributes",
+            "vendor",
+            ".git",
+            "tests",
+            ".github",
+            ".octocov.yml",
+            ".php-cs-fixer.dist.php",
+            ".tagpr",
+            "phpstan.neon",
+            "phpunit.xml"
+        ]
     }
 }
