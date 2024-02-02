@@ -10,7 +10,7 @@ use Litalico\EgR2\Console\Commands\GenerateRoute;
 /**
  * This provider is responsible for publishing necessary files and registering the GenerateRoute command.
  * It publishes configuration files when running in console mode and registers the GenerateRoute command for use in the CLI.
- * 
+ *
  * @package Litalico\EgR2\Providers
  */
 class GenerateRouteServiceProvider extends ServiceProvider

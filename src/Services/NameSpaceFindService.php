@@ -35,7 +35,7 @@ class NameSpaceFindService
     /**
      * Retrieves the namespace from the given class.
      * If the class does not have a namespace, it returns a default namespace.
-     * 
+     *
      * @param class-string $class The class to retrieve the namespace from.
      * @return string The namespace of the class, or the default namespace if the class does not have a namespace.
      * @throws ReflectionException

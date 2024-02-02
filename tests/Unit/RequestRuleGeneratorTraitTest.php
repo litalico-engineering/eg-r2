@@ -612,8 +612,9 @@ class ForClassSchemaAndPropertyTest extends FormRequest
     public array $key7;
 }
 
-enum Status:string {
-    case AVAILABLE = "available";
-    case PENDING = "pending";
-    case SOLD = "sold";
+enum Status: string
+{
+    case AVAILABLE = 'available';
+    case PENDING = 'pending';
+    case SOLD = 'sold';
 }

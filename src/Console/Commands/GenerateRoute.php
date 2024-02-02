@@ -165,7 +165,7 @@ class GenerateRoute extends Command
 
     /**
      * Returns the path to the route file.
-     * 
+     *
      * @return string
      */
     private function getRoutePath(): string

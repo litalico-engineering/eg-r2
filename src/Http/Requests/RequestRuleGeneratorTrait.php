@@ -198,7 +198,7 @@ trait RequestRuleGeneratorTrait
      * Recursively analyzes the given schema and generates Laravel validation rules.
      * This method handles different types of schemas (array, object, others) and generates appropriate validation rules.
      * It also takes into account the required fields in the schema.
-     * 
+     *
      * @param AnnotationSchema $schema The schema to analyze.
      * @param array<string> $parentNames An array of parent names used for nested schemas.
      * @param array<string> $requires An array of required fields in the schema.
@@ -247,7 +247,7 @@ trait RequestRuleGeneratorTrait
      * If the Schema is of type Property and has a defined title, the title is returned.
      * If the title is not defined, the property of the Schema is returned.
      * If the Schema is not of type Property, the title of the Schema is returned.
-     * 
+     *
      * @param AnnotationSchema $schema The schema to retrieve the property name from.
      * @return string The property name retrieved from the Schema.
      */
@@ -268,7 +268,7 @@ trait RequestRuleGeneratorTrait
      * Converts the given OpenApiSchema into Laravel validation rules.
      * This method analyzes the schema and generates appropriate validation rules based on its properties.
      * It takes into account whether the schema is nullable and whether it is required.
-     * 
+     *
      * @param AnnotationSchema $schema The OpenApiSchema to convert into Laravel validation rules.
      * @param array<string> $names An array of parent names used for nested schemas.
      * @param bool $required Indicates whether the schema is required or not.
