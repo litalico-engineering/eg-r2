@@ -31,7 +31,7 @@ class GenerateRoute extends Command
     protected $signature = 'eg-r2:generate-route';
 
     /**
-     * The console command description.
+     * The description of the console command
      *
      * @var null|string
      */
@@ -58,7 +58,7 @@ class GenerateRoute extends Command
     }
 
     /**
-     * Execute the console command.
+     * Executes the console command. This method generates a routing file from OpenAPI specifications.
      *
      * @return int
      * @throws ReflectionException
@@ -108,8 +108,8 @@ class GenerateRoute extends Command
     }
 
     /**
-     * @param class-string $controller
-     * @return Literal|null
+     * @param class-string $controller The fully qualified class name of the controller.
+     * @return Literal|null Returns a Literal object representing the route group for the controller, or null if no routes were generated.
      * @throws ReflectionException
      */
     private function generateRoute(string $controller): ?Literal
@@ -150,7 +150,7 @@ class GenerateRoute extends Command
     private function convertOperation(Operation $operation, string $action): Literal
     {
         $path = $operation->path;
-        // Specify Laravel own url description format
+        // Converts to Laravel path parameter format if `OptionalPathParameter` is specified in the 'x' attribute
         if ($operation->x !== Generator::UNDEFINED) {
             foreach ($operation->x as $key => $value) {
                 if ($key === 'OptionalPathParameter' && $value === true) {
@@ -164,6 +164,8 @@ class GenerateRoute extends Command
     }
 
     /**
+     * Returns the path to the route file.
+     * 
      * @return string
      */
     private function getRoutePath(): string

@@ -17,52 +17,52 @@ return (new PhpCsFixer\Config())
         'strict_param' => true,
 
         // header ------------------
-        'linebreak_after_opening_tag' => true, // Put a line break after the start tag so that there is no description on the line of the start tag
-        'no_leading_namespace_whitespace' => true, // namespaceの前にスペースがあったとき削除します
+        'linebreak_after_opening_tag' => true, // Ensure line break after opening tag
+        'no_leading_namespace_whitespace' => true, // If there is a space before namespace, delete it.
 
-        'no_unused_imports' => true, // 使用していないuse文は削除
+        'no_unused_imports' => true, // Remove unused imports
 
         // comment ------------------
-        'align_multiline_comment' => true, // マルチコメントを修正 /* */
+        'align_multiline_comment' => true, // Align multiline comments /* */
 
-        'no_empty_comment' => true, // 空コメント削除
-        'no_empty_phpdoc' => true, // 空コメント削除
-        'no_empty_statement' => true, // ;;とか削除
+        'no_empty_comment' => true, // Remove empty comments
+        'no_empty_phpdoc' => true, // Remove empty PHPDoc
+        'no_empty_statement' => true, // Remove empty statements
 
         // array ------------------
-        'array_syntax' => ['syntax' => 'short'], // array() を[]にする
-        'array_indentation' => true, // 配列のインデント揃える
+        'array_syntax' => ['syntax' => 'short'], // Use short array syntax
+        'array_indentation' => true, // Align array indentation
 
-        'no_superfluous_elseif' => true, // list関数の余計なカンマを削除
-        'no_multiline_whitespace_around_double_arrow' => true, // =>の前後で複数行になるスペースを禁止します
-        'no_trailing_comma_in_singleline_array' => true, // 単一行で記述する配列で余計なカンマを削除します
-        'no_whitespace_before_comma_in_array' => true, // 配列内で、カンマの前にスペースを禁止します
+        'no_superfluous_elseif' => true, // Simplify "else if" to "elseif"
+        'no_multiline_whitespace_around_double_arrow' => true, // Remove whitespace around double arrow
+        'no_trailing_comma_in_singleline_array' => true, // Remove trailing commas in single-line arrays
+        'no_whitespace_before_comma_in_array' => true, // No spaces before commas in arrays
 
         // syntax ------------------
-        'elseif' => true, // 'else if' to 'elseif'
-        'compact_nullable_typehint' => true, // '? int' to '?int'
-        'function_typehint_space' => true, // 関数の返り値の型宣言にスペースが抜けていると補完する
+        'elseif' => true, // Convert 'else if' to 'elseif'
+        'compact_nullable_typehint' => true, // Compact nullable typehint
+        'function_typehint_space' => true, // Ensure space in function return type declaration
 
         // space, line ------------------
 
-        // 色んな空白行削除
-        'no_blank_lines_after_class_opening' => true,
-        'no_blank_lines_after_phpdoc' => true,
-        'no_break_comment' => false,
+        // Delete various blank lines
+        'no_blank_lines_after_class_opening' => true,   // No blank lines after class opening
+        'no_blank_lines_after_phpdoc' => true,  //  No blank lines after PHPDoc
+        'no_break_comment' => false,    // Allow break comments
 
         'method_argument_space' => [
-            'ensure_fully_multiline' => true, // 複数行に渡るときには1行に引数一つとする
-            'keep_multiple_spaces_after_comma' => false, // 複数のスペースを許容する(falseで複数スペースを単一にする)
+            'ensure_fully_multiline' => true, // One argument per line in multiline
+            'keep_multiple_spaces_after_comma' => false, // Single space after comma
         ],
 
-        // 余計な改行を削除
+        // No whitespace in blank lines
         'no_extra_blank_lines' => [
             'tokens' => ['extra', 'use'],
         ],
 
-        'no_whitespace_in_blank_line' => true, // 空白行でスペースを禁止
+        'no_whitespace_in_blank_line' => true, // Blank lines prohibit spaces
 
-        // 特定のキーワードの前に改行を入れる
+        // Put a line break before certain keywords
         'blank_line_before_statement' => [
             'statements' => [
                 'break',
@@ -74,92 +74,89 @@ return (new PhpCsFixer\Config())
             ],
         ],
 
-        // コロンの後ろに空白を1つ入れる
+        // Ensure space after colon in return type declaration
         'return_type_declaration' => true,
-
-        // R2でのルール
 
         '@PHP80Migration:risky' => true,
         '@PHP81Migration' => true,
         '@PhpCsFixer:risky' => true,
 
-        // namespaceの前に1つ空行を入れる かんたん請求では開けていなかった。
-        'no_blank_lines_before_namespace' => false,
-        'single_blank_line_before_namespace' => true,
+        'no_blank_lines_before_namespace' => false, // Allow blank lines before namespace
+        'single_blank_line_before_namespace' => true,   // Single blank line before namespace
 
-        // セミコロンの位置
+        // Semicolon position
         'multiline_whitespace_before_semicolons' => [
             'strategy' => 'no_multi_line',
         ],
 
-        // 配列周り
+        // Arrangement
         'binary_operator_spaces' => [
             'operators' => [
-                '=>' => 'single_space', // かんたん請求では、'align', => は揃える
-                '=' => 'single_space', // かんたん請求では、null, = は揃えない
+                '=>' => 'single_space',
+                '=' => 'single_space',
             ],
         ],
 
-        // コメントの前にスペースを入れる
+        // Ensure space before single line comment
         'single_line_comment_spacing' => true,
 
-        // phpdocのインデント
+        // Indentation of PHPDoc
         'phpdoc_align' => [
             'align' => 'left',
         ],
 
-        // なくても良いphpdocを非表示にするかどうか
+        // Allow superfluous PHPDoc tags
         'no_superfluous_phpdoc_tags' => false,
 
-        // phpdocの@packageをなくすかどうか
+        // Allow @package in PHPDoc
         'phpdoc_no_package' => false,
         'general_phpdoc_annotation_remove' => [
             'annotations' => ['author'],
         ],
 
-        // 不要なnamespace設定を削除する
+        // Use fully qualified strict types
         'fully_qualified_strict_types' => true,
 
-        // voidを付与する
+        // Use void return type
         'void_return' => true,
 
-        // 標準関数のnamespaceをきれいにする
+        // Clean up namespace in standard functions
         'global_namespace_import' => [
             'import_classes' => true,
             'import_constants' => true,
             'import_functions' => true,
         ],
 
-        // is_nullは使わず === とする
+        // Use === instead of is_null
         'is_null' => true,
 
-        // ヨーダ記法の設定
+        // Yoda Notation Settings
         'yoda_style' => [
             'equal' => false,
             'identical' => false,
             'less_and_greater' => false,
         ],
 
-        // 匿名クラスでの{}の扱いについて
+        // Handling of {} in anonymous classes
         'curly_braces_position' => [
             'anonymous_classes_opening_brace' => 'next_line_unless_newline_at_signature_end',
         ],
 
-        // テストで@testを利用する
+        // Using @test in testing
         'php_unit_test_annotation' => [
             'style' => 'annotation',
         ],
 
-        // assetメソッドに関して厳密にするかどうかは、開発者に委ねる
+        // Developer decides strictness of assert method
         'php_unit_strict' => [],
 
-        // === を比較で矯正しない。開発者に委ねる
+        // Developer decides strictness of comparison
         'strict_comparison' => false,
 
-        // 1行の場合末尾の,を削除する。
+        // Remove trailing comma in single line
         'no_trailing_comma_in_singleline' => true,
 
-        // useのソートを行う
+        // Sort imports
         'ordered_imports' => [
             'sort_algorithm' => 'alpha',
             'imports_order' => [
@@ -169,41 +166,41 @@ return (new PhpCsFixer\Config())
             ],
         ],
 
-        // use にてグループ分けをしない
+        // No import grouping
         'blank_line_between_import_groups' => false,
 
-        // traitのソートはしない
+        // No trait sorting
         'ordered_traits' => false,
 
-        // list関数を利用する
+        // Use long list syntax
         'list_syntax' => [
             'syntax' => 'long',
         ],
 
-        // シングルクオートを利用する
+        // Use single quotes
         'single_quote' => true,
 
-        // static function, static fun が使えるときはそうする
+        // Use static lambda when possible
         'static_lambda' => true,
 
-        // 文字列内における変数転換の設定
+        // Convert simple to complex string variables
         'simple_to_complex_string_variable' => true,
 
-        // function, fn あとのスペース設定
+        // Space after function declaration
         'function_declaration' => [
             'closure_function_spacing' => 'one',
             'closure_fn_spacing' => 'one',
         ],
 
-        // PHPUnitでのメソッドの呼び出し方
+        // Use 'self' for PHPUnit method calls
         'php_unit_test_case_static_method_calls' => [
             'call_type' => 'self',
         ],
 
-        // PSR12のルールに準拠し、use HogeTrait は1行ずつにする
+        // One trait per statement
         'single_trait_insert_per_statement' => true,
 
-        // データ提供者名は試験名と一致していなければならない。
+        // No data provider name enforcement
         'php_unit_data_provider_name' => false,
     ])
     ->setFinder($finder);

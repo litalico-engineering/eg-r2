@@ -20,4 +20,3 @@
 	versionFile = composer.json
 	majorLabels = major
 	minorLabels = enhancement,minor
-

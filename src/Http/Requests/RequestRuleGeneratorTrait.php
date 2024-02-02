@@ -24,13 +24,13 @@ use function is_array;
 use function is_string;
 
 /**
- * Validation Rule Generation Trait
+ * A trait used to generate Laravel validation rules from OpenApiAttributes.
  * @package Litalico\EgR2\Http\Requests
  */
 trait RequestRuleGeneratorTrait
 {
     /**
-     * Return Laravel validation rules
+     * Returns Laravel validation rules converted from OpenApiAttributes.
      * @return array<string, list<\Illuminate\Contracts\Validation\ValidationRule|\Illuminate\Validation\Rules\Enum|\Illuminate\Validation\Rules\In|int|string>>
      * @throws ReflectionException
      */
@@ -40,7 +40,7 @@ trait RequestRuleGeneratorTrait
     }
 
     /**
-     * Converting OpenApiAttributes to Laravel Validation Rules
+     * Converts OpenApiAttributes to Laravel Validation Rules and returns them as an array.
      * @return array<string, list<\Illuminate\Contracts\Validation\ValidationRule|\Illuminate\Validation\Rules\Enum|\Illuminate\Validation\Rules\In|int|string>>
      * @throws ReflectionException
      */
@@ -122,16 +122,18 @@ trait RequestRuleGeneratorTrait
     }
 
     /**
-     * Get Schema required fields from reflection class
+     * Parses the required fields from the given reflection class's Schema.
+     * This method recursively checks the traits of the given class and its own attributes.
+     * It returns an array of required fields.
      * @template T of ReflectionClass
-     * @param ReflectionClass $refClass
-     * @return array<string>
+     * @param ReflectionClass $refClass The reflection class to parse the required fields from.
+     * @return array<string> The required fields parsed from the Schema of the given reflection class.
      */
     private function parseSchemaRequired(ReflectionClass $refClass): array
     {
         $requires = [];
 
-        // Obtaining a trait attribute. Because class attributes cannot refer to inherited class attributes
+        // Obtain the trait attributes. This is necessary because class attributes cannot refer to inherited class attributes.
         $traits = $refClass->getTraits();
         foreach ($traits as $trait) {
             $requires = [
@@ -140,7 +142,7 @@ trait RequestRuleGeneratorTrait
             ];
         }
 
-        // class attribute
+        // Process the attributes of the reflection class itself.
         foreach ($refClass->getAttributes() as $attribute) {
             $obj = $attribute->newInstance();
             if (is_a($obj, Schema::class)) {
@@ -157,12 +159,14 @@ trait RequestRuleGeneratorTrait
     }
 
     /**
-     * Compare property and schema definitions and return an error message if there is a discrepancy
+     * Compares the property and schema definitions and returns an array of error messages if there are discrepancies.
+     * This method checks if the nullable definition and the type definition of the property and the schema match.
+     * If they don't match, it adds an error message to the array for each discrepancy.
      *
-     * @param ReflectionProperty $property
-     * @param bool $schemaNullable Whether the schema definition is nullable or not
-     * @param string|non-empty-array<string> $schemaTypeName Schema Type Definition
-     * @return list<string>
+     * @param ReflectionProperty $property The property to compare with the schema.
+     * @param bool $schemaNullable Indicates whether the schema definition is nullable or not.
+     * @param string|non-empty-array<string> $schemaTypeName The type definition of the schema.
+     * @return list<string> An array of error messages indicating the discrepancies between the property and the schema.
      */
     private function checkDiffInPropertyAndSchema(
         ReflectionProperty $property,
@@ -191,11 +195,14 @@ trait RequestRuleGeneratorTrait
     }
 
     /**
-     * Recursively analyze schema structure
-     * @param AnnotationSchema $schema
-     * @param array<string> $parentNames
-     * @param array<string> $requires
-     * @return array<string, list<\Illuminate\Contracts\Validation\ValidationRule|\Illuminate\Validation\Rules\Enum|\Illuminate\Validation\Rules\In|int|string>>
+     * Recursively analyzes the given schema and generates Laravel validation rules.
+     * This method handles different types of schemas (array, object, others) and generates appropriate validation rules.
+     * It also takes into account the required fields in the schema.
+     * 
+     * @param AnnotationSchema $schema The schema to analyze.
+     * @param array<string> $parentNames An array of parent names used for nested schemas.
+     * @param array<string> $requires An array of required fields in the schema.
+     * @return array<string, list<\Illuminate\Contracts\Validation\ValidationRule|\Illuminate\Validation\Rules\Enum|\Illuminate\Validation\Rules\In|int|string>> The generated Laravel validation rules.
      */
     private function parseSchema(AnnotationSchema $schema, array $parentNames = [], array $requires = []): array
     {
@@ -236,14 +243,18 @@ trait RequestRuleGeneratorTrait
     }
 
     /**
-     * Get property name from Schema
-     * @param AnnotationSchema $schema
-     * @return string
+     * Retrieves the property name from the given Schema.
+     * If the Schema is of type Property and has a defined title, the title is returned.
+     * If the title is not defined, the property of the Schema is returned.
+     * If the Schema is not of type Property, the title of the Schema is returned.
+     * 
+     * @param AnnotationSchema $schema The schema to retrieve the property name from.
+     * @return string The property name retrieved from the Schema.
      */
     private function getPropertyName(AnnotationSchema $schema): string
     {
         if (is_a($schema, Property::class)) {
-            if ($schema->title !== Generator::UNDEFINED) {      /** @phpstan-ignore-line */
+            if ($schema->title !== Generator::UNDEFINED) {  /** @phpstan-ignore-line */
                 return $schema->title;
             }
 
@@ -254,24 +265,27 @@ trait RequestRuleGeneratorTrait
     }
 
     /**
-     * Conversion process of OpenApiSchema to laravel rules
-     * @param AnnotationSchema $schema
-     * @param array<string> $names
-     * @param bool $required
-     * @return array<string, list<\Illuminate\Contracts\Validation\ValidationRule|\Illuminate\Validation\Rules\Enum|\Illuminate\Validation\Rules\In|string>>
+     * Converts the given OpenApiSchema into Laravel validation rules.
+     * This method analyzes the schema and generates appropriate validation rules based on its properties.
+     * It takes into account whether the schema is nullable and whether it is required.
+     * 
+     * @param AnnotationSchema $schema The OpenApiSchema to convert into Laravel validation rules.
+     * @param array<string> $names An array of parent names used for nested schemas.
+     * @param bool $required Indicates whether the schema is required or not.
+     * @return array<string, list<\Illuminate\Contracts\Validation\ValidationRule|\Illuminate\Validation\Rules\Enum|\Illuminate\Validation\Rules\In|string>> The generated Laravel validation rules.
      */
     protected function convertRule(AnnotationSchema $schema, array $names = [], bool $required = false): array
     {
         $rules = [];
 
-        // Value Required
+        // Check if the schema value is nullable or not
         if ($schema->nullable === true) {
             $rules[] = 'nullable';
         } elseif ($schema->nullable === false) {
             // nop
         }
 
-        // Required field name. Require presence of key.
+        // Check if the field is required. If it is, ensure the key is present.
         if ($required) {
             if ($schema->type === 'object') {
                 $rules[] = 'present';
@@ -286,7 +300,7 @@ trait RequestRuleGeneratorTrait
             }
         }
 
-        // type specification
+        // Specify the type of the schema
         if (in_array($schema->type, ['string', 'number', 'integer', 'boolean', 'array', 'object'], true)) {
             if ($schema->type === 'number') {
                 $rules[] = 'numeric';
@@ -301,7 +315,7 @@ trait RequestRuleGeneratorTrait
             }
         }
 
-        // Apply specific Laravel validation rules
+        // Apply specific Laravel validation rules based on the schema properties
         $ignorePattern = false;
         if ($schema->x !== Generator::UNDEFINED) {  /** @phpstan-ignore-line */
             foreach ($schema->x as $ruleName => $rule) {

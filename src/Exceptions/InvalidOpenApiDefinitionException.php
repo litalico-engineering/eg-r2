@@ -6,7 +6,8 @@ namespace Litalico\EgR2\Exceptions;
 use LogicException;
 
 /**
- * OpenAPI-defined error Exception
+ * Exception for invalid OpenAPI definitions.
+ * This exception is thrown when there is a problem with the API definition according to the OpenAPI specification.
  * @package Litalico\EgR2\Exceptions
  */
 class InvalidOpenApiDefinitionException extends LogicException

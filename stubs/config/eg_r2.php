@@ -4,11 +4,12 @@ declare(strict_types=1);
 return [
     /*
     |---------------------------------------------------------------------------
-    | namespace in which the OpenAPI specification is defined
+    | Namespace where the OpenAPI specification is defined
     |---------------------------------------------------------------------------
     |
-    | Specify the namespace of the controller in which the OpenAPI http method is defined in swagger-php
-    | Specifies the name of a group that organizes multiple APIs and the namespace in which the Controller in which the API is implemented is located.
+    | Specify the namespace of the controller where the OpenAPI HTTP methods are defined using swagger-php.
+    | This setting organizes multiple APIs into groups and specifies the namespace where the Controller implementing the API is located.
+    | For example, you can map a group name to a namespace.
     */
     'namespaces' => [
         // Example 'group_name' => 'App\Http\Controllers'
@@ -17,10 +18,10 @@ return [
 
     /*
     |---------------------------------------------------------------------------
-    | Output route definition class
+    | Output path for the Route Files
     |---------------------------------------------------------------------------
     |
-    | Specify the path to the root definition file automatically generated from the OpenAPI specification
+    | Specify the path to the Route Files that is automatically generated from the OpenAPI specification.
     */
     'route_path' => base_path('routes/eg_r2.php'),
 ];

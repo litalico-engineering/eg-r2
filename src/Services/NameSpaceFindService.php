@@ -9,7 +9,7 @@ use ReflectionClass;
 use ReflectionException;
 
 /**
- * Class to search for classes in namespace
+ * A service class that provides functionality to search for classes within a given namespace.
  * @package Litalico\EgR2\Services
  */
 class NameSpaceFindService
@@ -33,8 +33,11 @@ class NameSpaceFindService
     }
 
     /**
-     * @param class-string $class
-     * @return string
+     * Retrieves the namespace from the given class.
+     * If the class does not have a namespace, it returns a default namespace.
+     * 
+     * @param class-string $class The class to retrieve the namespace from.
+     * @return string The namespace of the class, or the default namespace if the class does not have a namespace.
      * @throws ReflectionException
      */
     private function getNameSpaceFromClass(string $class): string
