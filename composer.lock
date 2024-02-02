@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "62f63d1395635529828dbad92dc6a672",
+    "content-hash": "d693c8f09129652d1d42dd3da4fc9ef8",
     "packages": [
         {
             "name": "brick/math",
@@ -8154,6 +8154,53 @@
                 }
             ],
             "time": "2023-02-07T11:34:05+00:00"
+        },
+        {
+            "name": "smeghead/php-vendor-credits",
+            "version": "v0.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/smeghead/php-vendor-credits.git",
+                "reference": "b98f2649236d64075b0c72dc23e562c1f61ccc89"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/smeghead/php-vendor-credits/zipball/b98f2649236d64075b0c72dc23e562c1f61ccc89",
+                "reference": "b98f2649236d64075b0c72dc23e562c1f61ccc89",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.4",
+                "symfony/console": "^5.4|^6.4"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^1.10",
+                "phpunit/phpunit": "^9.6"
+            },
+            "bin": [
+                "bin/php-vendor-credits"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Smeghead\\PhpVendorCredits\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "smeghead"
+                }
+            ],
+            "description": "php-vendor-creadits creates CREDITS file from LICENSE files of dependencies",
+            "support": {
+                "issues": "https://github.com/smeghead/php-vendor-credits/issues",
+                "source": "https://github.com/smeghead/php-vendor-credits/tree/v0.0.4"
+            },
+            "time": "2024-01-31T12:47:40+00:00"
         },
         {
             "name": "spatie/backtrace",

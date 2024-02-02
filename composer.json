@@ -16,6 +16,7 @@
         "orchestra/testbench": "^8.20",
         "phpstan/phpstan": "^1.10",
         "phpunit/phpunit": "^10.5",
+        "smeghead/php-vendor-credits": "^0.0.4",
         "spaze/phpstan-disallowed-calls": "^3.1"
     },
     "autoload": {
