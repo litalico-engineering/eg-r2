@@ -13,9 +13,9 @@
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.46",
-        "orchestra/testbench": "^8.20",
+        "orchestra/testbench": "^7.0|^8.0",
         "phpstan/phpstan": "^1.10",
-        "phpunit/phpunit": "^10.5",
+        "phpunit/phpunit": "^9.0|^10.0",
         "smeghead/php-vendor-credits": "^0.0.4",
         "spaze/phpstan-disallowed-calls": "^3.1"
     },
