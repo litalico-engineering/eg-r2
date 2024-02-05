@@ -20,4 +20,4 @@
 	versionFile = composer.json
 	majorLabels = major
 	minorLabels = enhancement,minor
-    command = "make prerelease_for_tagpr"
+	command = "make prerelease_for_tagpr"
