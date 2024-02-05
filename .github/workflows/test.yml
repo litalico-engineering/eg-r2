@@ -1,0 +1,57 @@
+name: tests
+on:
+  pull_request:
+
+jobs:
+  tests:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-20.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.php }}
+      cancel-in-progress: true
+
+    strategy:
+      matrix:
+        php: ['8.2',"8.3"]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+          ini-values: pcov.directory=src
+        env:
+          update: true
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate --no-check-version
+
+      - name: Get Composer Cache Directory
+        id: get-composer-cache-dir
+        run: |
+          echo "path=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.get-composer-cache-dir.outputs.path }}
+          key: ${{ runner.os }}-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.php }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: lint
+        run: composer lint
+
+      - name: test & coverage
+        run: composer coverage
+
+      - name: Report code coverage
+        if: matrix.php == '8.2'
+        uses: k1LoW/octocov-action@v1

@@ -1,0 +1,85 @@
+{
+    "name": "litalico-engineering/eg-r2",
+    "type": "library",
+    "description": "Easy request validation and route generation from open API specifications (for Laravel)",
+    "version": "0.0.1",
+    "require": {
+        "php": "^8.2|^8.3",
+        "illuminate/console": "^9.0|^10.0",
+        "illuminate/support": "^9.0|^10.0",
+        "illuminate/validation": "^9.0|^10.0",
+        "nette/php-generator": "^4.1",
+        "zircote/swagger-php": "^4.8"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.46",
+        "orchestra/testbench": "^7.0|^8.0",
+        "phpstan/phpstan": "^1.10",
+        "phpunit/phpunit": "^9.0|^10.0",
+        "smeghead/php-vendor-credits": "^0.0.4",
+        "spaze/phpstan-disallowed-calls": "^3.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Litalico\\EgR2\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": [],
+            "providers": [
+                "Litalico\\EgR2\\Providers\\GenerateRouteServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "platform": {
+            "php": "8.2.2"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "test": [
+            "./vendor/bin/phpunit --configuration phpunit.xml"
+        ],
+        "lint": [
+            "./vendor/bin/phpstan analyze"
+        ],
+        "fix-cs": [
+            "php-cs-fixer fix --config=.php-cs-fixer.dist.php --verbose"
+        ],
+        "coverage": [
+            "./vendor/bin/phpunit --configuration phpunit.xml --coverage-clover coverage.xml"
+        ]
+    },
+    "scripts-descriptions": {
+        "test": "Runs all tests using PHPUnit",
+        "lint": "Runs Code Static Analysis using PHPStan",
+        "fix-cs": "Fixes PHP code style using PHP-CS-Fixer",
+        "coverage": "Obtaining Code Coverage"
+    },
+    "archive": {
+        "exclude": [
+            ".gitignore",
+            ".gitattributes",
+            "vendor",
+            ".git",
+            "tests",
+            ".github",
+            ".octocov.yml",
+            ".php-cs-fixer.dist.php",
+            ".tagpr",
+            "phpstan.neon",
+            "phpunit.xml"
+        ]
+    }
+}

@@ -1,0 +1,11 @@
+/.gitignore export-ignore
+/.gitattributes export-ignore
+/vendor export-ignore
+/.git export-ignore
+/tests export-ignore
+/.github export-ignore
+/.octocov.yml export-ignore
+/.php-cs-fixer.dist.php export-ignore
+/.tagpr export-ignore
+/phpstan.neon export-ignore
+/phpunit.xml export-ignore

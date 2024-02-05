@@ -1,0 +1,23 @@
+changelog:
+  exclude:
+    labels:
+      - tagpr
+  categories:
+    - title: Breaking Changes 🛠
+      labels:
+        - breaking-change
+    - title: New Features 🎉
+      labels:
+        - enhancement
+    - title: Fix bug 🐛
+      labels:
+        - bug
+    - title: Testing 🧪
+      labels:
+        - testing
+    - title: Performance Tuning ⚡
+      labels:
+        - performance-tuning
+    - title: Other Changes
+      labels:
+        - "*"

@@ -1,0 +1,44 @@
+name: tagpr
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tagpr:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+
+      - name: Get PHP version
+        id: php-version
+        run: |
+          echo "PHP_VERSION=`jq -r '.config.platform.php' composer.json`" >> $GITHUB_ENV
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+
+      - id: tagpr
+        name: Run tagpr
+        uses: Songmu/tagpr@v1
+
+      - name: Trigger relase Workflow
+        uses: actions/github-script@v7
+        if: steps.tagpr.outputs.tag != ''
+        continue-on-error: true
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'release.yml',
+              ref: 'refs/tags/${{ steps.tagpr.outputs.tag }}',
+              inputs: {
+                tag_version: '${{ steps.tagpr.outputs.tag }}'
+              },
+            })
