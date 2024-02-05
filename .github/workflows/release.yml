@@ -29,7 +29,6 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ env.PHP_VERSION }}
-1
       - name: Run composer archive
         run: |
           composer archive --format zip --file composer
