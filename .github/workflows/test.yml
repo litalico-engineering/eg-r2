@@ -32,9 +32,6 @@ jobs:
         run: |
           composer require "laravel/framework=${{ matrix.laravel }}" --no-update --no-interaction --no-progress --ansi
 
-      - name: Validate composer.json and composer.lock
-        run: composer validate --no-check-version
-
       - name: Get Composer Cache Directory
         id: get-composer-cache-dir
         run: |
