@@ -68,9 +68,9 @@ credits: $(CREDITS_OBJ)	## Create CREDITS
 
 prerelease_for_tagpr:	## Change files just before release
 	@composer config version $(TAGPR_NEXT_VERSION)
-	@composer update
+	@composer install
 	@vendor/bin/php-vendor-credits . > $(CREDITS_OBJ)
-	@git add CHANGELOG.md composer.json composer.lock $(CREDITS_OBJ)
+	@git add CHANGELOG.md composer.json $(CREDITS_OBJ)
 
 release:	## Run composer archive
 	@composer archive --format zip --file composer

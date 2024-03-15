@@ -4,15 +4,16 @@ on:
 
 jobs:
   tests:
-    name: PHP ${{ matrix.php }}
+    name: PHP ${{ matrix.php }} / Laravle ${{ matrix.laravel }}
     runs-on: ubuntu-20.04
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.php }}
+      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.php }}-${{ matrix.laravel }}
       cancel-in-progress: true
 
     strategy:
       matrix:
-        php: ['8.2',"8.3"]
+        php: ['8.2','8.3']
+        laravel: ['^10.0', '^11.0']
 
     steps:
       - name: Checkout Code
@@ -22,10 +23,14 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          tools: composer:v2
+          tools: composer:v2.7
           ini-values: pcov.directory=src
         env:
           update: true
+
+      - name: Fixing the version of Laravel
+        run: |
+          composer require "laravel/framework=${{ matrix.laravel }}" --no-update --no-interaction --no-progress --ansi
 
       - name: Validate composer.json and composer.lock
         run: composer validate --no-check-version
@@ -40,8 +45,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.get-composer-cache-dir.outputs.path }}
-          key: ${{ runner.os }}-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-${{ matrix.php }}-composer-
+          key: ${{ runner.os }}-${{ matrix.php }}-${{ matrix.laravel }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.php }}-${{ matrix.laravel }}-composer-
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
@@ -53,5 +58,5 @@ jobs:
         run: composer coverage
 
       - name: Report code coverage
-        if: matrix.php == '8.2'
+        if: matrix.php == '8.2' && matrix.laravel == '^10.0'
         uses: k1LoW/octocov-action@v1
