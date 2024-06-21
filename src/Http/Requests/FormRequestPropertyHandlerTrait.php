@@ -11,6 +11,7 @@ use ReflectionNamedType;
 use ReflectionProperty;
 use ReflectionType;
 use ReflectionException;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * If the OpenApi attribute is embedded in the form request class along  with the Property addition,
@@ -32,6 +33,12 @@ trait FormRequestPropertyHandlerTrait
         $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
 
         foreach ($properties as $property) {
+
+            // from laravel11, Symfony components come here.
+            if ($property->class === Request::class) {
+                continue;
+            }
+
             // Only primitive types take over parameters
             if (!$property->hasType()) {
                 continue;
