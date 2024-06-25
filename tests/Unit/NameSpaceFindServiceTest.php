@@ -9,13 +9,12 @@ use Illuminate\Foundation\Application;
 use Litalico\EgR2\Console\Commands\GenerateRoute;
 use Litalico\EgR2\Providers\GenerateRouteServiceProvider;
 use Litalico\EgR2\Services\NameSpaceFindService;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * @package Tests\Unit
- * @coversDefaultClass \Litalico\EgR2\Services\NameSpaceFindService
- * @covers \Litalico\EgR2\Services\NameSpaceFindService
- */
+#[CoversClass(NameSpaceFindService::class)]
 class NameSpaceFindServiceTest extends TestCase
 {
     public static function setUpBeforeClass(): void
@@ -23,15 +22,18 @@ class NameSpaceFindServiceTest extends TestCase
     }
 
     /**
-     * @test
-     * @covers ::getNameSpaces
      * @throws
      */
-    public function testGetNameSpaces(): void
+    #[Test]
+    public function getNameSpaces(): void
     {
         setup:
         // Change base path
-        new Application(realpath(__DIR__.'/../../'));
+        $path = realpath(__DIR__.'/../../');
+        if ($path === false) {
+            self::fail('realpath is invalid');
+        }
+        new Application($path);
         $instance = new NameSpaceFindService();
 
         when:
@@ -42,17 +44,20 @@ class NameSpaceFindServiceTest extends TestCase
     }
 
     /**
-     * @test
-     * @covers ::getClassesOfNameSpace
-     * @dataProvider namespacePattern
      * @param string $namespace
-     * @param array $expected
+     * @param list<class-string> $expected
      */
-    public function testGetClassesOfNameSpace(string $namespace, array $expected): void
+    #[Test]
+    #[DataProvider('namespacePattern')]
+    public function getClassesOfNameSpace(string $namespace, array $expected): void
     {
         setup:
         // Change base path
-        new Application(realpath(__DIR__.'/../../'));
+        $path = realpath(__DIR__.'/../../');
+        if ($path === false) {
+            self::fail('realpath is invalid');
+        }
+        new Application($path);
         $instance = new NameSpaceFindService();
 
         when:
