@@ -15,7 +15,7 @@
         "friendsofphp/php-cs-fixer": "^3.46",
         "orchestra/testbench": "^9.0",
         "phpstan/phpstan": "^1.10",
-        "phpunit/phpunit": "^10.0",
+        "phpunit/phpunit": "^11.0",
         "smeghead/php-vendor-credits": "^0.0.5",
         "spaze/phpstan-disallowed-calls": "^3.1"
     },
