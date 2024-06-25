@@ -34,8 +34,6 @@ class RequestRuleGeneratorTraitTest extends TestCase
     /**
      * @param Schema $property
      * @param array $expected
-     *
-     * @test
      */
     #[Test]
     #[DataProvider('singlePropertyConversionPattern')]
@@ -90,9 +88,6 @@ class RequestRuleGeneratorTraitTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     */
     #[Test]
     public function objectRequiredFieldsCanBeConverted(): void
     {
@@ -141,9 +136,6 @@ class RequestRuleGeneratorTraitTest extends TestCase
         self::assertEquals($expected, $actual);
     }
 
-    /**
-     * @test
-     */
     #[Test]
     public function requiredOnlyIfTheParentElementExists(): void
     {
@@ -180,9 +172,6 @@ class RequestRuleGeneratorTraitTest extends TestCase
         self::assertEquals($expected, $actual);
     }
 
-    /**
-     * @test
-     */
     #[Test]
     #[DataProvider('schemaDefinitionPropertyPattern')]
     #[DataProvider('schemaDefinitionParameterPattern')]
@@ -327,9 +316,6 @@ class RequestRuleGeneratorTraitTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     */
     #[Test]
     public function arrayRequiredFieldsCanBeConverted(): void
     {
@@ -372,9 +358,6 @@ class RequestRuleGeneratorTraitTest extends TestCase
         self::assertEqualsCanonicalizing($expected, $actual);
     }
 
-    /**
-     * @test
-     */
     #[Test]
     public function multiTieredPropertiesCanBeConverted(): void
     {
@@ -441,9 +424,6 @@ class RequestRuleGeneratorTraitTest extends TestCase
         self::assertEquals($expected, $actual);
     }
 
-    /**
-     * @test
-     */
     #[Test]
     public function combinationOfParameterAndSchemaCanBeConverted(): void
     {
@@ -474,9 +454,6 @@ class RequestRuleGeneratorTraitTest extends TestCase
         self::assertSame($expected, $actual);
     }
 
-    /**
-     * @test
-     */
     #[Test]
     public function allowsRulesToBeSpecifiedForAllElementsOfAChildElementOfAnArrayOmittingThePropertyName(): void
     {
@@ -535,8 +512,6 @@ class RequestRuleGeneratorTraitTest extends TestCase
 
     /**
      * @throws ReflectionException
-     *
-     * @test
      */
     #[Test]
     public function propertyAndSchemaCombinationsCanBeConverted(): void
