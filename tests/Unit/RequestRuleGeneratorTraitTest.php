@@ -14,6 +14,7 @@ use OpenApi\Attributes\Items;
 use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Property;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionException;
@@ -23,7 +24,7 @@ use Tests\TestCase;
 /**
  * Testing of Validation Rule Generation Trait
  */
-#[CoversClass(RequestRuleGeneratorTrait::class)]
+#[CoversTrait(RequestRuleGeneratorTrait::class)]
 #[CoversClass(Integer::class)]
 class RequestRuleGeneratorTraitTest extends TestCase
 {
