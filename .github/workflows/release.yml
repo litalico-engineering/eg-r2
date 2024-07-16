@@ -56,3 +56,11 @@ jobs:
               name: 'composer.zip',
               data: fileContent,
             });
+
+      - name: Submit packages
+        run: |
+          curl \
+          -XPOST \
+          -H'content-type:application/json' \
+          'https://packagist.org/api/update-package?username=litalico-engineering@r2&apiToken=${{ secrets.PACKAGIST_TOKEN }}' \
+          -d'{"repository":{"url":"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"}}'
