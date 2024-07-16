@@ -23,6 +23,7 @@ use Tests\TestCase;
  * @coversDefaultClass \Litalico\EgR2\Http\Requests\RequestRuleGeneratorTrait
  * @covers \Litalico\EgR2\Http\Requests\RequestRuleGeneratorTrait
  * @covers \Litalico\EgR2\Rules\Integer
+ * @covers \Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException
  */
 class RequestRuleGeneratorTraitTest extends TestCase
 {
@@ -179,11 +180,11 @@ class RequestRuleGeneratorTraitTest extends TestCase
      * @dataProvider schemaDefinitionPropertyPattern
      * @dataProvider schemaDefinitionParameterPattern
      */
-    public function testErrorOccursIfThereIsAConflictBetweenPropertyAndSchemaDefinition(FormRequest $instance): void
+    public function testErrorOccursIfThereIsAConflictBetweenPropertyAndSchemaDefinition(FormRequest $instance, string $expectedMessage): void
     {
         expect:
         $this->expectException(InvalidOpenApiDefinitionException::class);
-
+        $this->expectExceptionMessage($expectedMessage);
         $instance->rules();
     }
 
@@ -207,6 +208,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     )]
                     public string $status;
                 },
+                '["status: Nullable definitions are different in property and schema. "]'
             ],
             'property|schema:required, property:nullable' => [
                 new class() extends FormRequest
@@ -221,6 +223,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     )]
                     public ?string $status;
                 },
+                '["status: Nullable definitions are different in property and schema. "]'
             ],
             'property|schema:integer, property:string' => [
                 new class() extends FormRequest
@@ -236,6 +239,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     )]
                     public ?string $status;
                 },
+                '["status: Type definitions are different in property and schema. "]'
             ],
             'property|schema:nullable integer, property:required string' => [
                 new class() extends FormRequest
@@ -251,6 +255,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     )]
                     public string $status;
                 },
+                '["status: Nullable definitions are different in property and schema. ","status: Type definitions are different in property and schema. "]'
             ],
         ];
     }
@@ -272,6 +277,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     ]
                     public ?string $code;
                 },
+                '["code: Nullable definitions are different in property and schema. "]'
             ],
             'Parameters|Schema:nullable, Property:required' => [
                 new class() extends FormRequest
@@ -284,6 +290,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     ]
                     public string $code;
                 },
+                '["code: Nullable definitions are different in property and schema. "]'
             ],
             'Parameters|Schema:string, Property:integer' => [
                 new class() extends FormRequest
@@ -296,6 +303,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     ]
                     public int $code;
                 },
+                '["code: Type definitions are different in property and schema. "]'
             ],
             'Parameters|schema:required string, property:nullable integer' => [
                 new class() extends FormRequest
@@ -308,6 +316,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     ]
                     public ?int $code;
                 },
+                '["code: Nullable definitions are different in property and schema. ","code: Type definitions are different in property and schema. "]'
             ],
         ];
     }
