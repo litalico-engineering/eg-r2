@@ -5,7 +5,6 @@ parameters:
   paths:
     - ./src/
   checkMissingIterableValueType: true
-  checkGenericClassInNonGenericObjectType: false
   excludePaths:
     - tests/**/*.php
   tmpDir: .phpstan
