@@ -98,8 +98,12 @@ class GenerateRoute extends Command
             fwrite($this->fp, (string) $literal);
         }
 
+        $metaData = stream_get_meta_data($this->fp);
+        if (isset($metaData['uri']) === false) {
+            throw new RuntimeException('Failed to get uri.');
+        }
         // Copy to root file
-        File::copy(stream_get_meta_data($this->fp)['uri'], $this->getRoutePath());
+        File::copy($metaData['uri'], $this->getRoutePath());
 
         // Delete temporary files
         fclose($this->fp);
