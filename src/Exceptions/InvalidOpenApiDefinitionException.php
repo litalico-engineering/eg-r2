@@ -18,7 +18,11 @@ class InvalidOpenApiDefinitionException extends LogicException
     public function __construct(
         protected array $messages
     ) {
-        parent::__construct('');
+        $msgJson = json_encode($messages, JSON_UNESCAPED_UNICODE);
+        if ($msgJson === false) {
+            $msgJson = 'Error message parsing failed';
+        }
+        parent::__construct($msgJson);
     }
 
     /**
