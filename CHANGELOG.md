@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.0.4](https://github.com/litalico-engineering/eg-r2/compare/0.0.3...0.0.4) - 2024-07-17
+### Other Changes
+- Refactoring to handle multiple exception messages as JSON strings by @katsumi-kato-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/14
+
 ## [0.0.3](https://github.com/litalico-engineering/eg-r2/compare/0.0.2...0.0.3) - 2024-07-16
 ### Other Changes
 - Fixing `Could not parse payload repository URL` by @katsumi-kato-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/12
