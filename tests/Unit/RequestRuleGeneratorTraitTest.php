@@ -562,6 +562,56 @@ class RequestRuleGeneratorTraitTest extends TestCase
         // Enum object is different, so it is not SAME
         self::assertEquals($expected, $actual);
     }
+
+    /**
+     * @test
+     * @covers ::convertRule
+     */
+    public function testNestedSchemasCanBeConverted(): void
+    {
+        setup:
+        $class = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+
+            #[
+                Property(
+                    'parent',
+                    type: 'string',
+                    format: 'string',
+                    maxLength: 10,
+                    nullable: true
+                ),
+            ]
+            public ?string $test;
+
+            #[
+                Property(
+                    property: 'nested',
+                    ref: '#/components/schemas/NestedObject',
+                    type: 'object'
+                ),
+            ]
+            public NestedObject $nested;
+        };
+
+        $expected = [
+            'parent' => ['nullable', 'string', 'max:10'],
+            'nested.id' => [
+                new Integer(),
+                'integer',
+            ],
+            'nested.name' => [
+               'string',
+            ],
+        ];
+
+        when:
+        $actual = $class->rules();
+
+        then:
+        self::assertEquals($expected, $actual);
+    }
 }
 
 // This is a test class for "Property/Schema combination can be converted". Because it cannot be defined in the class attribute anonymous class
@@ -631,4 +681,31 @@ enum Status: string
     case AVAILABLE = 'available';
     case PENDING = 'pending';
     case SOLD = 'sold';
+}
+
+#[\OpenApi\Attributes\Schema(
+    schema: 'NestedObject'
+)]
+class NestedObject extends FormRequest
+{
+    use RequestRuleGeneratorTrait;
+
+    #[Property(
+        property: "id",
+        title: "id",
+        description: "id",
+        type: "integer",
+        format: "int",
+        minimum: 1
+    )]
+    public int $id;
+
+    #[Property(
+        property: "name",
+        title: "name",
+        description: "name",
+        type: "string",
+        format: "string"
+    )]
+    public string $name;
 }
