@@ -600,6 +600,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
             'nested.id' => [
                 new Integer(),
                 'integer',
+                'min:1'
             ],
             'nested.name' => [
                'string',
