@@ -355,7 +355,7 @@ trait RequestRuleGeneratorTrait
                         default => [$rule],
                     };
                     foreach ($validationRules as $validationRule) {
-                        //　For ValidationRule class, instantiate and use it
+                        // For ValidationRule class, instantiate and use it
                         if (class_exists($validationRule)) {
                             $validationRuleClass = new $validationRule();
                             if ($validationRuleClass instanceof ValidationRule) {
