@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.0.5](https://github.com/litalico-engineering/eg-r2/compare/0.0.4...0.0.5) - 2024-07-29
+### Other Changes
+- Add Support for Directly Specifying Laravel-Supported Validation Options by @katsumi-kato-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/18
+
 ## [0.0.4](https://github.com/litalico-engineering/eg-r2/compare/0.0.3...0.0.4) - 2024-07-17
 ### Other Changes
 - Refactoring to handle multiple exception messages as JSON strings by @katsumi-kato-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/14
