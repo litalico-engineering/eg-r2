@@ -58,6 +58,16 @@ trait RequestRuleGeneratorTrait
                 // Exclude inherited FormRequest-related Properties。
                 continue;
             }
+            $reflectionType = $phpProperty->getType();
+
+            if ($reflectionType !== null && !$reflectionType->isBuiltin()) {
+                // If the type is not a built-in type, no validation rules can be generated..
+                $typeName = $reflectionType->getName();
+                $nestedClass = new ReflectionClass($typeName);
+
+                // TODO: If it is a unique type, the schema is read and the rule is generated.
+                continue;
+            }
 
             /** var Schema $schema */
             $schema = null;
