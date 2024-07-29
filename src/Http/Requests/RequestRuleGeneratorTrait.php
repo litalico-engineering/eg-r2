@@ -65,8 +65,31 @@ trait RequestRuleGeneratorTrait
                 $typeName = $reflectionType->getName();
                 $nestedClass = new ReflectionClass($typeName);
 
-                // TODO: If it is a unique type, the schema is read and the rule is generated.
-                continue;
+                // If it is a unique type, the schema is read and the rule is generated.
+                $nestedRequires = $this->parseSchemaRequired($nestedClass);
+
+                $reflectionAttributes = $nestedClass->getAttributes(Schema::class);
+                if ($reflectionAttributes !== []) {
+                    /** @var Schema $nestedSchema */
+                    $nestedSchema = $reflectionAttributes[0]->newInstance();
+
+                    $parentNames = [$phpProperty->getName()];
+
+                    $rules += $this->convertRule($nestedSchema, $parentNames, false);
+                    foreach ($nestedClass->getProperties() as $innerProperty) {
+                        $attributeProperties = $innerProperty->getAttributes(Property::class);
+                        if ($attributeProperties !== []) {
+                            /** @var Property $nestedSchemaProperty */
+                            $nestedSchemaProperty = $attributeProperties[0]->newInstance();
+
+                            /** @phpstan-ignore-next-line To determine the default value Generator::UNDEFINED */
+                            $requires = is_array($nestedSchemaProperty->required) ? $nestedSchema->required : [];
+                            $rules += $this->parseSchema($nestedSchemaProperty, $parentNames, $requires);
+                        }
+                    }
+
+                    continue;
+                }
             }
 
             /** var Schema $schema */
