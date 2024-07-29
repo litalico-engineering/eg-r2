@@ -339,11 +339,21 @@ trait RequestRuleGeneratorTrait
                     $ignorePattern = true;
                     $rules[] = sprintf('regex:%s', $rule);
                 }
-                if ($ruleName === 'validation' && $rule != '') {
-                    // Enabled when the ValidationRule class is specified in the rule
-                    $validationRule = new $rule();
-                    if ($validationRule instanceof ValidationRule) {
-                        $rules[] = $validationRule;
+                if ($ruleName === 'validation' && $rule !== '') {
+                    $validationRules = match (true) {
+                        is_array($rule) => [...$rule],
+                        default => [$rule],
+                    };
+                    foreach ($validationRules as $validationRule) {
+                        // For ValidationRule class, instantiate and use it
+                        if (class_exists($validationRule)) {
+                            $validationRuleClass = new $validationRule();
+                            if ($validationRuleClass instanceof ValidationRule) {
+                                $rules[] = $validationRuleClass;
+                            }
+                        } else {
+                            $rules[] = $validationRule;
+                        }
                     }
                 }
             }
