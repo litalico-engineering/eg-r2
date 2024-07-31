@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.0.6](https://github.com/litalico-engineering/eg-r2/compare/0.0.5...0.0.6) - 2024-07-31
+### Other Changes
+- Support for nested objects by @k2tzumi in https://github.com/litalico-engineering/eg-r2/pull/19
+
 ## [0.0.5](https://github.com/litalico-engineering/eg-r2/compare/0.0.4...0.0.5) - 2024-07-29
 ### Other Changes
 - Add Support for Directly Specifying Laravel-Supported Validation Options by @katsumi-kato-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/18
