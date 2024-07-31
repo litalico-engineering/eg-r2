@@ -4,19 +4,25 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Request;
+use Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException;
 use Litalico\EgR2\Http\Requests\FormRequestPropertyHandlerTrait;
+use Litalico\EgR2\Rules\Integer;
 use Mockery;
 use OpenApi\Attributes\Property;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversTrait;
+use PHPUnit\Framework\Attributes\Test;
+use ReflectionException;
 use Tests\FullAccessWrapper;
 use Tests\TestCase;
 
 /**
  * @package Tests\Unit
- * @coversDefaultClass \Litalico\EgR2\Http\Requests\FormRequestPropertyHandlerTrait
- * @covers \Litalico\EgR2\Http\Requests\FormRequestPropertyHandlerTrait
- * @covers \Litalico\EgR2\Rules\Integer
- * @covers \Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException
  */
+#[CoversTrait(FormRequestPropertyHandlerTrait::class)]
+#[CoversClass(InvalidOpenApiDefinitionException::class)]
+#[CoversClass(Integer::class)]
 class FormRequestPropertyHandlerTraitTest extends TestCase
 {
     public static function setUpBeforeClass(): void
@@ -24,9 +30,9 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
     }
 
     /**
-     * @test
-     * @covers ::passedValidation
+     * @throws ReflectionException
      */
+    #[Test]
     public function testPropertyOfFormRequestCanBeInitializedEvenIfValueIsNull(): void
     {
         setup:
@@ -93,9 +99,9 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
 
 
     /**
-     * @test
-     * @covers ::passedValidation
+     * @throws ReflectionException
      */
+    #[Test]
     public function testGetPropertiesOfNestedObject(): void
     {
         setup:
@@ -138,9 +144,9 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
     }
 
     /**
-     * @test
-     * @covers ::passedValidation
+     * @throws ReflectionException
      */
+    #[Test]
     public function testGetNestedObjectPropertiesEvenIfValueIsNull(): void
     {
         setup:
@@ -181,14 +187,13 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
     }
 
     /**
-     * @test
-     * @covers ::passedValidation
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
+    #[Test]
     public function testNestedObject(): void
     {
         setup:
-        $requestMock = Mockery::mock('Illuminate\Http\Request');
+        $requestMock = Mockery::mock(Request::class);
         $requestMock->shouldReceive('setUserResolver')->andReturn("dummy");
         $requestMock->shouldReceive('all')->andReturn(['id' => 1, 'nested' => ['id' => 2, 'name' => 'bob']]);
         $this->app->instance('request', $requestMock);

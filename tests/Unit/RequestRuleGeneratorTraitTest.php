@@ -541,10 +541,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
         self::assertEquals($expected, $actual);
     }
 
-    /**
-     * @test
-     * @covers ::convertRule
-     */
+    #[Test]
     public function testNestedSchemasCanBeConverted(): void
     {
         setup:
