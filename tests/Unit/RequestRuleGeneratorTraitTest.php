@@ -13,18 +13,19 @@ use OpenApi\Annotations\Schema;
 use OpenApi\Attributes\Items;
 use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Property;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversTrait;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use ReflectionException;
 use Tests\FullAccessWrapper;
 use Tests\TestCase;
 
 /**
  * Testing of Validation Rule Generation Trait
- * @package Tests\Unit
- * @coversDefaultClass \Litalico\EgR2\Http\Requests\RequestRuleGeneratorTrait
- * @covers \Litalico\EgR2\Http\Requests\RequestRuleGeneratorTrait
- * @covers \Litalico\EgR2\Rules\Integer
- * @covers \Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException
  */
+#[CoversTrait(RequestRuleGeneratorTrait::class)]
+#[CoversClass(Integer::class)]
 class RequestRuleGeneratorTraitTest extends TestCase
 {
     public static function setUpBeforeClass(): void
@@ -32,13 +33,12 @@ class RequestRuleGeneratorTraitTest extends TestCase
     }
 
     /**
-     * @test
-     * @dataProvider singlePropertyConversionPattern
-     * @covers ::convertRule
      * @param Schema $property
      * @param array $expected
      */
-    public function testCanConvertOpenApiSchemaToLaravelRules(Schema $property, array $expected): void
+    #[Test]
+    #[DataProvider('singlePropertyConversionPattern')]
+    public function canConvertOpenApiSchemaToLaravelRules(Schema $property, array $expected): void
     {
         setup:
         $class = new class extends FormRequest
@@ -89,11 +89,8 @@ class RequestRuleGeneratorTraitTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     * @covers ::convertRule
-     */
-    public function testObjectRequiredFieldsCanBeConverted(): void
+    #[Test]
+    public function objectRequiredFieldsCanBeConverted(): void
     {
         setup:
         $class = new class extends FormRequest
@@ -140,11 +137,8 @@ class RequestRuleGeneratorTraitTest extends TestCase
         self::assertEquals($expected, $actual);
     }
 
-    /**
-     * @test
-     * @covers ::convertRule
-     */
-    public function testRequiredOnlyIfTheParentElementExists(): void
+    #[Test]
+    public function requiredOnlyIfTheParentElementExists(): void
     {
         setup:
         $class = new class extends FormRequest
@@ -179,13 +173,10 @@ class RequestRuleGeneratorTraitTest extends TestCase
         self::assertEquals($expected, $actual);
     }
 
-    /**
-     * @test
-     * @covers ::convertRule
-     * @dataProvider schemaDefinitionPropertyPattern
-     * @dataProvider schemaDefinitionParameterPattern
-     */
-    public function testErrorOccursIfThereIsAConflictBetweenPropertyAndSchemaDefinition(FormRequest $instance, string $expectedMessage): void
+    #[Test]
+    #[DataProvider('schemaDefinitionPropertyPattern')]
+    #[DataProvider('schemaDefinitionParameterPattern')]
+    public function errorOccursIfThereIsAConflictBetweenPropertyAndSchemaDefinition(FormRequest $instance, string $expectedMessage): void
     {
         expect:
         $this->expectException(InvalidOpenApiDefinitionException::class);
@@ -326,11 +317,8 @@ class RequestRuleGeneratorTraitTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     * @covers ::convertRule
-     */
-    public function testArrayRequiredFieldsCanBeConverted(): void
+    #[Test]
+    public function arrayRequiredFieldsCanBeConverted(): void
     {
         setup:
         $class = new class extends FormRequest
@@ -371,11 +359,8 @@ class RequestRuleGeneratorTraitTest extends TestCase
         self::assertEqualsCanonicalizing($expected, $actual);
     }
 
-    /**
-     * @test
-     * @covers ::convertRule
-     */
-    public function testMultiTieredPropertiesCanBeConverted(): void
+    #[Test]
+    public function multiTieredPropertiesCanBeConverted(): void
     {
         setup:
         $class = new class extends FormRequest
@@ -440,11 +425,8 @@ class RequestRuleGeneratorTraitTest extends TestCase
         self::assertEquals($expected, $actual);
     }
 
-    /**
-     * @test
-     * @covers ::convertRule
-     */
-    public function testCombinationOfParameterAndSchemaCanBeConverted(): void
+    #[Test]
+    public function combinationOfParameterAndSchemaCanBeConverted(): void
     {
         setup:
         $class = new class extends FormRequest
@@ -473,11 +455,8 @@ class RequestRuleGeneratorTraitTest extends TestCase
         self::assertSame($expected, $actual);
     }
 
-    /**
-     * @test
-     * @covers ::convertRule
-     */
-    public function testAllowsRulesToBeSpecifiedForAllElementsOfAChildElementOfAnArrayOmittingThePropertyName(): void
+    #[Test]
+    public function allowsRulesToBeSpecifiedForAllElementsOfAChildElementOfAnArrayOmittingThePropertyName(): void
     {
         setup:
         $class = new class extends FormRequest
@@ -533,11 +512,10 @@ class RequestRuleGeneratorTraitTest extends TestCase
     }
 
     /**
-     * @test
-     * @covers ::convertRule
      * @throws ReflectionException
      */
-    public function testPropertyAndSchemaCombinationsCanBeConverted(): void
+    #[Test]
+    public function propertyAndSchemaCombinationsCanBeConverted(): void
     {
         setup:
         $class = new ForClassSchemaAndPropertyTest();
@@ -563,10 +541,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
         self::assertEquals($expected, $actual);
     }
 
-    /**
-     * @test
-     * @covers ::convertRule
-     */
+    #[Test]
     public function testNestedSchemasCanBeConverted(): void
     {
         setup:

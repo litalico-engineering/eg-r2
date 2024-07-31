@@ -148,7 +148,9 @@ return (new PhpCsFixer\Config())
         ],
 
         // Developer decides strictness of assert method
-        'php_unit_strict' => [],
+        'php_unit_strict' => [
+            'assertions' => [],
+        ],
 
         // Developer decides strictness of comparison
         'strict_comparison' => false,

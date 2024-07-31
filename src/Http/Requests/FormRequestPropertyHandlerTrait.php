@@ -7,10 +7,10 @@ namespace Litalico\EgR2\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use InvalidArgumentException;
 use ReflectionClass;
+use ReflectionException;
 use ReflectionNamedType;
 use ReflectionProperty;
 use ReflectionType;
-use ReflectionException;
 
 /**
  * If the OpenApi attribute is embedded in the form request class along  with the Property addition,
@@ -32,8 +32,8 @@ trait FormRequestPropertyHandlerTrait
         $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
 
         foreach ($properties as $property) {
-            // Only primitive types take over parameters
-            if (!$property->hasType()) {
+            // Ignore public field of parent class.
+            if ($property->getDeclaringClass()->getName() !== self::class) {
                 continue;
             }
 
@@ -86,14 +86,19 @@ trait FormRequestPropertyHandlerTrait
     {
         $instance = new $class();
 
-        if (($instance instanceof FormRequest) === false) {
-            throw new InvalidArgumentException('The class must be an instance of FormRequest');
+        if (!($instance instanceof FormRequest)) {
+            throw new InvalidArgumentException("The class must be an instance of FormRequest. {$class} was given");
         }
 
         $reflection = new ReflectionClass($class);
         $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
 
         foreach ($properties as $property) {
+            // Ignore public field of parent class.
+            if ($property->getDeclaringClass()->getName() !== $class) {
+                continue;
+            }
+
             $type = $property->getType();
             if (isset($requestValues[$property->getName()])) {
                 $property->setValue($instance, $requestValues[$property->getName()]);
