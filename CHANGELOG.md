@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.0](https://github.com/litalico-engineering/eg-r2/compare/0.0.6...1.0.0) - 2024-07-31
+### Other Changes
+- for laravel11 and PHPUnit11 by @kazuki-tamahori-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/9
+
 ## [0.0.6](https://github.com/litalico-engineering/eg-r2/compare/0.0.5...0.0.6) - 2024-07-31
 ### Other Changes
 - Support for nested objects by @k2tzumi in https://github.com/litalico-engineering/eg-r2/pull/19
