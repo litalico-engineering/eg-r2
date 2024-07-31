@@ -589,7 +589,6 @@ class RequestRuleGeneratorTraitTest extends TestCase
                 Property(
                     property: 'nested',
                     ref: '#/components/schemas/NestedObject',
-                    type: 'object'
                 ),
             ]
             public NestedObject $nested;
@@ -598,6 +597,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
         $expected = [
             'parent' => ['nullable', 'string', 'max:10'],
             'nested.id' => [
+                'required_with:nested',
                 new Integer(),
                 'integer',
                 'min:1'
@@ -685,7 +685,8 @@ enum Status: string
 }
 
 #[\OpenApi\Attributes\Schema(
-    schema: 'NestedObject'
+    schema: 'NestedObject',
+    required: ['id']
 )]
 class NestedObject extends FormRequest
 {

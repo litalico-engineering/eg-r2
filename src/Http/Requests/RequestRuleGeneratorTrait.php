@@ -61,11 +61,10 @@ trait RequestRuleGeneratorTrait
             $reflectionType = $phpProperty->getType();
 
             if ($reflectionType !== null && !$reflectionType->isBuiltin()) {
-                // If the type is not a built-in type, no validation rules can be generated..
+                // If it is a unique type, the schema is read and the rule is generated.
                 $typeName = $reflectionType->getName();
                 $nestedClass = new ReflectionClass($typeName);
 
-                // If it is a unique type, the schema is read and the rule is generated.
                 $nestedRequires = $this->parseSchemaRequired($nestedClass);
 
                 $reflectionAttributes = $nestedClass->getAttributes(Schema::class);
@@ -74,17 +73,13 @@ trait RequestRuleGeneratorTrait
                     $nestedSchema = $reflectionAttributes[0]->newInstance();
 
                     $parentNames = [$phpProperty->getName()];
-
-                    $rules += $this->convertRule($nestedSchema, $parentNames, false);
                     foreach ($nestedClass->getProperties() as $innerProperty) {
                         $attributeProperties = $innerProperty->getAttributes(Property::class);
                         if ($attributeProperties !== []) {
                             /** @var Property $nestedSchemaProperty */
                             $nestedSchemaProperty = $attributeProperties[0]->newInstance();
 
-                            /** @phpstan-ignore-next-line To determine the default value Generator::UNDEFINED */
-                            $requires = is_array($nestedSchemaProperty->required) ? $nestedSchema->required : [];
-                            $rules += $this->parseSchema($nestedSchemaProperty, $parentNames, $requires);
+                            $rules += $this->parseSchema($nestedSchemaProperty, $parentNames, $nestedRequires);
                         }
                     }
 
