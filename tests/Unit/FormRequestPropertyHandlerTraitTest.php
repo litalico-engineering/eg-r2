@@ -160,10 +160,10 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
             #[
                 Property(
                     property: 'nested',
-                    ref: '#/components/schemas/NestedObject',
+                    ref: '#/components/schemas/NestedObject2',
                 ),
             ]
-            public NestedObject $nested;
+            public NestedObject2 $nested;
         };
         /** @var $instance FormRequestPropertyHandlerTrait */
         $instance = new FullAccessWrapper($class);
@@ -175,7 +175,7 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
         self::assertNotNull($instance);
         self::assertEquals($instance->id, 0);
         self::assertNotNull($instance->nested);
-        self::assertInstanceOf(NestedObject::class, $instance->nested);
+        self::assertInstanceOf(NestedObject2::class, $instance->nested);
         self::assertEquals($instance->nested->id, 0);
         self::assertEmpty($instance->nested->name);
     }
@@ -209,10 +209,10 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
             #[
                 Property(
                     property: 'nested',
-                    ref: '#/components/schemas/NestedObject',
+                    ref: '#/components/schemas/NestedObject2',
                 ),
             ]
-            public NestedObject $nested;
+            public NestedObject2 $nested;
         };
         /** @var $instance FormRequestPropertyHandlerTrait */
         $instance = new FullAccessWrapper($class);
@@ -224,17 +224,17 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
         self::assertNotNull($instance);
         self::assertEquals($instance->id, 1);
         self::assertNotNull($instance->nested);
-        self::assertInstanceOf(NestedObject::class, $instance->nested);
+        self::assertInstanceOf(NestedObject2::class, $instance->nested);
         self::assertEquals($instance->nested->id, 2);
         self::assertEquals($instance->nested->name, 'bob');
     }
 }
 
 #[\OpenApi\Attributes\Schema(
-    schema: 'NestedObject',
+    schema: 'NestedObject2',
     required: ['id']
 )]
-class NestedObject extends FormRequest
+class NestedObject2 extends FormRequest
 {
     #[Property(
         property: "id",
