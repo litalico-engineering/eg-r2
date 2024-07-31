@@ -2,7 +2,7 @@
     "name": "litalico-engineering/eg-r2",
     "type": "library",
     "description": "Easy request validation and route generation from open API specifications (for Laravel)",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "require": {
         "php": "^8.2|^8.3",
         "illuminate/console": "^9.0|^10.0",
@@ -16,7 +16,7 @@
         "orchestra/testbench": "^7.0|^8.0",
         "phpstan/phpstan": "^1.10",
         "phpunit/phpunit": "^9.0|^10.0",
-        "smeghead/php-vendor-credits": "^0.0.5",
+        "smeghead/php-vendor-credits": "^0.0.6",
         "spaze/phpstan-disallowed-calls": "^3.1"
     },
     "autoload": {
