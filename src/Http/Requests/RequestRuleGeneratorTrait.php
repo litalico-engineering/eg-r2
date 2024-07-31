@@ -58,6 +58,34 @@ trait RequestRuleGeneratorTrait
                 // Exclude inherited FormRequest-related Properties。
                 continue;
             }
+            $reflectionType = $phpProperty->getType();
+
+            if ($reflectionType !== null && !$reflectionType->isBuiltin()) {
+                // If it is a unique type, the schema is read and the rule is generated.
+                $typeName = $reflectionType->getName();
+                $nestedClass = new ReflectionClass($typeName);
+
+                $nestedRequires = $this->parseSchemaRequired($nestedClass);
+
+                $reflectionAttributes = $nestedClass->getAttributes(Schema::class);
+                if ($reflectionAttributes !== []) {
+                    /** @var Schema $nestedSchema */
+                    $nestedSchema = $reflectionAttributes[0]->newInstance();
+
+                    $parentNames = [$phpProperty->getName()];
+                    foreach ($nestedClass->getProperties() as $innerProperty) {
+                        $attributeProperties = $innerProperty->getAttributes(Property::class);
+                        if ($attributeProperties !== []) {
+                            /** @var Property $nestedSchemaProperty */
+                            $nestedSchemaProperty = $attributeProperties[0]->newInstance();
+
+                            $rules += $this->parseSchema($nestedSchemaProperty, $parentNames, $nestedRequires);
+                        }
+                    }
+
+                    continue;
+                }
+            }
 
             /** var Schema $schema */
             $schema = null;
