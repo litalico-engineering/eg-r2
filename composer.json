@@ -63,7 +63,7 @@
     },
     "scripts-descriptions": {
         "test": "Runs all tests using PHPUnit",
-        "lint": "Runs Code Static Analysis using PHP",
+        "lint": "Runs Code Static Analysis using PHPStan",
         "fix-cs": "Fixes PHP code style using PHP-CS-Fixer",
         "coverage": "Obtaining Code Coverage"
     },
