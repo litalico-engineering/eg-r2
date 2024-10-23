@@ -76,7 +76,7 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
                 type: 'int',
                 nullable: true
             )]
-            public ?int $nullable;
+            public ?int $nullable = null;
 
             #[Property(
                 property: 'unknownType',
@@ -109,7 +109,7 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
     public function getPropertiesOfNestedObject(): void
     {
         setup:
-        $requestMock = Mockery::mock('Illuminate\Http\Request');
+        $requestMock = Mockery::mock(\Illuminate\Http\Request::class);
         $requestMock->shouldReceive('setUserResolver')->andReturn('dummy');
         $requestMock->shouldReceive('all')->andReturn(['id' => 1, 'name' => 'bob']);
         $this->app->instance('request', $requestMock);

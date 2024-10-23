@@ -217,7 +217,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                         enum: Status::class,
                         example: Status::AVAILABLE,
                     )]
-                    public ?string $status;
+                    public ?string $status = null;
                 },
                 '["status: Nullable definitions are different in property and schema. "]',
             ],
@@ -233,7 +233,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                         example: Status::AVAILABLE,
                         nullable: true
                     )]
-                    public ?string $status;
+                    public ?string $status = null;
                 },
                 '["status: Type definitions are different in property and schema. "]',
             ],
@@ -271,7 +271,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                         Parameter('code', name: 'Code', in: 'path', required: true),
                         \OpenApi\Attributes\Schema(type: 'string', maxLength: 19, pattern: '^[0-9]{1,19}', example: '1000000004')
                     ]
-                    public ?string $code;
+                    public ?string $code = null;
                 },
                 '["code: Nullable definitions are different in property and schema. "]',
             ],
@@ -310,7 +310,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                         Parameter('code', name: 'Code', in: 'path', required: true),
                         \OpenApi\Attributes\Schema(type: 'string', maxLength: 19, pattern: '^[0-9]{1,19}', example: '1000000004')
                     ]
-                    public ?int $code;
+                    public ?int $code = null;
                 },
                 '["code: Nullable definitions are different in property and schema. ","code: Type definitions are different in property and schema. "]',
             ],
@@ -561,7 +561,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     nullable: true
                 ),
             ]
-            public ?string $test;
+            public ?string $test = null;
 
             #[
                 Property(
@@ -640,7 +640,7 @@ class ForClassSchemaAndPropertyTest extends FormRequest
         minItems: 0,
         nullable: true,
     )]
-    public ?array $key6;
+    public ?array $key6 = null;
 
     #[Property(
         'key7',
