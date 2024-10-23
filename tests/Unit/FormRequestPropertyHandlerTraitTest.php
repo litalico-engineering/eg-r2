@@ -31,54 +31,57 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
 
     /**
      * @throws ReflectionException
+     *
+     * @test
      */
     #[Test]
-    public function testPropertyOfFormRequestCanBeInitializedEvenIfValueIsNull(): void
+    public function propertyOfFormRequestCanBeInitializedEvenIfValueIsNull(): void
     {
         setup:
-        $class = new class extends FormRequest {
+        $class = new class extends FormRequest
+        {
             use FormRequestPropertyHandlerTrait;
 
             #[Property(
-                property: "id",
-                title: "id",
-                description: "id",
-                type: "integer",
-                format: "int",
+                property: 'id',
+                title: 'id',
+                description: 'id',
+                type: 'integer',
+                format: 'int',
                 minimum: 1
             )]
             public int $id;
 
             #[Property(
-                property: "name",
-                title: "name",
-                description: "name",
-                type: "string"
+                property: 'name',
+                title: 'name',
+                description: 'name',
+                type: 'string'
             )]
             public string $name;
 
             #[Property(
-                property: "categories",
-                title: "categories",
-                description: "categories",
-                type: "array",
-                format: "string"
+                property: 'categories',
+                title: 'categories',
+                description: 'categories',
+                type: 'array',
+                format: 'string'
             )]
             public array $categories;
 
             #[Property(
-                property: "nullable",
-                title: "nullable",
-                description: "nullable",
-                type: "int",
+                property: 'nullable',
+                title: 'nullable',
+                description: 'nullable',
+                type: 'int',
                 nullable: true
             )]
             public ?int $nullable;
 
             #[Property(
-                property: "unknownType",
-                title: "unknownType",
-                description: "unknownType"
+                property: 'unknownType',
+                title: 'unknownType',
+                description: 'unknownType'
             )]
             public $unknownType;
         };
@@ -97,37 +100,39 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
         self::assertEmpty($instance->unknownType);
     }
 
-
     /**
      * @throws ReflectionException
+     *
+     * @test
      */
     #[Test]
-    public function testGetPropertiesOfNestedObject(): void
+    public function getPropertiesOfNestedObject(): void
     {
         setup:
         $requestMock = Mockery::mock('Illuminate\Http\Request');
-        $requestMock->shouldReceive('setUserResolver')->andReturn("dummy");
+        $requestMock->shouldReceive('setUserResolver')->andReturn('dummy');
         $requestMock->shouldReceive('all')->andReturn(['id' => 1, 'name' => 'bob']);
         $this->app->instance('request', $requestMock);
 
-        $class = new class extends FormRequest {
+        $class = new class extends FormRequest
+        {
             use FormRequestPropertyHandlerTrait;
 
             #[Property(
-                property: "id",
-                title: "id",
-                description: "id",
-                type: "integer",
-                format: "int",
+                property: 'id',
+                title: 'id',
+                description: 'id',
+                type: 'integer',
+                format: 'int',
                 minimum: 1
             )]
             public int $id;
 
             #[Property(
-                property: "name",
-                title: "name",
-                description: "name",
-                type: "string"
+                property: 'name',
+                title: 'name',
+                description: 'name',
+                type: 'string'
             )]
             public string $name;
         };
@@ -145,20 +150,23 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
 
     /**
      * @throws ReflectionException
+     *
+     * @test
      */
     #[Test]
-    public function testGetNestedObjectPropertiesEvenIfValueIsNull(): void
+    public function getNestedObjectPropertiesEvenIfValueIsNull(): void
     {
         setup:
-        $class = new class extends FormRequest {
+        $class = new class extends FormRequest
+        {
             use FormRequestPropertyHandlerTrait;
 
             #[Property(
-                property: "id",
-                title: "id",
-                description: "id",
-                type: "integer",
-                format: "int",
+                property: 'id',
+                title: 'id',
+                description: 'id',
+                type: 'integer',
+                format: 'int',
                 minimum: 1
             )]
             public int $id;
@@ -188,25 +196,28 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
 
     /**
      * @throws ReflectionException
+     *
+     * @test
      */
     #[Test]
-    public function testNestedObject(): void
+    public function nestedObject(): void
     {
         setup:
         $requestMock = Mockery::mock(Request::class);
-        $requestMock->shouldReceive('setUserResolver')->andReturn("dummy");
+        $requestMock->shouldReceive('setUserResolver')->andReturn('dummy');
         $requestMock->shouldReceive('all')->andReturn(['id' => 1, 'nested' => ['id' => 2, 'name' => 'bob']]);
         $this->app->instance('request', $requestMock);
 
-        $class = new class extends FormRequest {
+        $class = new class extends FormRequest
+        {
             use FormRequestPropertyHandlerTrait;
 
             #[Property(
-                property: "id",
-                title: "id",
-                description: "id",
-                type: "integer",
-                format: "int",
+                property: 'id',
+                title: 'id',
+                description: 'id',
+                type: 'integer',
+                format: 'int',
                 minimum: 1
             )]
             public int $id;
@@ -242,21 +253,21 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
 class NestedObject2 extends FormRequest
 {
     #[Property(
-        property: "id",
-        title: "id",
-        description: "id",
-        type: "integer",
-        format: "int",
+        property: 'id',
+        title: 'id',
+        description: 'id',
+        type: 'integer',
+        format: 'int',
         minimum: 1
     )]
     public int $id;
 
     #[Property(
-        property: "name",
-        title: "name",
-        description: "name",
-        type: "string",
-        format: "string"
+        property: 'name',
+        title: 'name',
+        description: 'name',
+        type: 'string',
+        format: 'string'
     )]
     public string $name;
 }

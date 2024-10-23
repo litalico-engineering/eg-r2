@@ -22,6 +22,7 @@ use function count;
 use function in_array;
 use function is_array;
 use function is_string;
+use function sprintf;
 
 /**
  * A trait used to generate Laravel validation rules from OpenApiAttributes.
