@@ -6,7 +6,7 @@ jobs:
   filter_paths:
     runs-on: ubuntu-20.04
     outputs:
-      lint: ${{ steps.filter.outputs.lint }}
+      lint_files: ${{ steps.filter.outputs.lint_files }}
       fixer_all: ${{ steps.filter.outputs.fixer_all }}
       rector_all: ${{ steps.filter.outputs.rector_all }}
     steps:
