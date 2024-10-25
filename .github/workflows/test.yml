@@ -24,6 +24,7 @@ jobs:
               - 'composer.json'
             rector_all:
               - 'composer.json'
+          list-files: 'shell'
 
   tests:
     needs: filter_paths
