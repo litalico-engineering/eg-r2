@@ -30,7 +30,7 @@ return RectorConfig::configure()
     ])
     ->withCache(cacheDirectory: './.rector', cacheClass: FileCacheStorage::class)
     // register single rule
-    ->withPhpSets(php83: true, php82: true)
+    ->withPhpSets()
     ->withRules([
         StaticDataProviderClassMethodRector::class,
         ExplicitBoolCompareRector::class,
