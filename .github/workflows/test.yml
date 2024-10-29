@@ -76,7 +76,6 @@ jobs:
       - name: PHP CS Fixer for ALL
         if: ${{ needs.filter_paths.outputs.fixer_all == 'true' }}
         id: fixer-all
-        continue-on-error: true
         run: |
           vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --diff --dry-run --format=checkstyle | cs2pr
 
