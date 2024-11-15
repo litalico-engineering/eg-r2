@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.1](https://github.com/litalico-engineering/eg-r2/compare/1.0.0...1.0.1) - 2024-11-15
+### Other Changes
+- Fix no license information by @katsumi-kato-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/24
+
 ## [1.0.0](https://github.com/litalico-engineering/eg-r2/compare/0.0.6...1.0.0) - 2024-07-31
 ### Other Changes
 - for laravel11 and PHPUnit11 by @kazuki-tamahori-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/9
