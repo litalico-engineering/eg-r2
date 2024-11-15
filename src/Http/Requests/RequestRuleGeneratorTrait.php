@@ -95,7 +95,7 @@ trait RequestRuleGeneratorTrait
             foreach ($phpProperty->getAttributes() as $attribute) {
                 $obj = $attribute->newInstance();
 
-                if ($obj instanceof \OpenApi\Attributes\Property) {
+                if ($obj instanceof Property) {
                     $rules += $this->parseSchema($obj, requires: $requires);
                     $errorMessages = array_merge(
                         $errorMessages,
@@ -105,9 +105,9 @@ trait RequestRuleGeneratorTrait
                             $obj->type
                         )
                     );
-                } elseif ($obj instanceof \OpenApi\Attributes\Schema) {
+                } elseif ($obj instanceof Schema) {
                     $schema = $obj;
-                } elseif ($obj instanceof \OpenApi\Attributes\Parameter) {
+                } elseif ($obj instanceof Parameter) {
                     $parameter = $obj;
                 }
             }
@@ -174,7 +174,7 @@ trait RequestRuleGeneratorTrait
         // Process the attributes of the reflection class itself.
         foreach ($refClass->getAttributes() as $attribute) {
             $obj = $attribute->newInstance();
-            if ($obj instanceof \OpenApi\Attributes\Schema && $obj->required !== Generator::UNDEFINED) {
+            if ($obj instanceof Schema && $obj->required !== Generator::UNDEFINED) {
                 /** @phpstan-ignore-line */
                 $requires = [
                     ...$requires,
@@ -281,7 +281,7 @@ trait RequestRuleGeneratorTrait
      */
     private function getPropertyName(AnnotationSchema $schema): string
     {
-        if ($schema instanceof \OpenApi\Attributes\Property) {
+        if ($schema instanceof Property) {
             if ($schema->title !== Generator::UNDEFINED) {  /** @phpstan-ignore-line */
                 return $schema->title;
             }

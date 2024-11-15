@@ -109,7 +109,7 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
     public function getPropertiesOfNestedObject(): void
     {
         setup:
-        $requestMock = Mockery::mock(\Illuminate\Http\Request::class);
+        $requestMock = Mockery::mock(Request::class);
         $requestMock->shouldReceive('setUserResolver')->andReturn('dummy');
         $requestMock->shouldReceive('all')->andReturn(['id' => 1, 'name' => 'bob']);
         $this->app->instance('request', $requestMock);
@@ -171,12 +171,10 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
             )]
             public int $id;
 
-            #[
-                Property(
-                    property: 'nested',
-                    ref: '#/components/schemas/NestedObject2',
-                ),
-            ]
+            #[Property(
+                property: 'nested',
+                ref: '#/components/schemas/NestedObject2',
+            )]
             public NestedObject2 $nested;
         };
         /** @var $instance FormRequestPropertyHandlerTrait */
@@ -222,12 +220,10 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
             )]
             public int $id;
 
-            #[
-                Property(
-                    property: 'nested',
-                    ref: '#/components/schemas/NestedObject2',
-                ),
-            ]
+            #[Property(
+                property: 'nested',
+                ref: '#/components/schemas/NestedObject2',
+            )]
             public NestedObject2 $nested;
         };
         /** @var $instance FormRequestPropertyHandlerTrait */
