@@ -52,4 +52,3 @@ return RectorConfig::configure()
         deadCode: true,
         codeQuality: true
     );
-
