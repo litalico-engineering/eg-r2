@@ -3,6 +3,7 @@
     "type": "library",
     "description": "Easy request validation and route generation from open API specifications (for Laravel)",
     "version": "1.0.0",
+    "license": ["MIT"],
     "require": {
         "php": "^8.2|^8.3",
         "illuminate/console": "^11.0",
