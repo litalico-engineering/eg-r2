@@ -5,7 +5,7 @@
     "version": "1.0.1",
     "license": ["MIT"],
     "require": {
-        "php": "^8.2|^8.3",
+        "php": "^8.2|^8.3|^8.4",
         "illuminate/console": "^11.0",
         "illuminate/support": "^11.0",
         "illuminate/validation": "^11.0",
