@@ -319,7 +319,7 @@ trait RequestRuleGeneratorTrait
                 $rules[] = 'present';
             } else {
                 // The path parameter etc. is treated as true for required, but the value may be null in some cases.
-                if (!$schema->nullable) {
+                if ($schema->nullable === false || $schema->nullable === Generator::UNDEFINED) {
                     // If type is array, set to `present`.
                     $requireRule = $schema->type === 'array' ? 'present' : 'required';
                     // In the case of a nested structure, it is required only when the parent element exists.
