@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 $finder = PhpCsFixer\Finder::create()
     ->exclude([
+        __DIR__ . '/bootstrap/cache',
+        __DIR__ . '/vendor',
     ])
     ->in([
         __DIR__ . '/src',

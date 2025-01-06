@@ -204,7 +204,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     )]
                     public string $status;
                 },
-                '["status: Nullable definitions are different in property and schema. "]'
+                '["status: Nullable definitions are different in property and schema. "]',
             ],
             'property|schema:required, property:nullable' => [
                 new class() extends FormRequest
@@ -217,9 +217,9 @@ class RequestRuleGeneratorTraitTest extends TestCase
                         enum: Status::class,
                         example: Status::AVAILABLE,
                     )]
-                    public ?string $status;
+                    public ?string $status = null;
                 },
-                '["status: Nullable definitions are different in property and schema. "]'
+                '["status: Nullable definitions are different in property and schema. "]',
             ],
             'property|schema:integer, property:string' => [
                 new class() extends FormRequest
@@ -233,9 +233,9 @@ class RequestRuleGeneratorTraitTest extends TestCase
                         example: Status::AVAILABLE,
                         nullable: true
                     )]
-                    public ?string $status;
+                    public ?string $status = null;
                 },
-                '["status: Type definitions are different in property and schema. "]'
+                '["status: Type definitions are different in property and schema. "]',
             ],
             'property|schema:nullable integer, property:required string' => [
                 new class() extends FormRequest
@@ -251,7 +251,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     )]
                     public string $status;
                 },
-                '["status: Nullable definitions are different in property and schema. ","status: Type definitions are different in property and schema. "]'
+                '["status: Nullable definitions are different in property and schema. ","status: Type definitions are different in property and schema. "]',
             ],
         ];
     }
@@ -271,9 +271,9 @@ class RequestRuleGeneratorTraitTest extends TestCase
                         Parameter('code', name: 'Code', in: 'path', required: true),
                         \OpenApi\Attributes\Schema(type: 'string', maxLength: 19, pattern: '^[0-9]{1,19}', example: '1000000004')
                     ]
-                    public ?string $code;
+                    public ?string $code = null;
                 },
-                '["code: Nullable definitions are different in property and schema. "]'
+                '["code: Nullable definitions are different in property and schema. "]',
             ],
             'Parameters|Schema:nullable, Property:required' => [
                 new class() extends FormRequest
@@ -286,7 +286,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     ]
                     public string $code;
                 },
-                '["code: Nullable definitions are different in property and schema. "]'
+                '["code: Nullable definitions are different in property and schema. "]',
             ],
             'Parameters|Schema:string, Property:integer' => [
                 new class() extends FormRequest
@@ -299,7 +299,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     ]
                     public int $code;
                 },
-                '["code: Type definitions are different in property and schema. "]'
+                '["code: Type definitions are different in property and schema. "]',
             ],
             'Parameters|schema:required string, property:nullable integer' => [
                 new class() extends FormRequest
@@ -310,9 +310,9 @@ class RequestRuleGeneratorTraitTest extends TestCase
                         Parameter('code', name: 'Code', in: 'path', required: true),
                         \OpenApi\Attributes\Schema(type: 'string', maxLength: 19, pattern: '^[0-9]{1,19}', example: '1000000004')
                     ]
-                    public ?int $code;
+                    public ?int $code = null;
                 },
-                '["code: Nullable definitions are different in property and schema. ","code: Type definitions are different in property and schema. "]'
+                '["code: Nullable definitions are different in property and schema. ","code: Type definitions are different in property and schema. "]',
             ],
         ];
     }
@@ -541,8 +541,11 @@ class RequestRuleGeneratorTraitTest extends TestCase
         self::assertEquals($expected, $actual);
     }
 
+    /**
+     * @test
+     */
     #[Test]
-    public function testNestedSchemasCanBeConverted(): void
+    public function nestedSchemasCanBeConverted(): void
     {
         setup:
         $class = new class extends FormRequest
@@ -558,7 +561,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     nullable: true
                 ),
             ]
-            public ?string $test;
+            public ?string $test = null;
 
             #[
                 Property(
@@ -575,10 +578,10 @@ class RequestRuleGeneratorTraitTest extends TestCase
                 'required_with:nested',
                 new Integer(),
                 'integer',
-                'min:1'
+                'min:1',
             ],
             'nested.name' => [
-               'string',
+                'string',
             ],
         ];
 
@@ -637,7 +640,7 @@ class ForClassSchemaAndPropertyTest extends FormRequest
         minItems: 0,
         nullable: true,
     )]
-    public ?array $key6;
+    public ?array $key6 = null;
 
     #[Property(
         'key7',
@@ -668,21 +671,21 @@ class NestedObject extends FormRequest
     use RequestRuleGeneratorTrait;
 
     #[Property(
-        property: "id",
-        title: "id",
-        description: "id",
-        type: "integer",
-        format: "int",
+        property: 'id',
+        title: 'id',
+        description: 'id',
+        type: 'integer',
+        format: 'int',
         minimum: 1
     )]
     public int $id;
 
     #[Property(
-        property: "name",
-        title: "name",
-        description: "name",
-        type: "string",
-        format: "string"
+        property: 'name',
+        title: 'name',
+        description: 'name',
+        type: 'string',
+        format: 'string'
     )]
     public string $name;
 }

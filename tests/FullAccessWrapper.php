@@ -13,7 +13,7 @@ use ReflectionException;
 class FullAccessWrapper
 {
     /** @var ReflectionClass reflection */
-    private ReflectionClass $reflection;
+    private readonly ReflectionClass $reflection;
 
     /**
      * @param object $targetInstance
@@ -57,7 +57,6 @@ class FullAccessWrapper
 
     /**
      * @param string $name
-     * @param mixed $value
      * @return void
      * @throws ErrorException
      * @throws ReflectionException

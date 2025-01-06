@@ -3,7 +3,31 @@ on:
   pull_request:
 
 jobs:
+  filter_paths:
+    runs-on: ubuntu-20.04
+    outputs:
+      lint_files: ${{ steps.filter.outputs.lint_files }}
+      fixer_all: ${{ steps.filter.outputs.fixer_all }}
+      rector_all: ${{ steps.filter.outputs.rector_all }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Filter paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            lint:
+              - added|modified: '**.php'
+            fixer_all:
+              - 'composer.json'
+            rector_all:
+              - 'composer.json'
+          list-files: 'shell'
+
   tests:
+    needs: filter_paths
     name: PHP ${{ matrix.php }}
     runs-on: ubuntu-20.04
     concurrency:
@@ -22,7 +46,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          tools: composer:v2
+          tools: composer:v2, cs2pr
           ini-values: pcov.directory=src
         env:
           update: true
@@ -48,6 +72,33 @@ jobs:
 
       - name: lint
         run: composer lint
+
+      - name: PHP CS Fixer for ALL
+        if: ${{ needs.filter_paths.outputs.fixer_all == 'true' }}
+        id: fixer-all
+        run: |
+          vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --diff --dry-run --format=checkstyle | cs2pr
+
+      - name: PHP CS Fixer for Diff
+        if: ${{ needs.filter_paths.outputs.fixer_all == 'false' && needs.filter_paths.outputs.lint_files }}
+        id: fixer
+        continue-on-error: true
+        run: |
+          vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --diff --dry-run ${{ needs.filter_paths.outputs.lint_files }} --format=checkstyle | cs2pr
+
+      - name: Dry run Rector for Diff
+        if: ${{ needs.filter_paths.outputs.rector_all == 'false' && needs.filter_paths.outputs.lint_files }}
+        id: rector
+        continue-on-error: true
+        run: |
+          vendor/bin/rector process --config rector.php ${{ needs.filter_paths.outputs.lint_files }} --dry-run
+
+      - name: Dry run Rector for ALL
+        if: ${{ needs.filter_paths.outputs.rector_all == 'true' }}
+        id: rector-all
+        continue-on-error: true
+        run: |
+          vendor/bin/rector process --config rector.php --dry-run
 
       - name: test & coverage
         run: composer coverage

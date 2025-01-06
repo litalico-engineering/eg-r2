@@ -17,6 +17,7 @@ use ReflectionClass;
 use ReflectionException;
 use RuntimeException;
 use function is_array;
+use function sprintf;
 
 /**
  * @package Litalico\EgR2\Console\Commands

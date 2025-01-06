@@ -22,6 +22,7 @@ use function count;
 use function in_array;
 use function is_array;
 use function is_string;
+use function sprintf;
 
 /**
  * A trait used to generate Laravel validation rules from OpenApiAttributes.
@@ -94,7 +95,7 @@ trait RequestRuleGeneratorTrait
             foreach ($phpProperty->getAttributes() as $attribute) {
                 $obj = $attribute->newInstance();
 
-                if (is_a($obj, Property::class)) {
+                if ($obj instanceof Property) {
                     $rules += $this->parseSchema($obj, requires: $requires);
                     $errorMessages = array_merge(
                         $errorMessages,
@@ -104,9 +105,9 @@ trait RequestRuleGeneratorTrait
                             $obj->type
                         )
                     );
-                } elseif (is_a($obj, Schema::class)) {
+                } elseif ($obj instanceof Schema) {
                     $schema = $obj;
-                } elseif (is_a($obj, Parameter::class)) {
+                } elseif ($obj instanceof Parameter) {
                     $parameter = $obj;
                 }
             }
@@ -173,13 +174,12 @@ trait RequestRuleGeneratorTrait
         // Process the attributes of the reflection class itself.
         foreach ($refClass->getAttributes() as $attribute) {
             $obj = $attribute->newInstance();
-            if (is_a($obj, Schema::class)) {
-                if ($obj->required !== Generator::UNDEFINED) {  /** @phpstan-ignore-line */
-                    $requires = [
-                        ...$requires,
-                        ...$obj->required,
-                    ];
-                }
+            if ($obj instanceof Schema && $obj->required !== Generator::UNDEFINED) {
+                /** @phpstan-ignore-line */
+                $requires = [
+                    ...$requires,
+                    ...$obj->required,
+                ];
             }
         }
 
@@ -281,7 +281,7 @@ trait RequestRuleGeneratorTrait
      */
     private function getPropertyName(AnnotationSchema $schema): string
     {
-        if (is_a($schema, Property::class)) {
+        if ($schema instanceof Property) {
             if ($schema->title !== Generator::UNDEFINED) {  /** @phpstan-ignore-line */
                 return $schema->title;
             }
@@ -319,7 +319,7 @@ trait RequestRuleGeneratorTrait
                 $rules[] = 'present';
             } else {
                 // The path parameter etc. is treated as true for required, but the value may be null in some cases.
-                if ($schema->nullable !== true) {
+                if ($schema->nullable === false || $schema->nullable === Generator::UNDEFINED) {
                     // If type is array, set to `present`.
                     $requireRule = $schema->type === 'array' ? 'present' : 'required';
                     // In the case of a nested structure, it is required only when the parent element exists.
