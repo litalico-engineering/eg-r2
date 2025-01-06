@@ -5,7 +5,7 @@
     "version": "1.0.1",
     "license": ["MIT"],
     "require": {
-        "php": "^8.2|^8.3",
+        "php": "^8.2|^8.3|^8.4",
         "illuminate/console": "^11.0",
         "illuminate/support": "^11.0",
         "illuminate/validation": "^11.0",
@@ -17,6 +17,7 @@
         "orchestra/testbench": "^9.0",
         "phpstan/phpstan": "^1.10",
         "phpunit/phpunit": "^11.2",
+        "rector/rector": "^1.2",
         "smeghead/php-vendor-credits": "^0.0.5",
         "spaze/phpstan-disallowed-calls": "^3.1"
     },

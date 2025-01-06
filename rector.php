@@ -22,6 +22,7 @@ define('LARAVEL_VERSION', '10.0');
 return RectorConfig::configure()
     ->withPaths([
         __DIR__ . '/tests',
+        __DIR__ . '/src',
     ])
     ->withAutoloadPaths([
         __DIR__ . '/vendor/autoload.php',
@@ -30,7 +31,9 @@ return RectorConfig::configure()
     ])
     ->withCache(cacheDirectory: './.rector', cacheClass: FileCacheStorage::class)
     // register single rule
-    ->withPhpSets()
+    ->withPhpSets(php82: true)
+    ->withPhpSets(php83: true)
+    ->withPhpSets(php84: true)
     ->withRules([
         StaticDataProviderClassMethodRector::class,
         ExplicitBoolCompareRector::class,

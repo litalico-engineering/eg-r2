@@ -11,3 +11,4 @@ phpunit-ci.xml
 /.phpstan
 /.fixer-diff.status
 composer.lock
+.rector

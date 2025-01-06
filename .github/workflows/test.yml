@@ -36,7 +36,7 @@ jobs:
 
     strategy:
       matrix:
-        php: ['8.2',"8.3", "8.4"]
+        php: ["8.2", "8.3", "8.4"]
 
     steps:
       - name: Checkout Code
@@ -70,14 +70,17 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
 
-      - name: lint
-        run: composer lint
+      - name: PHPStan
+        id: stan
+        continue-on-error: true
+        run: ./vendor/bin/phpstan analyse --error-format=github
 
       - name: PHP CS Fixer for ALL
         if: ${{ needs.filter_paths.outputs.fixer_all == 'true' }}
         id: fixer-all
+        continue-on-error: true
         run: |
-          vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --diff --dry-run --format=checkstyle | cs2pr
+          PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --diff --dry-run --format=checkstyle | cs2pr
 
       - name: PHP CS Fixer for Diff
         if: ${{ needs.filter_paths.outputs.fixer_all == 'false' && needs.filter_paths.outputs.lint_files }}
@@ -99,6 +102,12 @@ jobs:
         continue-on-error: true
         run: |
           vendor/bin/rector process --config rector.php --dry-run
+
+      - name: Check steps outcome
+        if: steps.stan.outcome == 'failure' || steps.fixer-all.outcome == 'failure' || steps.fixer.outcome == 'failure' || steps.fixer-all.outcome == 'failure' || steps.rector.outcome == 'failure'|| steps.rector-all.outcome == 'failure'
+        run: |
+          echo "Lint is failed. stan: ${{ steps.stan.outcome }}, fixer: ${{ steps.fixer.outcome }}, fixer-all: ${{ steps.fixer-all.outcome }}, rector: ${{ steps.rector.outcome }}, rector-all: ${{ steps.rector-all.outcome }}
+          exit 1
 
       - name: test & coverage
         run: composer coverage

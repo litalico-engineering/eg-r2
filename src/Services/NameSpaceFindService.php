@@ -67,7 +67,7 @@ class NameSpaceFindService
         /** @var class-string $class */
         foreach (array_keys($composer->getClassMap()) as $class) {
             foreach ($psr4 as $namespace => $directory) {
-                if (str_starts_with($class, $namespace)) {
+                if (str_starts_with($class, (string) $namespace)) {
                     self::$namespaceMap[$this->getNameSpaceFromClass($class)][] = $class;
                 }
             }
