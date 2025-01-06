@@ -77,7 +77,7 @@ jobs:
         if: ${{ needs.filter_paths.outputs.fixer_all == 'true' }}
         id: fixer-all
         run: |
-          vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --diff --dry-run --format=checkstyle | cs2pr
+          PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --diff --dry-run --format=checkstyle | cs2pr
 
       - name: PHP CS Fixer for Diff
         if: ${{ needs.filter_paths.outputs.fixer_all == 'false' && needs.filter_paths.outputs.lint_files }}
