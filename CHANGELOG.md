@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.1](https://github.com/litalico-engineering/eg-r2/compare/1.0.0...1.0.1) - 2025-01-06
+### Other Changes
+- Fix no license information by @katsumi-kato-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/24
+- :construction_worker: add php8.4 by @tyamahori in https://github.com/litalico-engineering/eg-r2/pull/26
+- Add condition to apply all cs fixer and rector by @kai-nagao-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/23
+
 ## [1.0.0](https://github.com/litalico-engineering/eg-r2/compare/0.0.6...1.0.0) - 2024-07-31
 ### Other Changes
 - for laravel11 and PHPUnit11 by @kazuki-tamahori-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/9
