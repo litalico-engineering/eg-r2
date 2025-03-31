@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.0](https://github.com/litalico-engineering/eg-r2/compare/1.0.1...1.1.0) - 2025-03-31
+### Other Changes
+- PHP8.4, Lint,CI settings by @tyamahori in https://github.com/litalico-engineering/eg-r2/pull/27
+
 ## [1.0.1](https://github.com/litalico-engineering/eg-r2/compare/1.0.0...1.0.1) - 2025-01-06
 ### Other Changes
 - Fix no license information by @katsumi-kato-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/24
