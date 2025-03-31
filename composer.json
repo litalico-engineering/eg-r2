@@ -6,15 +6,15 @@
     "license": ["MIT"],
     "require": {
         "php": "^8.2|^8.3|^8.4",
-        "illuminate/console": "^11.0",
-        "illuminate/support": "^11.0",
-        "illuminate/validation": "^11.0",
+        "illuminate/console": "^12.0",
+        "illuminate/support": "^12.0",
+        "illuminate/validation": "^12.0",
         "nette/php-generator": "^4.1",
         "zircote/swagger-php": "^4.8"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.46",
-        "orchestra/testbench": "^9.0",
+        "orchestra/testbench": "^10.0",
         "phpstan/phpstan": "^1.10",
         "phpunit/phpunit": "^11.2",
         "rector/rector": "^1.2",
