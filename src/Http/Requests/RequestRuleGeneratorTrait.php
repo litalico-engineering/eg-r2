@@ -7,6 +7,7 @@ namespace Litalico\EgR2\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Rules\In;
 use Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException;
 use Litalico\EgR2\Rules\Integer;
 use OpenApi\Annotations\Schema as AnnotationSchema;
@@ -32,7 +33,7 @@ trait RequestRuleGeneratorTrait
 {
     /**
      * Returns Laravel validation rules converted from OpenApiAttributes.
-     * @return array<string, list<\Illuminate\Contracts\Validation\ValidationRule|\Illuminate\Validation\Rules\Enum|\Illuminate\Validation\Rules\In|int|string>>
+     * @return array<string, list<ValidationRule|Enum|In|int|string>>
      * @throws ReflectionException
      */
     public function rules(): array
@@ -42,7 +43,7 @@ trait RequestRuleGeneratorTrait
 
     /**
      * Converts OpenApiAttributes to Laravel Validation Rules and returns them as an array.
-     * @return array<string, list<\Illuminate\Contracts\Validation\ValidationRule|\Illuminate\Validation\Rules\Enum|\Illuminate\Validation\Rules\In|int|string>>
+     * @return array<string, list<ValidationRule|Enum|In|int|string>>
      * @throws ReflectionException
      */
     private function convertRules(): array
@@ -97,14 +98,14 @@ trait RequestRuleGeneratorTrait
 
                 if ($obj instanceof Property) {
                     $rules += $this->parseSchema($obj, requires: $requires);
-                    $errorMessages = array_merge(
-                        $errorMessages,
-                        $this->checkDiffInPropertyAndSchema(
+                    $errorMessages = [
+                        ...$errorMessages,
+                        ...$this->checkDiffInPropertyAndSchema(
                             $phpProperty,
                             $obj->nullable === true,
                             $obj->type
-                        )
-                    );
+                        ),
+                    ];
                 } elseif ($obj instanceof Schema) {
                     $schema = $obj;
                 } elseif ($obj instanceof Parameter) {
@@ -131,14 +132,14 @@ trait RequestRuleGeneratorTrait
                     $schema->merge([$parameter]);
                 }
                 $rules += $this->parseSchema($schema, requires: $requires);
-                $errorMessages = array_merge(
-                    $errorMessages,
-                    $this->checkDiffInPropertyAndSchema(
+                $errorMessages = [
+                    ...$errorMessages,
+                    ...$this->checkDiffInPropertyAndSchema(
                         $phpProperty,
                         $schema->nullable === true,
                         $schema->type
-                    )
-                );
+                    ),
+                ];
             }
         }
 
@@ -213,7 +214,7 @@ trait RequestRuleGeneratorTrait
         }
 
         if (
-            $propertyTypeName === 'array' && !in_array($schemaTypeName, ['array', 'object'], true)
+            ($propertyTypeName === 'array' && !in_array($schemaTypeName, ['array', 'object'], true))
             || (is_string($schemaTypeName) && $propertyTypeName !== 'array' && !str_starts_with($schemaTypeName, $propertyTypeName))
         ) {
             $errorMessages[] = "{$property->getName()}: Type definitions are different in property and schema. ";
@@ -230,7 +231,7 @@ trait RequestRuleGeneratorTrait
      * @param AnnotationSchema $schema The schema to analyze.
      * @param array<string> $parentNames An array of parent names used for nested schemas.
      * @param array<string> $requires An array of required fields in the schema.
-     * @return array<string, list<\Illuminate\Contracts\Validation\ValidationRule|\Illuminate\Validation\Rules\Enum|\Illuminate\Validation\Rules\In|int|string>> The generated Laravel validation rules.
+     * @return array<string, list<ValidationRule|Enum|In|int|string>> The generated Laravel validation rules.
      */
     private function parseSchema(AnnotationSchema $schema, array $parentNames = [], array $requires = []): array
     {
@@ -300,7 +301,7 @@ trait RequestRuleGeneratorTrait
      * @param AnnotationSchema $schema The OpenApiSchema to convert into Laravel validation rules.
      * @param array<string> $names An array of parent names used for nested schemas.
      * @param bool $required Indicates whether the schema is required or not.
-     * @return array<string, list<\Illuminate\Contracts\Validation\ValidationRule|\Illuminate\Validation\Rules\Enum|\Illuminate\Validation\Rules\In|string>> The generated Laravel validation rules.
+     * @return array<string, list<ValidationRule|Enum|In|string>> The generated Laravel validation rules.
      */
     protected function convertRule(AnnotationSchema $schema, array $names = [], bool $required = false): array
     {
