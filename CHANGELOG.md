@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.0](https://github.com/litalico-engineering/eg-r2/compare/1.1.0...1.2.0) - 2025-03-31
+### Other Changes
+- Laravel 12.x Compatibility by @tyamahori in https://github.com/litalico-engineering/eg-r2/pull/29
+
 ## [1.1.0](https://github.com/litalico-engineering/eg-r2/compare/1.0.1...1.1.0) - 2025-03-31
 ### Other Changes
 - PHP8.4, Lint,CI settings by @tyamahori in https://github.com/litalico-engineering/eg-r2/pull/27
