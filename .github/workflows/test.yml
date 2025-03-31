@@ -31,7 +31,7 @@ jobs:
     name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }}
     runs-on: ubuntu-20.04
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.php }}
+      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.php }}-${{ matrix.laravel }}
       cancel-in-progress: true
 
     strategy:
