@@ -5,7 +5,6 @@ declare(strict_types=1);
 use Rector\Caching\ValueObject\Storage\FileCacheStorage;
 use Rector\CodeQuality\Rector\Empty_\SimplifyEmptyCheckOnEmptyArrayRector;
 use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
-use Rector\CodeQuality\Rector\If_\ExplicitBoolCompareRector;
 use Rector\CodeQuality\Rector\If_\ShortenElseIfRector;
 use Rector\CodingStyle\Rector\FuncCall\ArraySpreadInsteadOfArrayMergeRector;
 use Rector\Config\RectorConfig;
@@ -31,12 +30,9 @@ return RectorConfig::configure()
     ])
     ->withCache(cacheDirectory: './.rector', cacheClass: FileCacheStorage::class)
     // register single rule
-    ->withPhpSets(php82: true)
-    ->withPhpSets(php83: true)
     ->withPhpSets(php84: true)
     ->withRules([
         StaticDataProviderClassMethodRector::class,
-        ExplicitBoolCompareRector::class,
         ArraySpreadInsteadOfArrayMergeRector::class,
     ])
     ->withSkip([
