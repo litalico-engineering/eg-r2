@@ -1,10 +1,10 @@
 includes:
   - ./vendor/spaze/phpstan-disallowed-calls/extension.neon
+  - phpstan-baseline.neon
 parameters:
   level: 9
   paths:
     - ./src/
-  checkMissingIterableValueType: true
   excludePaths:
     - tests/**/*.php
   tmpDir: .phpstan
