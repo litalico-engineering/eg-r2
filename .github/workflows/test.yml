@@ -4,7 +4,7 @@ on:
 
 jobs:
   filter_paths:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     outputs:
       lint_files: ${{ steps.filter.outputs.lint_files }}
       fixer_all: ${{ steps.filter.outputs.fixer_all }}
@@ -29,7 +29,7 @@ jobs:
   tests:
     needs: filter_paths
     name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.php }}-${{ matrix.laravel }}
       cancel-in-progress: true

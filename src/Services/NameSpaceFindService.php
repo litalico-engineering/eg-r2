@@ -3,10 +3,14 @@ declare(strict_types=1);
 
 namespace Litalico\EgR2\Services;
 
+use Composer\Autoload\ClassLoader;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use InvalidArgumentException;
+use JsonException;
 use ReflectionClass;
 use ReflectionException;
+use RuntimeException;
+use function sprintf;
 
 /**
  * A service class that provides functionality to search for classes within a given namespace.
@@ -23,7 +27,7 @@ class NameSpaceFindService
     public const DEFAULT_NAMESPACE = 'global';
 
     /**
-     * @throws FileNotFoundException|ReflectionException
+     * @throws FileNotFoundException|ReflectionException|JsonException
      */
     public function __construct()
     {
@@ -51,11 +55,17 @@ class NameSpaceFindService
 
     /**
      * @return void
-     * @throws ReflectionException|FileNotFoundException
+     * @throws ReflectionException|FileNotFoundException|JsonException
      */
     public function traverseClasses(): void
     {
         $composer = require base_path() . '/vendor/autoload.php';
+        if (!($composer instanceof ClassLoader)) {
+            $message = sprintf('Invalid configuration composer. composer: %s', var_export($composer, true));
+
+            throw new RuntimeException($message);
+        }
+
         $jsonContents = file_get_contents('composer.json');
         if ($jsonContents === false) {
             throw new FileNotFoundException('composer.json not found');
