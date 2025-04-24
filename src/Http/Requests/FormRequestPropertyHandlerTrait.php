@@ -17,6 +17,8 @@ use ReflectionType;
  * the magic method of the Form Request class will be overridden,
  * but this Trait will reflect the request for its own added Property.
  * @package Litalico\EgR2\Http\Requests
+ * Ignore PHPStan error as this is called from production code.
+ * @phpstan-ignore-next-line
  */
 trait FormRequestPropertyHandlerTrait
 {

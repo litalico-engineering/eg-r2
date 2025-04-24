@@ -12,11 +12,11 @@ use Nette\PhpGenerator\Literal;
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PsrPrinter;
 use OpenApi\Annotations\Operation;
-use OpenApi\Generator;
 use ReflectionClass;
 use ReflectionException;
 use RuntimeException;
 use function is_array;
+use function is_string;
 use function sprintf;
 
 /**
@@ -82,6 +82,12 @@ class GenerateRoute extends Command
         }
 
         foreach ($namespaces as $group => $namespaceName) {
+            if (!is_string($namespaceName)) {
+                $message = sprintf('Invalid configuration namespace. namespace: %s', var_export($namespaces, true));
+                $this->error($message);
+
+                throw new RuntimeException($message);
+            }
             $controllers = $this->nameSpaceFindService->getClassesOfNameSpace($namespaceName);
 
             $closure = new Closure();
@@ -156,12 +162,10 @@ class GenerateRoute extends Command
     {
         $path = $operation->path;
         // Converts to Laravel path parameter format if `OptionalPathParameter` is specified in the 'x' attribute
-        if ($operation->x !== Generator::UNDEFINED) {
-            foreach ($operation->x as $key => $value) {
-                if ($key === 'OptionalPathParameter' && $value === true) {
-                    // Change path parameters arbitrarily
-                    $path = str_replace('}', '\?}', $path);
-                }
+        foreach ($operation->x as $key => $value) {
+            if ($key === 'OptionalPathParameter' && $value === true) {
+                // Change path parameters arbitrarily
+                $path = str_replace('}', '\?}', $path);
             }
         }
 

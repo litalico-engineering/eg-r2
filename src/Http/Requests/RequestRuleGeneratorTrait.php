@@ -28,6 +28,9 @@ use function sprintf;
 /**
  * A trait used to generate Laravel validation rules from OpenApiAttributes.
  * @package Litalico\EgR2\Http\Requests
+ *
+ * Ignore PHPStan error as this is called from production code.
+ * @phpstan-ignore-next-line
  */
 trait RequestRuleGeneratorTrait
 {
