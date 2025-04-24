@@ -10,7 +10,7 @@ on:
 jobs:
   release-job:
     name: Release job.
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
