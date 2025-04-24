@@ -10,7 +10,7 @@
         "illuminate/support": "^11.0|^12.0",
         "illuminate/validation": "^11.0|^12.0",
         "nette/php-generator": "^4.1",
-        "zircote/swagger-php": "^5.1"
+        "zircote/swagger-php": "^4.0|^5.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.46",
