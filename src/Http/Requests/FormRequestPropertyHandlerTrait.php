@@ -6,6 +6,8 @@ namespace Litalico\EgR2\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use InvalidArgumentException;
+use OpenApi\Attributes\Property;
+use OpenApi\Generator;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -33,49 +35,50 @@ trait FormRequestPropertyHandlerTrait
         $reflection = new ReflectionClass(self::class);
         $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
 
+        // Ignore public field of parent class.
+        $properties = array_filter(
+            $properties,
+            static fn (ReflectionProperty $property) => $property->getDeclaringClass()->getName() === self::class
+        );
+
         foreach ($properties as $property) {
-            // Ignore public field of parent class.
-            if ($property->getDeclaringClass()->getName() !== self::class) {
-                continue;
-            }
+
+            $attributes = $property->getAttributes(Property::class);
+            $defaultValue = isset($attributes[0]) ? $attributes[0]->newInstance()->default : null;
 
             $value = request($property->getName());
             $type = $property->getType();
-            if ($value === null) {
-                $value = $this->initialValue($type);
-            } else {
-                if (!$type->isBuiltin()) {
-                    $value = $this->initializationFormRequest($type->getName(), $value);
-                }
-            }
+            $value = match(true) {
+                $value === null && ($defaultValue !== Generator::UNDEFINED && $defaultValue !== null) => $defaultValue,
+                $value === null => $this->initialValue($type),
+                !$type->isBuiltin() => $this->initializationFormRequest($type->getName(), $value),
+                default => $value,
+            };
+
             $property->setValue($this, $value);
         }
     }
 
     /**
      * @param ReflectionType|null $type
-     * @return mixed|null
+     * @return array|FormRequest|int|string|null
      * @throws ReflectionException
      */
-    private function initialValue(?ReflectionType $type)
+    private function initialValue(ReflectionType|null $type): array|FormRequest|int|string|null
     {
-        if ($type instanceof ReflectionNamedType) {
-            if ($type->allowsNull()) {
-                return null;
-            } else {
-                if ($type->isBuiltin()) {
-                    return match ($type->getName()) {
-                        'array' => [],
-                        'int' => 0,
-                        default => ''
-                    };
-                } else {
-                    return $this->initializationFormRequest($type->getName());
-                }
-            }
+        if (!($type instanceof ReflectionNamedType) || $type->allowsNull()) {
+            return null;
         }
 
-        return null;
+        if ($type->isBuiltin()) {
+            return match ($type->getName()) {
+                'array' => [],
+                'int' => 0,
+                default => ''
+            };
+        }
+
+        return $this->initializationFormRequest($type->getName());
     }
 
     /**
