@@ -92,7 +92,7 @@ jobs:
         id: fixer
         continue-on-error: true
         run: |
-          vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --diff --dry-run ${{ needs.filter_paths.outputs.lint_files }} --format=checkstyle | cs2pr
+          PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --diff --dry-run ${{ needs.filter_paths.outputs.lint_files }} --format=checkstyle | cs2pr
 
       - name: Dry run Rector for Diff
         if: ${{ needs.filter_paths.outputs.rector_all == 'false' && needs.filter_paths.outputs.lint_files }}

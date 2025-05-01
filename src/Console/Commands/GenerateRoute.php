@@ -12,6 +12,7 @@ use Nette\PhpGenerator\Literal;
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PsrPrinter;
 use OpenApi\Annotations\Operation;
+use OpenApi\Generator;
 use ReflectionClass;
 use ReflectionException;
 use RuntimeException;
@@ -162,7 +163,9 @@ class GenerateRoute extends Command
     {
         $path = $operation->path;
         // Converts to Laravel path parameter format if `OptionalPathParameter` is specified in the 'x' attribute
-        foreach ($operation->x as $key => $value) {
+
+        $x = $operation->x === Generator::UNDEFINED ? [] : $operation->x; // @phpstan-ignore-line
+        foreach ($x as $key => $value) {
             if ($key === 'OptionalPathParameter' && $value === true) {
                 // Change path parameters arbitrarily
                 $path = str_replace('}', '\?}', $path);
