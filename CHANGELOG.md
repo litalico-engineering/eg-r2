@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.1](https://github.com/litalico-engineering/eg-r2/compare/1.3.0...1.3.1) - 2025-05-01
+### Other Changes
+- fix: check Generator::UNDEFINED or not by @kazuki-tamahori-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/35
+
 ## [1.3.0](https://github.com/litalico-engineering/eg-r2/compare/1.2.0...1.3.0) - 2025-04-24
 ### Other Changes
 - Update libs by @tyamahori in https://github.com/litalico-engineering/eg-r2/pull/31
