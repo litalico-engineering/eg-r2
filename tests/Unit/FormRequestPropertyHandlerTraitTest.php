@@ -31,8 +31,6 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
 
     /**
      * @throws ReflectionException
-     *
-     * @test
      */
     #[Test]
     public function propertyOfFormRequestCanBeInitializedEvenIfValueIsNull(): void
@@ -79,6 +77,36 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
             public ?int $nullable = null;
 
             #[Property(
+                property: 'nullableWithDefaultValue',
+                title: 'nullableWithDefaultValue',
+                description: 'nullableWithDefaultValue',
+                type: 'int',
+                default: 100,
+                nullable: true
+            )]
+            public ?int $nullableWithDefaultValue = null;
+
+            #[Property(
+                property: 'nullableWithDefaultValueAndDifferentType',
+                title: 'nullableWithDefaultValueAndDifferentType',
+                description: 'nullableWithDefaultValueAndDifferentType',
+                type: 'int',
+                default: '3',
+                nullable: true
+            )]
+            public ?int $nullableWithDefaultValueAndDifferentType = null;
+
+            #[Property(
+                property: 'nullableWithDefaultNull',
+                title: 'nullableWithDefaultNull',
+                description: 'nullableWithDefaultNull',
+                type: 'int',
+                default: null,
+                nullable: true
+            )]
+            public ?int $nullableWithDefaultNull = null;
+
+            #[Property(
                 property: 'unknownType',
                 title: 'unknownType',
                 description: 'unknownType'
@@ -93,17 +121,18 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
 
         then:
         self::assertNotNull($instance);
-        self::assertEquals($instance->id, 0);
+        self::assertSame(0, $instance->id);
+        self::assertSame(100, $instance->nullableWithDefaultValue);
+        self::assertSame(3, $instance->nullableWithDefaultValueAndDifferentType);
+        self::assertNull($instance->nullableWithDefaultNull);
         self::assertEmpty($instance->name);
-        self::assertEquals($instance->categories, []);
+        self::assertEquals([], $instance->categories);
         self::assertNull($instance->nullable);
         self::assertEmpty($instance->unknownType);
     }
 
     /**
-     * @throws ReflectionException
-     *
-     * @test
+     * @throws
      */
     #[Test]
     public function getPropertiesOfNestedObject(): void
@@ -144,8 +173,8 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
 
         then:
         self::assertNotNull($instance);
-        self::assertEquals($instance->id, 1);
-        self::assertEquals($instance->name, 'bob');
+        self::assertEquals(1, $instance->id);
+        self::assertEquals('bob', $instance->name);
     }
 
     /**
@@ -185,17 +214,15 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
 
         then:
         self::assertNotNull($instance);
-        self::assertEquals($instance->id, 0);
+        self::assertEquals(0, $instance->id);
         self::assertNotNull($instance->nested);
         self::assertInstanceOf(NestedObject2::class, $instance->nested);
-        self::assertEquals($instance->nested->id, 0);
+        self::assertEquals(0, $instance->nested->id);
         self::assertEmpty($instance->nested->name);
     }
 
     /**
      * @throws ReflectionException
-     *
-     * @test
      */
     #[Test]
     public function nestedObject(): void
@@ -234,11 +261,11 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
 
         then:
         self::assertNotNull($instance);
-        self::assertEquals($instance->id, 1);
+        self::assertEquals(1, $instance->id);
         self::assertNotNull($instance->nested);
         self::assertInstanceOf(NestedObject2::class, $instance->nested);
-        self::assertEquals($instance->nested->id, 2);
-        self::assertEquals($instance->nested->name, 'bob');
+        self::assertEquals(2, $instance->nested->id);
+        self::assertEquals('bob', $instance->nested->name);
     }
 }
 
