@@ -6,11 +6,14 @@ namespace Litalico\EgR2\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use InvalidArgumentException;
+use OpenApi\Attributes\Property;
+use OpenApi\Generator;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
 use ReflectionProperty;
 use ReflectionType;
+use stdClass;
 
 /**
  * If the OpenApi attribute is embedded in the form request class along  with the Property addition,
@@ -30,52 +33,98 @@ trait FormRequestPropertyHandlerTrait
      */
     protected function passedValidation(): void
     {
-        $reflection = new ReflectionClass(self::class);
-        $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
-
-        foreach ($properties as $property) {
-            // Ignore public field of parent class.
-            if ($property->getDeclaringClass()->getName() !== self::class) {
-                continue;
-            }
-
-            $value = request($property->getName());
-            $type = $property->getType();
-            if ($value === null) {
-                $value = $this->initialValue($type);
-            } else {
-                if (!$type->isBuiltin()) {
-                    $value = $this->initializationFormRequest($type->getName(), $value);
-                }
-            }
+        foreach ($this->getOwnPublicProperties() as $property) {
+            $value = $this->resolvePropertyValue($property);
             $property->setValue($this, $value);
         }
     }
 
     /**
-     * @param ReflectionType|null $type
-     * @return mixed|null
+     * Get public properties declared in the current class (excluding parent class properties).
+     *
+     * @return array<ReflectionProperty>
+     */
+    private function getOwnPublicProperties(): array
+    {
+        $properties = (new ReflectionClass(self::class))->getProperties(ReflectionProperty::IS_PUBLIC);
+
+        return array_filter(
+            $properties,
+            static fn (ReflectionProperty $property) => $property->getDeclaringClass()->getName() === self::class
+        );
+    }
+
+    /**
+     * Resolve the value for a property based on request data, default values, and type information.
+     *
+     * @param ReflectionProperty $property
+     * @return mixed
      * @throws ReflectionException
      */
-    private function initialValue(?ReflectionType $type)
+    private function resolvePropertyValue(ReflectionProperty $property): mixed
     {
-        if ($type instanceof ReflectionNamedType) {
-            if ($type->allowsNull()) {
-                return null;
-            } else {
-                if ($type->isBuiltin()) {
-                    return match ($type->getName()) {
-                        'array' => [],
-                        'int' => 0,
-                        default => ''
-                    };
-                } else {
-                    return $this->initializationFormRequest($type->getName());
-                }
-            }
+        $defaultValue = $this->getPropertyDefaultValue($property);
+        $requestValue = request($property->getName());
+        $propertyType = $property->getType();
+
+        if ($requestValue !== null) {
+            return match(true) {
+                $propertyType !== null && !$propertyType->isBuiltin() => $this->initializationFormRequest($propertyType->getName(), $requestValue),
+                default => $requestValue,
+            };
         }
 
-        return null;
+        return match(true) {
+            $this->hasValidDefaultValue($defaultValue) => $defaultValue,
+            $property->isInitialized($this) => $property->getValue($this),
+            default => $this->initialValue($propertyType),
+        };
+    }
+
+    /**
+     * Get the default value from the Property attribute if it exists.
+     *
+     * @param ReflectionProperty $property
+     * @return mixed
+     */
+    private function getPropertyDefaultValue(ReflectionProperty $property): mixed
+    {
+        $attributes = $property->getAttributes(Property::class);
+
+        return isset($attributes[0]) && $attributes[0]->newInstance()->nullable === true ? $attributes[0]->newInstance()->default : null;
+    }
+
+    /**
+     * Check if the default value is valid (not UNDEFINED and not null).
+     *
+     * @param mixed $defaultValue
+     * @return bool
+     */
+    private function hasValidDefaultValue(mixed $defaultValue): bool
+    {
+        return $defaultValue !== Generator::UNDEFINED && $defaultValue !== null;
+    }
+
+    /**
+     * @param ReflectionType|null $type
+     * @return mixed
+     * @throws ReflectionException
+     */
+    private function initialValue(ReflectionType|null $type): mixed
+    {
+        return match (true) {
+            !($type instanceof ReflectionNamedType),
+            $type->allowsNull() => null,
+            $type->isBuiltin() => match ($type->getName()) {
+                'array' => [],
+                'int' => 0,
+                'float' => 0.0,
+                'object' => new stdClass(),
+                'bool' => false,
+                default => ''
+            },
+            default => $this->initializationFormRequest($type->getName())
+        };
     }
 
     /**
@@ -92,21 +141,21 @@ trait FormRequestPropertyHandlerTrait
             throw new InvalidArgumentException("The class must be an instance of FormRequest. {$class} was given");
         }
 
-        $reflection = new ReflectionClass($class);
-        $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
+        $properties = (new ReflectionClass($class))
+            ->getProperties(ReflectionProperty::IS_PUBLIC);
 
-        foreach ($properties as $property) {
-            // Ignore public field of parent class.
-            if ($property->getDeclaringClass()->getName() !== $class) {
-                continue;
-            }
+        // Ignore public field of parent class.
+        $filteredProperties = array_filter(
+            $properties,
+            static fn (ReflectionProperty $property) => $property->getDeclaringClass()->getName() === $class
+        );
 
+        foreach ($filteredProperties as $property) {
             $type = $property->getType();
-            if (isset($requestValues[$property->getName()])) {
-                $property->setValue($instance, $requestValues[$property->getName()]);
-            } else {
-                $property->setValue($instance, $this->initialValue($type));
-            }
+
+            $value = $requestValues[$property->getName()] ?? $this->initialValue($type);
+
+            $property->setValue($instance, $value);
         }
 
         return $instance;
