@@ -32,7 +32,6 @@ class FullAccessWrapper
     public function __call(string $methodName, array $args)
     {
         $method = $this->reflection->getMethod($methodName);
-        $method->setAccessible(true);
 
         return $method->invokeArgs($this->targetInstance, $args);
     }
@@ -47,7 +46,6 @@ class FullAccessWrapper
     {
         if ($this->reflection->hasProperty($name)) {
             $property = $this->reflection->getProperty($name);
-            $property->setAccessible(true);
 
             return $property->getValue($this->targetInstance);
         }

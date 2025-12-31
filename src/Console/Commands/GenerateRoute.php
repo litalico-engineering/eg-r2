@@ -34,7 +34,7 @@ class GenerateRoute extends Command
     /**
      * The description of the console command
      *
-     * @var null|string
+     * @var string
      */
     protected $description = 'Generate routing file from OpenAPI specifications.';
 
