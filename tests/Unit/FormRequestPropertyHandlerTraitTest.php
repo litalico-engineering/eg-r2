@@ -14,6 +14,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionException;
+use stdClass;
 use Tests\FullAccessWrapper;
 use Tests\TestCase;
 
@@ -31,79 +32,81 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
 
     /**
      * @throws ReflectionException
-     *
-     * @test
      */
     #[Test]
     public function propertyOfFormRequestCanBeInitializedEvenIfValueIsNull(): void
     {
         setup:
-        $class = new class extends FormRequest
-        {
-            use FormRequestPropertyHandlerTrait;
+        $class = new TestFormRequest();
 
-            #[Property(
-                property: 'id',
-                title: 'id',
-                description: 'id',
-                type: 'integer',
-                format: 'int',
-                minimum: 1
-            )]
-            public int $id;
-
-            #[Property(
-                property: 'name',
-                title: 'name',
-                description: 'name',
-                type: 'string'
-            )]
-            public string $name;
-
-            #[Property(
-                property: 'categories',
-                title: 'categories',
-                description: 'categories',
-                type: 'array',
-                format: 'string'
-            )]
-            public array $categories;
-
-            #[Property(
-                property: 'nullable',
-                title: 'nullable',
-                description: 'nullable',
-                type: 'int',
-                nullable: true
-            )]
-            public ?int $nullable = null;
-
-            #[Property(
-                property: 'unknownType',
-                title: 'unknownType',
-                description: 'unknownType'
-            )]
-            public $unknownType;
-        };
-        /** @var $instance FormRequestPropertyHandlerTrait */
+        /** @var FullAccessWrapper&TestFormRequest $instance */
         $instance = new FullAccessWrapper($class);
 
         when:
         $instance->passedValidation();
 
         then:
-        self::assertNotNull($instance);
-        self::assertEquals($instance->id, 0);
-        self::assertEmpty($instance->name);
-        self::assertEquals($instance->categories, []);
-        self::assertNull($instance->nullable);
-        self::assertEmpty($instance->unknownType);
+        self::assertInstanceOf(TestFormRequest::class, $instance->getInstance());
+
+        self::assertSame(0, $instance->intWithoutInitialValue);
+        self::assertSame('', $instance->stringWithoutInitialValue);
+        self::assertSame([], $instance->arrayWithoutInitialValue);
+        self::assertFalse($instance->boolWithoutInitialValue);
+        self::assertSame(0.0, $instance->floatWithoutInitialValue);
+        self::assertInstanceOf(stdClass::class, $instance->objectWithoutInitialValue);
+
+        self::assertSame(101, $instance->intWithInitialValue);
+        self::assertSame('string', $instance->stringWithInitialValue);
+        self::assertSame(['a', 'b', 'c'], $instance->arrayWithInitialValue);
+        self::assertTrue($instance->boolWithInitialValue);
+        self::assertSame(0.999, $instance->floatWithInitialValue);
+
+        self::assertSame(101, $instance->nullableIntWithInitialValue);
+        self::assertSame('string', $instance->nullableStringWithInitialValue);
+        self::assertSame(['a', 'b', 'c'], $instance->nullableArrayWithInitialValue);
+        self::assertTrue($instance->nullableBoolWithInitialValue);
+        self::assertSame(0.999, $instance->nullableFloatWithInitialValue);
+
+        self::assertNull($instance->nullableIntWithInitialValueNull);
+        self::assertNull($instance->nullableStringWithInitialValueNull);
+        self::assertNull($instance->nullableArrayWithInitialValueNull);
+        self::assertNull($instance->nullableBoolWithInitialValueNull);
+        self::assertNull($instance->nullableFloatWithInitialValueNull);
+
+        self::assertSame(0, $instance->intWithoutInitialValueWithoutDefault);
+        self::assertSame('', $instance->stringWithoutInitialValueWithoutDefault);
+        self::assertSame([], $instance->arrayWithoutInitialValueWithoutDefault);
+        self::assertFalse($instance->boolWithoutInitialValueWithoutDefault);
+        self::assertSame(0.0, $instance->floatWithoutInitialValueWithoutDefault);
+
+        self::assertSame(3, $instance->intWithInitialValueWithoutDefault);
+        self::assertSame('string', $instance->stringWithInitialValueWithoutDefault);
+        self::assertSame(['c', 'd', 'e'], $instance->arrayWithInitialValueWithoutDefault);
+        self::assertTrue($instance->boolWithInitialValueWithoutDefault);
+        self::assertSame(0.8888, $instance->floatWithInitialValueWithoutDefault);
+
+        self::assertSame(8989, $instance->intWithInitialValueAndDefault);
+        self::assertSame(888, $instance->intWithInitialValueAndDefaultAsString);
+        self::assertSame('33333', $instance->stringWithInitialValueAndDefault);
+        self::assertSame(['bbc', 'abc', 'cnn'], $instance->arrayWithInitialValueAndDefault);
+        self::assertTrue($instance->boolWithInitialValueAndDefaultAsStringTrue);
+        self::assertTrue($instance->boolWithInitialValueAndDefaultAsTrue);
+        self::assertTrue($instance->boolWithInitialValueAndDefaultAsString1);
+
+        self::assertSame(3.14, $instance->floatWithInitialValueAndDefault);
+        self::assertSame(2.718, $instance->floatWithInitialValueAndDefaultAsString);
+
+        self::assertSame(999, $instance->nullableIntWithoutInitialValueAndDefault);
+        self::assertSame('default_string', $instance->nullableStringWithoutInitialValueAndDefault);
+        self::assertSame(['x', 'y', 'z'], $instance->nullableArrayWithoutInitialValueAndDefault);
+        self::assertTrue($instance->nullableBoolWithoutInitialValueAndDefault);
+        self::assertSame(1.23, $instance->nullableFloatWithoutInitialValueAndDefault);
+
+        self::assertSame('aa', $instance->unkownProperty);
     }
 
     /**
-     * @throws ReflectionException
-     *
-     * @test
+     * @throws
      */
     #[Test]
     public function getPropertiesOfNestedObject(): void
@@ -144,14 +147,13 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
 
         then:
         self::assertNotNull($instance);
-        self::assertEquals($instance->id, 1);
-        self::assertEquals($instance->name, 'bob');
+        self::assertEquals(1, $instance->id);
+        self::assertEquals('bob', $instance->name);
     }
 
     /**
      * @throws ReflectionException
      *
-     * @test
      */
     #[Test]
     public function getNestedObjectPropertiesEvenIfValueIsNull(): void
@@ -185,17 +187,15 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
 
         then:
         self::assertNotNull($instance);
-        self::assertEquals($instance->id, 0);
+        self::assertEquals(0, $instance->id);
         self::assertNotNull($instance->nested);
         self::assertInstanceOf(NestedObject2::class, $instance->nested);
-        self::assertEquals($instance->nested->id, 0);
+        self::assertEquals(0, $instance->nested->id);
         self::assertEmpty($instance->nested->name);
     }
 
     /**
      * @throws ReflectionException
-     *
-     * @test
      */
     #[Test]
     public function nestedObject(): void
@@ -234,11 +234,11 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
 
         then:
         self::assertNotNull($instance);
-        self::assertEquals($instance->id, 1);
+        self::assertEquals(1, $instance->id);
         self::assertNotNull($instance->nested);
         self::assertInstanceOf(NestedObject2::class, $instance->nested);
-        self::assertEquals($instance->nested->id, 2);
-        self::assertEquals($instance->nested->name, 'bob');
+        self::assertEquals(2, $instance->nested->id);
+        self::assertEquals('bob', $instance->nested->name);
     }
 }
 
@@ -266,4 +266,189 @@ class NestedObject2 extends FormRequest
         format: 'string'
     )]
     public string $name;
+}
+
+class TestFormRequest extends FormRequest
+{
+    use FormRequestPropertyHandlerTrait;
+
+    public int $intWithoutInitialValue;
+    public string $stringWithoutInitialValue;
+    public array $arrayWithoutInitialValue;
+    public bool $boolWithoutInitialValue;
+    public float $floatWithoutInitialValue;
+    public object $objectWithoutInitialValue;
+
+    public int $intWithInitialValue = 101;
+    public string $stringWithInitialValue = 'string';
+    public array $arrayWithInitialValue = ['a', 'b', 'c'];
+    public bool $boolWithInitialValue = true;
+    public float $floatWithInitialValue = 0.999;
+
+    public ?int $nullableIntWithInitialValue = 101;
+    public ?string $nullableStringWithInitialValue = 'string';
+    public ?array $nullableArrayWithInitialValue = ['a', 'b', 'c'];
+    public ?bool $nullableBoolWithInitialValue = true;
+    public ?float $nullableFloatWithInitialValue = 0.999;
+
+    public ?int $nullableIntWithInitialValueNull = null;
+    public ?string $nullableStringWithInitialValueNull = null;
+    public ?array $nullableArrayWithInitialValueNull = null;
+    public ?bool $nullableBoolWithInitialValueNull = null;
+    public ?float $nullableFloatWithInitialValueNull = null;
+
+    #[Property(
+        type: 'integer',
+    )]
+    public int $intWithoutInitialValueWithoutDefault;
+
+    #[Property(
+        type: 'string',
+    )]
+    public string $stringWithoutInitialValueWithoutDefault;
+
+    #[Property(
+        type: 'array',
+    )]
+    public array $arrayWithoutInitialValueWithoutDefault;
+
+    #[Property(
+        type: 'bool'
+    )]
+    public bool $boolWithoutInitialValueWithoutDefault;
+
+    #[Property(
+        type: 'float'
+    )]
+    public float $floatWithoutInitialValueWithoutDefault;
+
+    #[Property(
+        type: 'integer',
+    )]
+    public int $intWithInitialValueWithoutDefault = 3;
+
+    #[Property(
+        type: 'string',
+    )]
+    public string $stringWithInitialValueWithoutDefault = 'string';
+
+    #[Property(
+        type: 'array',
+    )]
+    public array $arrayWithInitialValueWithoutDefault = ['c', 'd', 'e'];
+
+    #[Property(
+        type: 'bool'
+    )]
+    public bool $boolWithInitialValueWithoutDefault = true;
+
+    #[Property(
+        type: 'float'
+    )]
+    public float $floatWithInitialValueWithoutDefault = 0.8888;
+
+    #[Property(
+        type: 'integer',
+        default: 8989,
+        nullable: true
+    )]
+    public int $intWithInitialValueAndDefault = 3;
+
+    #[Property(
+        type: 'integer',
+        default: '888',
+        nullable: true
+    )]
+    public int $intWithInitialValueAndDefaultAsString = 3;
+
+    #[Property(
+        type: 'string',
+        default: '33333',
+        nullable: true
+    )]
+    public string $stringWithInitialValueAndDefault = 'string';
+
+    #[Property(
+        type: 'array',
+        default: ['bbc', 'abc', 'cnn'],
+        nullable: true
+    )]
+    public array $arrayWithInitialValueAndDefault = ['litalico', 'eg-r2'];
+
+    #[Property(
+        type: 'bool',
+        default: 'true',
+        nullable: true
+    )]
+    public bool $boolWithInitialValueAndDefaultAsStringTrue = false;
+
+    #[Property(
+        type: 'bool',
+        default: true,
+        nullable: true
+    )]
+    public bool $boolWithInitialValueAndDefaultAsTrue = false;
+
+    #[Property(
+        type: 'bool',
+        default: '1',
+        nullable: true
+    )]
+    public bool $boolWithInitialValueAndDefaultAsString1 = false;
+
+    #[Property(
+        type: 'float',
+        default: 3.14,
+        nullable: true
+    )]
+    public float $floatWithInitialValueAndDefault = 0.5;
+
+    #[Property(
+        type: 'float',
+        default: '2.718',
+        nullable: true
+    )]
+    public float $floatWithInitialValueAndDefaultAsString = 0.5;
+
+    #[Property(
+        type: 'integer',
+        default: 999,
+        nullable: true
+    )]
+    public ?int $nullableIntWithoutInitialValueAndDefault = null;
+
+    #[Property(
+        type: 'string',
+        default: 'default_string',
+        nullable: true
+    )]
+    public ?string $nullableStringWithoutInitialValueAndDefault = null;
+
+    #[Property(
+        type: 'array',
+        default: ['x', 'y', 'z'],
+        nullable: true
+    )]
+    public ?array $nullableArrayWithoutInitialValueAndDefault = null;
+
+    #[Property(
+        type: 'bool',
+        default: true,
+        nullable: true
+    )]
+    public ?bool $nullableBoolWithoutInitialValueAndDefault = null;
+
+    #[Property(
+        type: 'float',
+        default: 1.23,
+        nullable: true
+    )]
+    public ?float $nullableFloatWithoutInitialValueAndDefault = null;
+
+    #[Property(
+        type: 'float',
+        default: 'aa',
+        nullable: true
+    )]
+    public $unkownProperty;
 }
