@@ -13,6 +13,7 @@ $finder = PhpCsFixer\Finder::create()
     ]);
 
 return (new PhpCsFixer\Config())
+    ->setUnsupportedPhpVersionAllowed(true)
     ->setRiskyAllowed(true)
     ->setRules([
         '@PSR2' => true,
