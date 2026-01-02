@@ -42,16 +42,18 @@ trait FormRequestPropertyHandlerTrait
     /**
      * Get public properties declared in the current class (excluding parent class properties).
      *
-     * @return array<ReflectionProperty>
+     * @return list<ReflectionProperty>
      */
     private function getOwnPublicProperties(): array
     {
         $properties = (new ReflectionClass(self::class))->getProperties(ReflectionProperty::IS_PUBLIC);
 
-        return array_filter(
+        $filtered = array_filter(
             $properties,
             static fn (ReflectionProperty $property) => $property->getDeclaringClass()->getName() === self::class
         );
+
+        return array_values($filtered);
     }
 
     /**
