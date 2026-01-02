@@ -34,7 +34,7 @@ trait FormRequestPropertyHandlerTrait
     protected function passedValidation(): void
     {
         foreach ($this->getOwnPublicProperties() as $property) {
-            $value = $this->resolvePropertyValue($property);
+            $value = $this->getDefaultValueFromProperty($property);
             $property->setValue($this, $value);
         }
     }
@@ -63,7 +63,7 @@ trait FormRequestPropertyHandlerTrait
      * @return mixed
      * @throws ReflectionException
      */
-    private function resolvePropertyValue(ReflectionProperty $property): mixed
+    private function getDefaultValueFromProperty(ReflectionProperty $property): mixed
     {
         $defaultValue = $this->getPropertyDefaultValue($property);
         $requestValue = request($property->getName());
@@ -77,7 +77,37 @@ trait FormRequestPropertyHandlerTrait
         }
 
         return match(true) {
-            $this->hasValidDefaultValue($defaultValue) => $defaultValue,
+            $defaultValue !== Generator::UNDEFINED && $defaultValue !== null => $defaultValue,
+            $property->isInitialized($this) => $property->getValue($this),
+            default => $this->initialValue($propertyType),
+        };
+    }
+
+    /**
+     * Resolve the value for a property based on request data, default values, and type information.
+     *
+     * @param ReflectionProperty $property
+     * @return mixed
+     * @throws ReflectionException
+     */
+    private function getDefaultValueFromProperty2(ReflectionProperty $property): mixed
+    {
+        $defaultValue = $this->getPropertyDefaultValue($property);
+        $requestValue = request($property->getName());
+
+        $propertyName = $property->getName();
+        if (request()->has($propertyName)) {
+            $propertyType = $property->getType();
+            $requestValue = request($propertyName);
+            // If the type is not built-in, initialize it; otherwise, return the request value.
+            if ($propertyType !== null && !$propertyType->isBuiltin()) {
+                return $this->initializationFormRequest($propertyType->getName(), $requestValue);
+            }
+            return $requestValue;
+        }
+
+        return match(true) {
+            $defaultValue !== Generator::UNDEFINED && $defaultValue !== null => $defaultValue,
             $property->isInitialized($this) => $property->getValue($this),
             default => $this->initialValue($propertyType),
         };
@@ -94,17 +124,6 @@ trait FormRequestPropertyHandlerTrait
         $attributes = $property->getAttributes(Property::class);
 
         return isset($attributes[0]) && $attributes[0]->newInstance()->nullable === true ? $attributes[0]->newInstance()->default : null;
-    }
-
-    /**
-     * Check if the default value is valid (not UNDEFINED and not null).
-     *
-     * @param mixed $defaultValue
-     * @return bool
-     */
-    private function hasValidDefaultValue(mixed $defaultValue): bool
-    {
-        return $defaultValue !== Generator::UNDEFINED && $defaultValue !== null;
     }
 
     /**
