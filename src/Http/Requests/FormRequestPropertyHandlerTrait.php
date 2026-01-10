@@ -14,6 +14,7 @@ use ReflectionNamedType;
 use ReflectionProperty;
 use ReflectionType;
 use stdClass;
+use function PHPStan\dumpType;
 
 /**
  * If the OpenApi attribute is embedded in the form request class along  with the Property addition,
@@ -133,20 +134,31 @@ trait FormRequestPropertyHandlerTrait
      * @return mixed
      * @throws ReflectionException
      */
-    private function initialValue(?ReflectionType $type): mixed
+    private function initialValue(ReflectionType|null $type): mixed
     {
-        return match (true) {
-            !($type instanceof ReflectionNamedType),
-            $type->allowsNull() => null,
-            $type->isBuiltin() => match ($type->getName()) {
-                'array' => [],
-                'int' => 0,
-                'float' => 0.0,
-                'object' => new stdClass(),
-                'bool' => false,
-                default => ''
-            },
-            default => $this->initializationFormRequest($type->getName())
+        if ($type === null) {
+            return null;
+        }
+
+        if ($type->allowsNull()) {
+            return null;
+        }
+
+        if (!($type instanceof ReflectionNamedType)) {
+            throw new InvalidArgumentException('The type must be an instance of ReflectionNamedType.');
+        }
+
+        if (!$type->isBuiltin()) {
+            return $this->initializationFormRequest($type->getName());
+        }
+
+        return match ($type->getName()) {
+            'array' => [],
+            'int' => 0,
+            'float' => 0.0,
+            'object' => new stdClass(),
+            'bool' => false,
+            default => ''
         };
     }
 
