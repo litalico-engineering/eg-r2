@@ -14,7 +14,6 @@ use ReflectionNamedType;
 use ReflectionProperty;
 use ReflectionType;
 use stdClass;
-use function PHPStan\dumpType;
 
 /**
  * If the OpenApi attribute is embedded in the form request class along  with the Property addition,
@@ -65,33 +64,6 @@ trait FormRequestPropertyHandlerTrait
      * @throws ReflectionException
      */
     private function getDefaultValueFromProperty(ReflectionProperty $property): mixed
-    {
-        $defaultValue = $this->getPropertyDefaultValue($property);
-        $requestValue = request($property->getName());
-        $propertyType = $property->getType();
-
-        if ($requestValue !== null) {
-            return match(true) {
-                $propertyType !== null && !$propertyType->isBuiltin() => $this->initializationFormRequest($propertyType->getName(), $requestValue),
-                default => $requestValue,
-            };
-        }
-
-        return match(true) {
-            $defaultValue !== Generator::UNDEFINED && $defaultValue !== null => $defaultValue,
-            $property->isInitialized($this) => $property->getValue($this),
-            default => $this->initialValue($propertyType),
-        };
-    }
-
-    /**
-     * Resolve the value for a property based on request data, default values, and type information.
-     *
-     * @param ReflectionProperty $property
-     * @return mixed
-     * @throws ReflectionException
-     */
-    private function getDefaultValueFromProperty2(ReflectionProperty $property): mixed
     {
         $requestValue = request($property->getName());
         $propertyType = $property->getType();
