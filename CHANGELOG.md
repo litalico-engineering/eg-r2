@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.2](https://github.com/litalico-engineering/eg-r2/compare/1.3.1...1.3.2) - 2026-01-13
+### Other Changes
+- Add export-ignore for rector.php and Makefile by @sasezaki in https://github.com/litalico-engineering/eg-r2/pull/37
+
 ## [1.3.1](https://github.com/litalico-engineering/eg-r2/compare/1.3.0...1.3.1) - 2025-05-01
 ### Other Changes
 - fix: check Generator::UNDEFINED or not by @kazuki-tamahori-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/35
