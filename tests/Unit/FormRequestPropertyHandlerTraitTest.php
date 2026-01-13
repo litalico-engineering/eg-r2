@@ -102,7 +102,7 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
         self::assertTrue($instance->nullableBoolWithoutInitialValueAndDefault);
         self::assertSame(1.23, $instance->nullableFloatWithoutInitialValueAndDefault);
 
-        self::assertSame('aa', $instance->unkownProperty);
+        self::assertSame('aa', $instance->unknownProperty);
     }
 
     /**
@@ -450,5 +450,5 @@ class TestFormRequest extends FormRequest
         default: 'aa',
         nullable: true
     )]
-    public $unkownProperty;
+    public $unknownProperty;
 }
