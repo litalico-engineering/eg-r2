@@ -140,7 +140,7 @@ trait FormRequestPropertyHandlerTrait
      * @return FormRequest
      * @throws ReflectionException
      */
-    private function initializationFormRequest(string $class, array $requestValues = []): FormRequest
+    private function initializationFormRequest(string $class, mixed $requestValues = []): FormRequest
     {
         $instance = new $class();
 
