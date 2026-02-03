@@ -58,6 +58,7 @@ trait FormRequestPropertyHandlerTrait
 
     /**
      * Resolve the value for a property based on request data, default values, and type information.
+     * Values are normalized to match the declared property type.
      *
      * @param ReflectionProperty $property
      * @return mixed
@@ -73,12 +74,12 @@ trait FormRequestPropertyHandlerTrait
         }
 
         if ($requestValue !== null) {
-            return $requestValue;
+            return $this->normalizeValueToType($requestValue, $propertyType);
         }
 
         $defaultValue = $this->getPropertyDefaultValue($property);
         if ($defaultValue !== Generator::UNDEFINED && $defaultValue !== null) {
-            return $defaultValue;
+            return $this->normalizeValueToType($defaultValue, $propertyType);
         }
 
         if ($property->isInitialized($this)) {
@@ -108,6 +109,33 @@ trait FormRequestPropertyHandlerTrait
         }
 
         return null;
+    }
+
+    /**
+     * Normalize a value to match the declared property type.
+     *
+     * @param mixed $value
+     * @param ReflectionType|null $type
+     * @return mixed
+     */
+    private function normalizeValueToType(mixed $value, ReflectionType|null $type): mixed
+    {
+        if ($type === null) {
+            return $value;
+        }
+
+        if (!($type instanceof ReflectionNamedType) || !$type->isBuiltin()) {
+            return $value;
+        }
+
+        return match ($type->getName()) {
+            'int' => (int) $value,
+            'float' => (float) $value,
+            'bool' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+            'string' => (string) $value,
+            'array' => is_array($value) ? $value : [$value],
+            default => $value,
+        };
     }
 
     /**
