@@ -144,7 +144,7 @@ trait FormRequestPropertyHandlerTrait
      * @return mixed
      * @throws ReflectionException
      */
-    private function initialValue(ReflectionType|null $type): mixed
+    private function initialValue(?ReflectionType $type): mixed
     {
         if ($type === null) {
             return null;
