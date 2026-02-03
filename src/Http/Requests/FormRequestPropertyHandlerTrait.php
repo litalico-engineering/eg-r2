@@ -144,8 +144,8 @@ trait FormRequestPropertyHandlerTrait
     }
 
     /**
-     * @param class-string<FormRequest> $class
-     * @param array $requestValues
+     * @param string $class
+     * @param mixed $requestValues
      * @return FormRequest
      * @throws ReflectionException
      */
