@@ -14,6 +14,7 @@ use ReflectionNamedType;
 use ReflectionProperty;
 use ReflectionType;
 use stdClass;
+use function is_array;
 
 /**
  * If the OpenApi attribute is embedded in the form request class along  with the Property addition,
@@ -173,11 +174,11 @@ trait FormRequestPropertyHandlerTrait
 
     /**
      * @param string $class
-     * @param mixed $requestValues
+     * @param array $requestValues
      * @return FormRequest
      * @throws ReflectionException
      */
-    private function initializationFormRequest(string $class, mixed $requestValues = []): FormRequest
+    private function initializationFormRequest(string $class, array $requestValues = []): FormRequest
     {
         $instance = new $class();
 
