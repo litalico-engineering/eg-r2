@@ -173,7 +173,7 @@ trait FormRequestPropertyHandlerTrait
     }
 
     /**
-     * @param string $class
+     * @param class-string<FormRequest> $class
      * @param array $requestValues
      * @return FormRequest
      * @throws ReflectionException
