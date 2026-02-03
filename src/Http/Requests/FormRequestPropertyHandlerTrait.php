@@ -98,7 +98,16 @@ trait FormRequestPropertyHandlerTrait
     {
         $attributes = $property->getAttributes(Property::class);
 
-        return isset($attributes[0]) && $attributes[0]->newInstance()->nullable === true ? $attributes[0]->newInstance()->default : null;
+        if (!isset($attributes[0])) {
+            return null;
+        }
+
+        $instance = $attributes[0]->newInstance();
+        if ($instance->nullable === true) {
+            return $instance->default;
+        }
+
+        return null;
     }
 
     /**
