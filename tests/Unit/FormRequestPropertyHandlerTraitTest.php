@@ -298,7 +298,8 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
         $requestMock->shouldReceive('all')->andReturn(['id' => 1, 'name' => 'bob']);
         $this->app->instance('request', $requestMock);
 
-        $class = new class extends FormRequest {
+        $class = new class extends FormRequest
+        {
             use FormRequestPropertyHandlerTrait;
 
             #[Property(
@@ -339,7 +340,8 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
     public function getNestedObjectPropertiesEvenIfValueIsNull(): void
     {
         setup:
-        $class = new class extends FormRequest {
+        $class = new class extends FormRequest
+        {
             use FormRequestPropertyHandlerTrait;
 
             #[Property(
@@ -385,7 +387,8 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
         $requestMock->shouldReceive('all')->andReturn(['id' => 1, 'nested' => ['id' => 2, 'name' => 'bob']]);
         $this->app->instance('request', $requestMock);
 
-        $class = new class extends FormRequest {
+        $class = new class extends FormRequest
+        {
             use FormRequestPropertyHandlerTrait;
 
             #[Property(

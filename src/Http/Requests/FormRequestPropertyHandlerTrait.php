@@ -70,7 +70,11 @@ trait FormRequestPropertyHandlerTrait
         $requestValue = request($property->getName());
         $propertyType = $property->getType();
 
-        if ($requestValue !== null && $propertyType !== null && !$propertyType->isBuiltin()) {
+        if (
+            $requestValue !== null &&
+            $propertyType !== null &&
+            !$propertyType->isBuiltin()
+        ) {
             return $this->initializationFormRequest($propertyType->getName(), $requestValue);
         }
 
@@ -200,7 +204,9 @@ trait FormRequestPropertyHandlerTrait
 
             $value = $requestValues[$property->getName()] ?? $this->initialValue($type);
 
-            $property->setValue($instance, $value);
+            $castedValue = $this->normalizeValueToType($value, $type);
+
+            $property->setValue($instance, $castedValue);
         }
 
         return $instance;
