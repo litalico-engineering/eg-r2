@@ -28,16 +28,17 @@ jobs:
 
   tests:
     needs: filter_paths
-    name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }}
+    name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} - Swagger ${{ matrix.swagger_php }}
     runs-on: ubuntu-22.04
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.php }}-${{ matrix.laravel }}
+      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.php }}-${{ matrix.laravel }}-${{ matrix.swagger_php }}
       cancel-in-progress: true
 
     strategy:
       matrix:
         php: ["8.2", "8.3", "8.4"]
         laravel: ["11.*", "12.*"]
+        swagger_php: ["^4.0", "^5.0", "^6.0"]
 
     steps:
       - name: Checkout Code
@@ -72,6 +73,7 @@ jobs:
         run: |
           composer --version
           composer require "laravel/framework:${{ matrix.laravel }}" --no-interaction --no-update
+          composer require "zircote/swagger-php:${{ matrix.swagger_php }}" --no-interaction --no-update
           composer update --prefer-dist --no-interaction
           composer dump
 
