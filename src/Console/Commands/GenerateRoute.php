@@ -33,9 +33,7 @@ class GenerateRoute extends Command
     protected $signature = 'eg-r2:generate-route';
 
     /**
-     * The description of the console command
-     *
-     * @var null|string
+     * @inheritDoc
      */
     protected $description = 'Generate routing file from OpenAPI specifications.';
 
