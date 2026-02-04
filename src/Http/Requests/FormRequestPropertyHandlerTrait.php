@@ -129,7 +129,15 @@ trait FormRequestPropertyHandlerTrait
             return $value;
         }
 
-        if (!($type instanceof ReflectionNamedType) || !$type->isBuiltin()) {
+        if ($value === null) {
+            return null;
+        }
+
+        if (!($type instanceof ReflectionNamedType)) {
+            return $value;
+        }
+
+        if (!$type->isBuiltin()) {
             return $value;
         }
 
