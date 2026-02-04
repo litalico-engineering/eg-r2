@@ -202,11 +202,15 @@ trait FormRequestPropertyHandlerTrait
         foreach ($filteredProperties as $property) {
             $type = $property->getType();
 
-            $value = $requestValues[$property->getName()] ?? $this->initialValue($type);
+            $propertyName = $property->getName();
+            if (!isset($requestValues[$propertyName])) {
+                $value = $this->initialValue($type);
+            } else {
+                $rawValue = $requestValues[$propertyName];
+                $value = $this->normalizeValueToType($rawValue, $type);
+            }
 
-            $castedValue = $this->normalizeValueToType($value, $type);
-
-            $property->setValue($instance, $castedValue);
+            $property->setValue($instance, $value);
         }
 
         return $instance;
