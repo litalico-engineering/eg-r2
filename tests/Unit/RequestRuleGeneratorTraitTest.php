@@ -591,6 +591,35 @@ class RequestRuleGeneratorTraitTest extends TestCase
         then:
         self::assertEquals($expected, $actual);
     }
+
+    #[Test]
+    public function nullableEnumParameterCanBeConverted(): void
+    {
+        setup:
+        $class = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+            #[
+                Parameter('Status', name: 'status', required: false),
+                \OpenApi\Attributes\Schema(type: 'string', enum: Status::class, nullable: true)
+            ]
+            public ?string $status = null;
+        };
+
+        $expected = [
+            'status' => [
+                'nullable',
+                'string',
+                new Enum(Status::class),
+            ],
+        ];
+
+        when:
+        $actual = $class->rules();
+
+        then:
+        self::assertEquals($expected, $actual);
+    }
 }
 
 // This is a test class for "Property/Schema combination can be converted". Because it cannot be defined in the class attribute anonymous class
