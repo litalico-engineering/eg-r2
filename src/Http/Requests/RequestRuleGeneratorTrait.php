@@ -297,6 +297,41 @@ trait RequestRuleGeneratorTrait
     }
 
     /**
+     * Builds enum validation rules based on the provided enum value.
+     *
+     * @param string|array $enum The enum value(s) to build rules for.
+     * @return list<Enum|In> An array of enum validation rules.
+     */
+    private function buildEnumRules(string|array $enum): array
+    {
+        // String enum class
+        if (is_string($enum) && class_exists($enum)) {
+            return [new Enum($enum)];
+        }
+
+        // Array of enums
+        $enums = [];
+        $nonEnums = [];
+        if (is_array($enum)) {
+            foreach ($enum as $item) {
+                if (is_string($item) && class_exists($item)) {
+                    $enums[] = new Enum($item);
+                } else {
+                    $nonEnums[] = $item;
+                }
+            }
+
+            return [
+                ...$enums,
+                ...$nonEnums !== [] ? [Rule::in($nonEnums)] : [],
+            ];
+        }
+
+        // Other cases
+        return [Rule::in($enum)];
+    }
+
+    /**
      * Converts the given OpenApiSchema into Laravel validation rules.
      * This method analyzes the schema and generates appropriate validation rules based on its properties.
      * It takes into account whether the schema is nullable and whether it is required.
@@ -393,11 +428,10 @@ trait RequestRuleGeneratorTrait
 
         // Apply enum
         if ($schema->enum !== Generator::UNDEFINED) {   /** @phpstan-ignore-line */
-            if (is_string($schema->enum)) {
-                $rules[] = new Enum($schema->enum);
-            } else {
-                $rules[] = Rule::in($schema->enum);
-            }
+            $rules = [
+                ...$rules,
+                ...$this->buildEnumRules($schema->enum),
+            ];
         }
 
         // Maximum number
