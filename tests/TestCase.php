@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use Litalico\EgR2\Providers\EgR2ServiceProvider;
 use Orchestra\Testbench\Concerns\WithWorkbench;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 
@@ -15,7 +16,9 @@ abstract class TestCase extends BaseTestCase
      */
     protected function getPackageProviders($app): array
     {
-        return [];
+        return [
+            EgR2ServiceProvider::class,
+        ];
     }
 
     /**
@@ -26,9 +29,10 @@ abstract class TestCase extends BaseTestCase
      */
     protected function getEnvironmentSetUp($app): void
     {
-        $app['config']->set('eg_r2', [
-            'namespaces' => [],
-            'route_path' => base_path('routes/eg_r2.php'),
-        ]);
+        // Set default locale to Japanese for tests
+        $app['config']->set('app.locale', 'ja');
+
+        // Set fallback locale to Japanese for tests
+        $app['config']->set('app.fallback_locale', 'ja');
     }
 }
