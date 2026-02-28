@@ -140,23 +140,18 @@ class RequestAttributesGeneratorTraitTest extends TestCase
         {
             use RequestAttributesGeneratorTrait;
 
-            #[Property(
-                property: 'address',
-                description: 'address object',
-                type: 'object',
-                properties: [
-                    new Property(
-                        property: 'zipCode',
-                        description: 'zip code',
-                        type: 'string'
-                    ),
-                    new Property(
-                        property: 'prefecture',
-                        description: 'prefecture name',
-                        type: 'string'
-                    ),
-                ]
-            )]
+            #[Property(property: 'address', description: 'address object', properties: [
+                new Property(
+                    property: 'zipCode',
+                    description: 'zip code',
+                    type: 'string'
+                ),
+                new Property(
+                    property: 'prefecture',
+                    description: 'prefecture name',
+                    type: 'string'
+                ),
+            ], type: 'object')]
             public array $address;
         };
 
@@ -269,9 +264,7 @@ class RequestAttributesGeneratorTraitTest extends TestCase
 
             public function attributes(): array
             {
-                return array_merge($this->generatedAttributes(), [
-                    'field1' => 'custom field one',
-                ]);
+                return [...$this->generatedAttributes(), 'field1' => 'custom field one'];
             }
         };
 
@@ -344,32 +337,27 @@ class RequestAttributesGeneratorTraitTest extends TestCase
         {
             use RequestAttributesGeneratorTrait;
 
-            #[Property(
-                property: 'parent',
-                description: 'parent object',
-                type: 'object',
-                properties: [
-                    new Property(
-                        property: 'name',
-                        description: 'name',
-                        type: 'string'
-                    ),
-                    new Property(
-                        property: 'items',
-                        description: 'items',
-                        type: 'array',
-                        items: new Items(
-                            properties: [
-                                new Property(
-                                    property: 'itemId',
-                                    description: 'item id',
-                                    type: 'string'
-                                ),
-                            ]
-                        )
-                    ),
-                ]
-            )]
+            #[Property(property: 'parent', description: 'parent object', properties: [
+                new Property(
+                    property: 'name',
+                    description: 'name',
+                    type: 'string'
+                ),
+                new Property(
+                    property: 'items',
+                    description: 'items',
+                    type: 'array',
+                    items: new Items(
+                        properties: [
+                            new Property(
+                                property: 'itemId',
+                                description: 'item id',
+                                type: 'string'
+                            ),
+                        ]
+                    )
+                ),
+            ], type: 'object')]
             public array $parent;
         };
 

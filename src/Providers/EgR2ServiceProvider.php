@@ -14,7 +14,7 @@ use Litalico\EgR2\Console\Commands\GenerateRoute;
  *
  * @package Litalico\EgR2\Providers
  */
-class GenerateRouteServiceProvider extends ServiceProvider
+class EgR2ServiceProvider extends ServiceProvider
 {
     public const STUB_DIR = __DIR__.'/../../stubs';
 
