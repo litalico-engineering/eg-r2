@@ -125,7 +125,7 @@ class AttributeMessageService
 
             // If app.locale is not set, use fallback locale
             return $this->getFallbackLocale();
-        } catch (Throwable $e) {
+        } catch (Throwable) {
             return $this->getFallbackLocale();
         }
     }
@@ -141,7 +141,7 @@ class AttributeMessageService
             $fallbackLocale = config('app.fallback_locale');
 
             return is_string($fallbackLocale) ? $fallbackLocale : 'ja';
-        } catch (Throwable $e) {
+        } catch (Throwable) {
             return 'ja';
         }
     }
