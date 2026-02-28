@@ -6,6 +6,8 @@ namespace Litalico\EgR2\Services;
 
 use Throwable;
 use function config;
+use function is_array;
+use function is_string;
 use function trans;
 
 /**
@@ -137,6 +139,7 @@ class AttributeMessageService
     {
         try {
             $fallbackLocale = config('app.fallback_locale');
+
             return is_string($fallbackLocale) ? $fallbackLocale : 'ja';
         } catch (Throwable $e) {
             return 'ja';
