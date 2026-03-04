@@ -87,14 +87,14 @@ jobs:
         id: fixer-all
         continue-on-error: true
         run: |
-          PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --diff --dry-run --format=checkstyle | cs2pr
+          vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --diff --dry-run --format=checkstyle | cs2pr
 
       - name: PHP CS Fixer for Diff
         if: ${{ needs.filter_paths.outputs.fixer_all == 'false' && needs.filter_paths.outputs.lint_files }}
         id: fixer
         continue-on-error: true
         run: |
-          PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --diff --dry-run ${{ needs.filter_paths.outputs.lint_files }} --format=checkstyle | cs2pr
+          vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --diff --dry-run ${{ needs.filter_paths.outputs.lint_files }} --format=checkstyle | cs2pr
 
       - name: Dry run Rector for Diff
         if: ${{ needs.filter_paths.outputs.rector_all == 'false' && needs.filter_paths.outputs.lint_files }}
