@@ -3,10 +3,12 @@
 declare(strict_types=1);
 
 use Rector\Caching\ValueObject\Storage\FileCacheStorage;
+use Rector\CodeQuality\Rector\Attribute\SortAttributeNamedArgsRector;
 use Rector\CodeQuality\Rector\Empty_\SimplifyEmptyCheckOnEmptyArrayRector;
 use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
 use Rector\CodeQuality\Rector\If_\ShortenElseIfRector;
 use Rector\CodingStyle\Rector\FuncCall\ArraySpreadInsteadOfArrayMergeRector;
+use Rector\CodeQuality\Rector\FuncCall\SortCallLikeNamedArgsRector;
 use Rector\Config\RectorConfig;
 use Rector\DeadCode\Rector\ClassMethod\RemoveUselessParamTagRector;
 use Rector\DeadCode\Rector\ClassMethod\RemoveUselessReturnTagRector;
@@ -44,6 +46,8 @@ return RectorConfig::configure()
         RemoveUselessVarTagRector::class,
         TernaryToBooleanOrFalseToBooleanAndRector::class,
         ShortenElseIfRector::class,
+        SortAttributeNamedArgsRector::class,
+        SortCallLikeNamedArgsRector::class,
         ListToArrayDestructRector::class,
     ])
     // here we can define, what prepared sets of rules will be applied
