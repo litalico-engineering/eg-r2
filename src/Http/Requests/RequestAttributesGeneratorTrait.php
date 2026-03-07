@@ -243,14 +243,14 @@ trait RequestAttributesGeneratorTrait
             return $schema->description;
         }
 
-        // Priority 2: title (but not for Property with title, use property name instead)
+        // Priority 2: title
+        if ($schema->title !== Generator::UNDEFINED && $schema->title !== null) {  /** @phpstan-ignore-line */
+            return $schema->title;
+        }
+
         if ($schema instanceof Property) {
             // For Property, if no description, use property name (not title)
             return $schema->property;
-        }
-
-        if ($schema->title !== Generator::UNDEFINED && $schema->title !== null) {  /** @phpstan-ignore-line */
-            return $schema->title;
         }
 
         return '';

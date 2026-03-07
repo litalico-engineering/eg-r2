@@ -124,7 +124,7 @@ class RequestAttributesGeneratorTraitTest extends TestCase
 
         $expected = [
             'title1' => 'description1',
-            'title2' => 'field2',
+            'title2' => 'title2',
             'field3' => 'field3',
         ];
 
