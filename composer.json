@@ -17,7 +17,7 @@
         "orchestra/testbench": "^9.0|^10.0",
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^11.2",
-        "rector/rector": "^2.0",
+        "rector/rector": "2.3.8",
         "smeghead/php-vendor-credits": "^0.0.5",
         "spaze/phpstan-disallowed-calls": "^4.5"
     },
