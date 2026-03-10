@@ -1,684 +1,918 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Tests\Unit;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Enum;
-use Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException;
-use Litalico\EgR2\Http\Requests\RequestRuleGeneratorTrait;
-use Litalico\EgR2\Rules\Integer;
-use OpenApi\Annotations\Schema;
+use Litalico\EgR2\Http\Requests\RequestAttributesGeneratorTrait;
 use OpenApi\Attributes\Items;
 use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Property;
-use PHPUnit\Framework\Attributes\CoversClass;
+use OpenApi\Attributes\Schema;
 use PHPUnit\Framework\Attributes\CoversTrait;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use ReflectionException;
-use Tests\FullAccessWrapper;
 use Tests\TestCase;
 
 /**
- * Testing of Validation Rule Generation Trait
+ * Testing of Request Attributes Generator Trait
  */
-#[CoversTrait(RequestRuleGeneratorTrait::class)]
-#[CoversClass(Integer::class)]
-class RequestRuleGeneratorTraitTest extends TestCase
+#[CoversTrait(RequestAttributesGeneratorTrait::class)]
+class RequestAttributesGeneratorTraitTest extends TestCase
 {
-    public static function setUpBeforeClass(): void
-    {
-    }
-
-    /**
-     * @param Schema $property
-     * @param array $expected
-     */
     #[Test]
-    #[DataProvider('singlePropertyConversionPattern')]
-    public function canConvertOpenApiSchemaToLaravelRules(Schema $property, array $expected): void
+    public function canGenerateAttributesFromSimpleProperties(): void
     {
-        setup:
         $class = new class extends FormRequest
         {
-            use RequestRuleGeneratorTrait;
-        };
-        /** @var $instance RequestRuleGeneratorTrait */
-        $instance = new FullAccessWrapper($class);
+            use RequestAttributesGeneratorTrait;
 
-        when:
-        $actual = $instance->convertRule($property);
-
-        then:
-        self::assertEquals($expected, $actual);
-    }
-
-    /**
-     * @return array
-     */
-    public static function singlePropertyConversionPattern(): iterable
-    {
-        return [
-            'nullable-true' => [new Property('key', nullable: true), ['key' => ['nullable']]],
-            'nullable-false' => [new Property('key', nullable: false), ['key' => []]],
-            'string' => [new Property('key', type: 'string'), ['key' => ['string']]],
-            'number' => [new Property('key', type: 'number'), ['key' => ['numeric']]],
-            'integer' => [new Property('key', type: 'integer'), ['key' => [new Integer(), 'integer']]],
-            'validation-class' => [new Property('key', nullable: true, x: ['validation' => Integer::class]), ['key' => ['nullable', new Integer()]]],
-            'validation-non-class' => [new Property('key', nullable: true, x: ['validation' => 'distinct']), ['key' => ['nullable', 'distinct']]],
-            'validation-array|only non-class' => [new Property('key', nullable: true, x: ['validation' => ['distinct']]), ['key' => ['nullable', 'distinct']]],
-            'validation-array|only class' => [new Property('key', nullable: true, x: ['validation' => [Integer::class]]), ['key' => ['nullable', new Integer()]]],
-            'validation-array|non-class and class' => [new Property('key', nullable: true, x: ['validation' => ['distinct', Integer::class]]), ['key' => ['nullable', 'distinct', new Integer()]]],
-            'boolean' => [new Property('key', type: 'boolean'), ['key' => ['boolean']]],
-            'array' => [new Property('key', type: 'array'), ['key' => ['array']]],
-            'object' => [new Property('key', type: 'object'), ['key' => ['array']]],
-            'enum' => [new Property('key', enum: [1, 2, 3]), ['key' => [Rule::in([1, 2,3])]]],
-            'enum-class-string' => [new Property('key', enum: Status::class), ['key' => [new Enum(Status::class)]]],
-            'maximum' => [new Property('key', maximum: 5), ['key' => ['max:5']]],
-            'maxLength' => [new Property('key', maxLength: 5), ['key' => ['max:5']]],
-            'minimum' => [new Property('key', minimum: 5), ['key' => ['min:5']]],
-            'minLength' => [new Property('key', minLength: 5), ['key' => ['min:5']]],
-            'minItems' => [new Property('key', minItems: 5), ['key' => ['min:5']]],
-            'maxItems' => [new Property('key', maxItems: 5), ['key' => ['max:5']]],
-            'pattern' => [new Property('key', pattern: '^[a-z]{3}_[0-9]+'), ['key' => ['regex:/^[a-z]{3}_[0-9]+/']]],
-            'date_format:Ymd' => [new Property('key', pattern: '^[0-9]{4}(0[1-9]|1[0-2])[0-3][0-9]', maxLength: 8, minLength: 8, x: ['date_format' => 'Ymd']), ['key' => ['date_format:Ymd']]],
-            'date_format:Ym' => [new Property('key', pattern: '^[0-9]{4}(0[1-9]|1[0-2])', maxLength: 6, minLength: 6, x: ['date_format' => 'Ym']), ['key' => ['date_format:Ym']]],
-            'date_format:Hi' => [new Property('key', pattern: '^[0-2][0-9][0-5][0-9]', maxLength: 4, minLength: 4, x: ['date_format' => 'Hi']), ['key' => ['date_format:Hi']]],
-        ];
-    }
-
-    #[Test]
-    public function objectRequiredFieldsCanBeConverted(): void
-    {
-        setup:
-        $class = new class extends FormRequest
-        {
-            use RequestRuleGeneratorTrait;
             #[Property(
-                'test',
-                required: [
-                    'key1',
-                    'key2',
-                    'key3',
-                    'key5',
-                ],
-                properties: [
-                    new Property('key1', type: 'string'),
-                    new Property('key2', type: 'string', nullable: true),
-                    new Property('key3', type: 'string', nullable: false),
-                    new Property('key4', type: 'string'),
-                    new Property(
-                        'key5',
-                        type: 'array',
-                        items: new Items(required: ['nestKey1'], properties: [new Property('nestKey1', type: 'integer')])
-                    ),
-                ],
-                type: 'object'
+                property: 'facilityCode',
+                description: 'facility code',
+                type: 'string'
             )]
-            public array $test;
+            public string $facilityCode;
+
+            #[Property(
+                property: 'serviceType',
+                description: 'service type',
+                type: 'string'
+            )]
+            public string $serviceType;
         };
 
         $expected = [
-            'test.key1' => ['required_with:test', 'string'],
-            'test.key2' => ['nullable', 'string'],
-            'test.key3' => ['required_with:test', 'string'],
-            'test.key4' => ['string'],
-            'test.key5' => ['required_with:test', 'array'],
-            'test.key5.*.nestKey1' => ['required_with:test.key5.*', new Integer(), 'integer'],
-            'test' => ['array'],
+            'facilityCode' => 'facility code',
+            'serviceType' => 'service type',
         ];
 
-        when:
-        $actual = $class->rules();
+        $actual = $class->generatedAttributes();
 
-        then:
         self::assertEquals($expected, $actual);
     }
 
     #[Test]
-    public function requiredOnlyIfTheParentElementExists(): void
+    public function canGenerateAttributesFromArrayWithNestedProperties(): void
     {
-        setup:
         $class = new class extends FormRequest
         {
-            use RequestRuleGeneratorTrait;
+            use RequestAttributesGeneratorTrait;
 
             #[Property(
-                'parent',
-                required: ['key1'],
-                properties: [
-
-                    new Property('key1', type: 'string'),
-                    new Property('key2', type: 'string'),
-                    new Property('key3', type: 'string'),
-                ],
-                type: 'object'
-            )]
-            public array $test;
-        };
-
-        $expected = [
-            'parent.key1' => ['required_with:parent', 'string'],
-            'parent.key2' => ['string'],
-            'parent.key3' => ['string'],
-            'parent' => ['array'],
-        ];
-
-        when:
-        $actual = $class->rules();
-
-        then:
-        self::assertEquals($expected, $actual);
-    }
-
-    #[Test]
-    #[DataProvider('schemaDefinitionPropertyPattern')]
-    #[DataProvider('schemaDefinitionParameterPattern')]
-    public function errorOccursIfThereIsAConflictBetweenPropertyAndSchemaDefinition(FormRequest $instance, string $expectedMessage): void
-    {
-        expect:
-        $this->expectException(InvalidOpenApiDefinitionException::class);
-        $this->expectExceptionMessage($expectedMessage);
-        $instance->rules();
-    }
-
-    /**
-     * @return iterable
-     */
-    public static function schemaDefinitionPropertyPattern(): iterable
-    {
-        return [
-            'property|schema:nullable, property:required' => [
-                new class() extends FormRequest
-                {
-                    use RequestRuleGeneratorTrait;
-
-                    #[Property('status', type: 'string', example: Status::AVAILABLE, nullable: true, enum: Status::class)]
-                    public string $status;
-                },
-                '["status: Nullable definitions are different in property and schema. "]',
-            ],
-            'property|schema:required, property:nullable' => [
-                new class() extends FormRequest
-                {
-                    use RequestRuleGeneratorTrait;
-
-                    #[Property('status', type: 'string', example: Status::AVAILABLE, enum: Status::class)]
-                    public ?string $status = null;
-                },
-                '["status: Nullable definitions are different in property and schema. "]',
-            ],
-            'property|schema:integer, property:string' => [
-                new class() extends FormRequest
-                {
-                    use RequestRuleGeneratorTrait;
-
-                    #[Property('status', type: 'integer', example: Status::AVAILABLE, nullable: true, enum: Status::class)]
-                    public ?string $status = null;
-                },
-                '["status: Type definitions are different in property and schema. "]',
-            ],
-            'property|schema:nullable integer, property:required string' => [
-                new class() extends FormRequest
-                {
-                    use RequestRuleGeneratorTrait;
-
-                    #[Property('status', type: 'integer', example: Status::AVAILABLE, nullable: true, enum: Status::class)]
-                    public string $status;
-                },
-                '["status: Nullable definitions are different in property and schema. ","status: Type definitions are different in property and schema. "]',
-            ],
-        ];
-    }
-
-    /**
-     * @return iterable
-     */
-    public static function schemaDefinitionParameterPattern(): iterable
-    {
-        return [
-            'Parameters|Schema:required, Property:nullable' => [
-                new class() extends FormRequest
-                {
-                    use RequestRuleGeneratorTrait;
-
-                    #[
-                        Parameter('code', name: 'Code', in: 'path', required: true),
-                        \OpenApi\Attributes\Schema(type: 'string', pattern: '^[0-9]{1,19}', example: '1000000004', maxLength: 19)
-                    ]
-                    public ?string $code = null;
-                },
-                '["code: Nullable definitions are different in property and schema. "]',
-            ],
-            'Parameters|Schema:nullable, Property:required' => [
-                new class() extends FormRequest
-                {
-                    use RequestRuleGeneratorTrait;
-
-                    #[
-                        Parameter('code', name: 'Code', in: 'path', required: true),
-                        \OpenApi\Attributes\Schema(type: 'string', pattern: '^[0-9]{1,19}', example: '1000000004', nullable: true, maxLength: 19)
-                    ]
-                    public string $code;
-                },
-                '["code: Nullable definitions are different in property and schema. "]',
-            ],
-            'Parameters|Schema:string, Property:integer' => [
-                new class() extends FormRequest
-                {
-                    use RequestRuleGeneratorTrait;
-
-                    #[
-                        Parameter('code', name: 'Code', in: 'path', required: true),
-                        \OpenApi\Attributes\Schema(type: 'string', pattern: '^[0-9]{1,19}', example: '1000000004', maxLength: 19)
-                    ]
-                    public int $code;
-                },
-                '["code: Type definitions are different in property and schema. "]',
-            ],
-            'Parameters|schema:required string, property:nullable integer' => [
-                new class() extends FormRequest
-                {
-                    use RequestRuleGeneratorTrait;
-
-                    #[
-                        Parameter('code', name: 'Code', in: 'path', required: true),
-                        \OpenApi\Attributes\Schema(type: 'string', pattern: '^[0-9]{1,19}', example: '1000000004', maxLength: 19)
-                    ]
-                    public ?int $code = null;
-                },
-                '["code: Nullable definitions are different in property and schema. ","code: Type definitions are different in property and schema. "]',
-            ],
-        ];
-    }
-
-    #[Test]
-    public function arrayRequiredFieldsCanBeConverted(): void
-    {
-        setup:
-        $class = new class extends FormRequest
-        {
-            use RequestRuleGeneratorTrait;
-            #[Property(
-                title: 'test',
+                property: 'items',
+                description: 'items array',
                 type: 'array',
                 items: new Items(
-                    required: [
-                        'key1',
-                        'key2',
-                        'key3',
-                    ],
                     properties: [
-                        new Property('key1', type: 'string'),
-                        new Property('key2', type: 'string', nullable: false),
-                        new Property('key3', type: 'string', nullable: true),
-                        new Property('key4', type: 'string'),
+                        new Property(
+                            property: 'code',
+                            description: 'item code',
+                            type: 'string'
+                        ),
+                        new Property(
+                            property: 'name',
+                            description: 'item name',
+                            type: 'string'
+                        ),
                     ]
                 )
             )]
-            public array $test;
+            public array $items;
         };
 
         $expected = [
-            'test' => ['array'],
-            'test.*.key1' => ['required_with:test.*', 'string'],
-            'test.*.key2' => ['required_with:test.*', 'string'],
-            'test.*.key3' => ['nullable', 'string'],
-            'test.*.key4' => ['string'],
+            'items' => 'items array',
+            'items.*' => 'items arrayの各項目',
+            'items.*.code' => 'items arrayの :position 行目の「item code」',
+            'items.*.name' => 'items arrayの :position 行目の「item name」',
         ];
 
-        when:
-        $actual = $class->rules();
+        $actual = $class->generatedAttributes();
 
-        then:
-        self::assertEqualsCanonicalizing($expected, $actual);
+        self::assertEquals($expected, $actual);
     }
 
     #[Test]
-    public function multiTieredPropertiesCanBeConverted(): void
+    public function descriptionHasPriorityOverTitle(): void
     {
-        setup:
         $class = new class extends FormRequest
         {
-            use RequestRuleGeneratorTrait;
+            use RequestAttributesGeneratorTrait;
+
             #[Property(
-                title: 'test',
+                property: 'field1',
+                title: 'title1',
+                description: 'description1',
+                type: 'string'
+            )]
+            public string $field1;
+
+            #[Property(
+                property: 'field2',
+                title: 'title2',
+                type: 'string'
+            )]
+            public string $field2;
+
+            #[Property(
+                property: 'field3',
+                type: 'string'
+            )]
+            public string $field3;
+        };
+
+        $expected = [
+            'field1' => 'description1',
+            'field2' => 'title2',
+            'field3' => 'field3',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function canGenerateAttributesFromObjectType(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(property: 'address', description: 'address object', properties: [
+                new Property(
+                    property: 'zipCode',
+                    description: 'zip code',
+                    type: 'string'
+                ),
+                new Property(
+                    property: 'prefecture',
+                    description: 'prefecture name',
+                    type: 'string'
+                ),
+            ], type: 'object')]
+            public array $address;
+        };
+
+        $expected = [
+            'address' => 'address object',
+            'address.zipCode' => 'zip code',
+            'address.prefecture' => 'prefecture name',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function canGenerateAttributesFromMultiLevelNestedArrays(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(
+                property: 'departments',
+                description: 'departments',
                 type: 'array',
                 items: new Items(
-                    required: [
-                        'key1',
-                        'key2',
-                    ],
                     properties: [
-                        new Property('key1', type: 'string'),
-                        new Property('key2', type: 'string'),
                         new Property(
-                            'key3',
+                            property: 'name',
+                            description: 'dept name',
+                            type: 'string'
+                        ),
+                        new Property(
+                            property: 'employees',
+                            description: 'employees',
                             type: 'array',
                             items: new Items(
-                                properties:  [
-                                    new Property('key3-1', type: 'string'),
-                                ],
+                                properties: [
+                                    new Property(
+                                        property: 'employeeId',
+                                        description: 'employee id',
+                                        type: 'string'
+                                    ),
+                                ]
                             )
-                        ),
-                        new Property(
-                            'key4',
-                            properties: [
-                                new Property('key4-1', type: 'string'),
-                                new Property(
-                                    'key4-2',
-                                    properties: [
-                                        new Property('key4-2-1', type: 'string'),
-                                    ],
-                                    type: 'object'
-                                ),
-                            ],
-                            type: 'object',
                         ),
                     ]
                 )
             )]
-            public array $test;
+            public array $departments;
         };
 
         $expected = [
-            'test' => ['array'],
-            'test.*.key1' => ['required_with:test.*', 'string'],
-            'test.*.key2' => ['required_with:test.*', 'string'],
-            'test.*.key3' => ['array'],
-            'test.*.key3.*.key3-1' => ['string'],
-            'test.*.key4.key4-1' => ['string'],
-            'test.*.key4.key4-2.key4-2-1' => ['string'],
-            'test.*.key4' => ['array'],
-            'test.*.key4.key4-2' => ['array'],
+            'departments' => 'departments',
+            'departments.*' => 'departmentsの各項目',
+            'departments.*.name' => 'departmentsの :position 行目の「dept name」',
+            'departments.*.employees' => 'departmentsの :position 行目の「employees」',
+            'departments.*.employees.*' => 'departmentsの :position 行目の「employees」の各項目',
+            'departments.*.employees.*.employeeId' => 'departmentsの :position 行目の「employee id」',
         ];
 
-        when:
-        $actual = $class->rules();
+        $actual = $class->generatedAttributes();
 
-        then:
         self::assertEquals($expected, $actual);
     }
 
     #[Test]
-    public function combinationOfParameterAndSchemaCanBeConverted(): void
+    public function canGenerateAttributesFromSchemaAndParameterCombination(): void
     {
-        setup:
         $class = new class extends FormRequest
         {
-            use RequestRuleGeneratorTrait;
+            use RequestAttributesGeneratorTrait;
+
             #[
-                Parameter('Key', name: 'key', required: true),
-                \OpenApi\Attributes\Schema(type: 'string', pattern: '^[0-9]{1,19}', maxLength: 19)
+                Parameter('code', name: 'code', description: 'code value', in: 'path', required: true),
+                Schema(type: 'string', maxLength: 19)
             ]
-            public string $test;
+            public string $code;
         };
 
         $expected = [
-            'key' => [
-                'required',
-                'string',
-                'max:19',
-                'regex:/^[0-9]{1,19}/',
-            ],
+            'code' => 'code value',
         ];
 
-        when:
-        $actual = $class->rules();
+        $actual = $class->generatedAttributes();
 
-        then:
-        self::assertSame($expected, $actual);
+        self::assertEquals($expected, $actual);
     }
 
     #[Test]
-    public function allowsRulesToBeSpecifiedForAllElementsOfAChildElementOfAnArrayOmittingThePropertyName(): void
+    public function canOverrideGeneratedAttributes(): void
     {
-        setup:
         $class = new class extends FormRequest
         {
-            use RequestRuleGeneratorTrait;
-            #[
-                Property(
-                    'parent',
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(
+                property: 'field1',
+                description: 'field one',
+                type: 'string'
+            )]
+            public string $field1;
+
+            #[Property(
+                property: 'field2',
+                description: 'field two',
+                type: 'string'
+            )]
+            public string $field2;
+
+            public function attributes(): array
+            {
+                return [...$this->generatedAttributes(), 'field1' => 'custom field one'];
+            }
+        };
+
+        $expected = [
+            'field1' => 'custom field one',
+            'field2' => 'field two',
+        ];
+
+        $actual = $class->attributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function canGenerateAttributesFromArrayWithSimpleItems(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(
+                property: 'tags',
+                description: 'tags',
+                type: 'array',
+                items: new Items(
+                    type: 'string'
+                )
+            )]
+            public array $tags;
+        };
+
+        $expected = [
+            'tags' => 'tags',
+            'tags.*' => 'tagsの各項目',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function canGenerateAttributesWithTitleAsPropertyName(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(
+                title: 'customName',
+                description: 'custom name',
+                type: 'string'
+            )]
+            public string $actualPropertyName;
+        };
+
+        $expected = [
+            'actualPropertyName' => 'custom name',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function reflectedPropertyNameHasPriorityOverAttributePropertyName(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(
+                property: 'attributePropertyName',
+                description: 'display name',
+                type: 'string'
+            )]
+            public string $reflectedPropertyName;
+        };
+
+        $expected = [
+            'reflectedPropertyName' => 'display name',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function canGenerateAttributesForMixedObjectAndArrayStructure(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(property: 'parent', description: 'parent object', properties: [
+                new Property(
+                    property: 'name',
+                    description: 'name',
+                    type: 'string'
+                ),
+                new Property(
+                    property: 'items',
+                    description: 'items',
                     type: 'array',
                     items: new Items(
                         properties: [
                             new Property(
-                                'key',
-                                type: 'array',
-                                items: new Items(
-                                    type: 'integer',
-                                    format: 'int32',
-                                    maximum:12,
-                                    minimum:9,
-                                ),
-                                nullable: false,
-                                maxItems: 5,
-                                minItems: 1,
+                                property: 'itemId',
+                                description: 'item id',
+                                type: 'string'
                             ),
-                        ],
-                        type: 'array',
-                    ),
+                        ]
+                    )
                 ),
-            ]
-            public array $test;
+            ], type: 'object')]
+            public array $parent;
         };
 
         $expected = [
-            'parent' => ['array'],
-            'parent.*.key' => [
-                'array',
-                'max:5',
-                'min:1',
-            ],
-            'parent.*.key.*' => [
-                new Integer(),
-                'integer',
-                'max:12',
-                'min:9',
-            ],
+            'parent' => 'parent object',
+            'parent.name' => 'name',
+            'parent.items' => 'items',
+            'parent.items.*' => 'itemsの各項目',
+            'parent.items.*.itemId' => 'itemsの :position 行目の「item id」',
         ];
 
-        when:
-        $actual = $class->rules();
+        $actual = $class->generatedAttributes();
 
-        then:
         self::assertEquals($expected, $actual);
     }
 
-    /**
-     * @throws ReflectionException
-     */
     #[Test]
-    public function propertyAndSchemaCombinationsCanBeConverted(): void
+    public function attributes_methodReturnsGeneratedAttributes(): void
     {
-        setup:
-        $class = new ForClassSchemaAndPropertyTest();
-        $expected = [
-            'key1' => ['required', 'string'],
-            'key2' => [new Integer(), 'integer'],
-            'key3' => ['required', 'string'],
-            'key4' => ['present', 'array', 'max:2', 'min:1'],
-            'key4.*.nestKey1' => ['required_with:key4.*', new Integer(), 'integer'],
-            'key5' => ['present', 'array'],
-            'key5.key5-1' => ['string'],
-            'key6' => ['nullable', 'array','max:5','min:0'],
-            'key6.*' => ['string', new Enum(Status::class)],
-            'key7' => ['present', 'array'],
-            'key7.*' => [new Integer(), 'integer', 'max:10', 'min:0'],
-        ];
-
-        when:
-        $actual = $class->rules();
-
-        then:
-        // Enum object is different, so it is not SAME
-        self::assertEquals($expected, $actual);
-    }
-
-    /**
-     * @test
-     */
-    #[Test]
-    public function nestedSchemasCanBeConverted(): void
-    {
-        setup:
         $class = new class extends FormRequest
         {
-            use RequestRuleGeneratorTrait;
+            use RequestAttributesGeneratorTrait;
 
-            #[
-                Property('parent', type: 'string', format: 'string', nullable: true, maxLength: 10),
-            ]
-            public ?string $test = null;
+            #[Property(
+                property: 'name',
+                description: 'full name',
+                type: 'string'
+            )]
+            public string $name;
 
-            #[
-                Property(
-                    property: 'nested',
-                    ref: '#/components/schemas/NestedObject',
-                ),
-            ]
-            public NestedObject $nested;
+            #[Property(
+                property: 'email',
+                description: 'email address',
+                type: 'string'
+            )]
+            public string $email;
         };
 
         $expected = [
-            'parent' => ['nullable', 'string', 'max:10'],
-            'nested.id' => [
-                'required_with:nested',
-                new Integer(),
-                'integer',
-                'min:1',
-            ],
-            'nested.name' => [
-                'string',
-            ],
+            'name' => 'full name',
+            'email' => 'email address',
         ];
 
-        when:
-        $actual = $class->rules();
+        $actual = $class->attributes();
 
-        then:
         self::assertEquals($expected, $actual);
     }
 
     #[Test]
-    public function nullableEnumParameterCanBeConverted(): void
+    public function canGenerateAttributesInJapanese(): void
     {
-        setup:
+        app('config')->set('app.locale', 'ja');
+
         $class = new class extends FormRequest
         {
-            use RequestRuleGeneratorTrait;
-            #[
-                Parameter('Status', name: 'status', required: false),
-                \OpenApi\Attributes\Schema(type: 'string', nullable: true, enum: Status::class)
-            ]
-            public ?string $status = null;
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(
+                property: 'items',
+                description: 'items',
+                type: 'array',
+                items: new Items(
+                    properties: [
+                        new Property(
+                            property: 'code',
+                            description: 'code',
+                            type: 'string'
+                        ),
+                    ]
+                )
+            )]
+            public array $items;
         };
 
         $expected = [
-            'status' => [
-                'nullable',
-                'string',
-                new Enum(Status::class),
-            ],
+            'items' => 'items',
+            'items.*' => 'itemsの各項目',
+            'items.*.code' => 'itemsの :position 行目の「code」',
         ];
 
-        when:
-        $actual = $class->rules();
+        $actual = $class->generatedAttributes();
 
-        then:
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function canGenerateAttributesInEnglish(): void
+    {
+        app('config')->set('app.locale', 'en');
+
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(
+                property: 'items',
+                description: 'items',
+                type: 'array',
+                items: new Items(
+                    properties: [
+                        new Property(
+                            property: 'code',
+                            description: 'code',
+                            type: 'string'
+                        ),
+                    ]
+                )
+            )]
+            public array $items;
+        };
+
+        $expected = [
+            'items' => 'items',
+            'items.*' => 'Each item of items',
+            'items.*.code' => 'Row :position of items: "code"',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function canGenerateNestedArrayAttributesInJapanese(): void
+    {
+        app('config')->set('app.locale', 'ja');
+
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(
+                property: 'departments',
+                description: 'departments',
+                type: 'array',
+                items: new Items(
+                    properties: [
+                        new Property(
+                            property: 'employees',
+                            description: 'employees',
+                            type: 'array',
+                            items: new Items(
+                                properties: [
+                                    new Property(
+                                        property: 'id',
+                                        description: 'employee id',
+                                        type: 'string'
+                                    ),
+                                ]
+                            )
+                        ),
+                    ]
+                )
+            )]
+            public array $departments;
+        };
+
+        $expected = [
+            'departments' => 'departments',
+            'departments.*' => 'departmentsの各項目',
+            'departments.*.employees' => 'departmentsの :position 行目の「employees」',
+            'departments.*.employees.*' => 'departmentsの :position 行目の「employees」の各項目',
+            'departments.*.employees.*.id' => 'departmentsの :position 行目の「employee id」',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function canGenerateNestedArrayAttributesInEnglish(): void
+    {
+        app('config')->set('app.locale', 'en');
+
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(
+                property: 'departments',
+                description: 'departments',
+                type: 'array',
+                items: new Items(
+                    properties: [
+                        new Property(
+                            property: 'employees',
+                            description: 'employees',
+                            type: 'array',
+                            items: new Items(
+                                properties: [
+                                    new Property(
+                                        property: 'id',
+                                        description: 'employee id',
+                                        type: 'string'
+                                    ),
+                                ]
+                            )
+                        ),
+                    ]
+                )
+            )]
+            public array $departments;
+        };
+
+        $expected = [
+            'departments' => 'departments',
+            'departments.*' => 'Each item of departments',
+            'departments.*.employees' => 'Row :position of departments: "employees"',
+            'departments.*.employees.*' => 'Each item of row :position of departments: "employees"',
+            'departments.*.employees.*.id' => 'Row :position of departments: "employee id"',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function canGenerateAttributesFromNestedFormRequestClass(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            public NestedSchemaClass $nested;
+        };
+
+        $expected = [
+            'nested.code' => 'code description',
+            'nested.name' => 'name description',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function nestedFormRequestClassSkipsPropertiesWithoutPropertyAttribute(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            public NestedSchemaClassWithMixedProperties $nested;
+        };
+
+        $expected = [
+            'nested.annotated' => 'annotated field',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function classTypedPropertyWithoutSchemaAttributeFallsThrough(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            public ClassWithoutSchema $noSchema;
+        };
+
+        $expected = [];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function publicPropertyWithoutOpenApiAttributesIsSkipped(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            public string $noAttribute;
+
+            #[Property(
+                property: 'name',
+                description: 'name field',
+                type: 'string'
+            )]
+            public string $name;
+        };
+
+        $expected = [
+            'name' => 'name field',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function nonPublicPropertiesAreSkipped(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(
+                property: 'visible',
+                description: 'visible field',
+                type: 'string'
+            )]
+            public string $visible;
+
+            #[Property(
+                property: 'hidden',
+                description: 'hidden field',
+                type: 'string'
+            )]
+            protected string $hidden;
+
+            #[Property(
+                property: 'secret',
+                description: 'secret field',
+                type: 'string'
+            )]
+            private string $secret; /** @phpstan-ignore-line */
+        };
+
+        $actual = $class->generatedAttributes();
+
+        self::assertArrayHasKey('visible', $actual);
+        self::assertArrayNotHasKey('hidden', $actual);
+        self::assertArrayNotHasKey('secret', $actual);
+    }
+
+    #[Test]
+    public function canGenerateAttributesFromSchemaOnlyWithoutParameter(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Schema(title: 'status', description: 'status value', type: 'string')]
+            public string $status;
+        };
+
+        $expected = [
+            'status' => 'status value',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function schemaWithDescriptionKeepsPriorityOverParameterDescription(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[
+                Parameter('code', name: 'code', description: 'parameter desc', in: 'path', required: true),
+                Schema(description: 'schema desc', type: 'string')
+            ]
+            public string $code;
+        };
+
+        $expected = [
+            'code' => 'schema desc',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function schemaArrayTypeWithParameterNameContainingBrackets(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[
+                Parameter('ids', name: 'ids[]', description: 'id list', in: 'query'),
+                Schema(
+                    type: 'array',
+                    items: new Items(type: 'integer')
+                )
+            ]
+            public array $ids;
+        };
+
+        $expected = [
+            'ids' => 'id list',
+            'ids.*' => 'id listの各項目',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function schemaWithTitleOnly(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Schema(title: 'myField', type: 'string')]
+            public string $myField;
+        };
+
+        $expected = [
+            'myField' => 'myField',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function canGenerateAttributesFromObjectInsideArrayWithEmptyRootDescription(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(
+                property: 'records',
+                description: 'records',
+                type: 'array',
+                items: new Items(
+                    properties: [
+                        new Property(
+                            property: 'detail',
+                            description: 'detail object',
+                            properties: [
+                                new Property(
+                                    property: 'value',
+                                    description: 'value field',
+                                    type: 'string'
+                                ),
+                            ],
+                            type: 'object'
+                        ),
+                    ]
+                )
+            )]
+            public array $records;
+        };
+
+        $expected = [
+            'records' => 'records',
+            'records.*' => 'recordsの各項目',
+            'records.*.detail' => 'detail object',
+            'records.*.detail.value' => 'recordsの :position 行目の「value field」',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function canGenerateAttributesFromNestedFormRequestWithArrayProperty(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            public NestedSchemaClassWithArray $nested;
+        };
+
+        $expected = [
+            'nested.items' => 'item list',
+            'nested.items.*' => 'item listの各項目',
+            'nested.items.*.id' => 'item listの :position 行目の「item id」',
+        ];
+
+        $actual = $class->generatedAttributes();
+
         self::assertEquals($expected, $actual);
     }
 }
 
-// This is a test class for "Property/Schema combination can be converted". Because it cannot be defined in the class attribute anonymous class
-#[
-    \OpenApi\Attributes\Schema(
-        required: ['key1', 'key3', 'key4', 'key5', 'key7']
-    )
-]
-class ForClassSchemaAndPropertyTest extends FormRequest
+#[Schema(schema: 'NestedSchemaClass')]
+class NestedSchemaClass
 {
-    use RequestRuleGeneratorTrait;
-    #[Property(title: 'key1', type: 'string')]
-    public string $key1;
+    #[Property(property: 'code', description: 'code description', type: 'string')]
+    public string $code;
 
-    #[Property(title: 'key2', type: 'integer')]
-    public int $key2;
+    #[Property(property: 'name', description: 'name description', type: 'string')]
+    public string $name;
+}
 
-    #[Property(title: 'key3', type: 'string')]
-    public string $key3;
+#[Schema(schema: 'NestedSchemaClassWithMixedProperties')]
+class NestedSchemaClassWithMixedProperties
+{
+    #[Property(property: 'annotated', description: 'annotated field', type: 'string')]
+    public string $annotated;
 
+    public string $notAnnotated;
+}
+
+class ClassWithoutSchema
+{
+    public string $field;
+}
+
+#[Schema(schema: 'NestedSchemaClassWithArray')]
+class NestedSchemaClassWithArray
+{
     #[Property(
-        title: 'key4',
-        type: 'array',
-        items: new Items(required: ['nestKey1'], properties: [new Property('nestKey1', type: 'integer')]),
-        maxItems: 2,
-        minItems: 1
-    )]
-    public array $key4;
-
-    #[Property(
-        'key5',
-        properties: [
-            new Property('key5-1', type: 'string'),
-        ],
-        type: 'object'
-    )]
-    public array $key5;
-
-    #[Property('key6', type: 'array', items: new Items(
-        type: 'string',
-        enum: Status::class,
-    ), nullable: true, maxItems: 5, minItems: 0)]
-    public ?array $key6 = null;
-
-    #[Property(
-        'key7',
+        property: 'items',
+        description: 'item list',
         type: 'array',
         items: new Items(
-            type: 'integer',
-            maximum: 10,
-            minimum: 0,
-        ),
-        nullable: false,
+            properties: [
+                new Property(
+                    property: 'id',
+                    description: 'item id',
+                    type: 'string'
+                ),
+            ]
+        )
     )]
-    public array $key7;
-}
-
-enum Status: string
-{
-    case AVAILABLE = 'available';
-    case PENDING = 'pending';
-    case SOLD = 'sold';
-}
-
-#[\OpenApi\Attributes\Schema(
-    schema: 'NestedObject',
-    required: ['id']
-)]
-class NestedObject extends FormRequest
-{
-    use RequestRuleGeneratorTrait;
-
-    #[Property(
-        property: 'id',
-        title: 'id',
-        description: 'id',
-        type: 'integer',
-        format: 'int',
-        minimum: 1
-    )]
-    public int $id;
-
-    #[Property(
-        property: 'name',
-        title: 'name',
-        description: 'name',
-        type: 'string',
-        format: 'string'
-    )]
-    public string $name;
+    public array $items;
 }
