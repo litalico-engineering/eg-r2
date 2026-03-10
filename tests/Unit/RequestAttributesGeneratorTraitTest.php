@@ -123,8 +123,8 @@ class RequestAttributesGeneratorTraitTest extends TestCase
         };
 
         $expected = [
-            'title1' => 'description1',
-            'title2' => 'title2',
+            'field1' => 'description1',
+            'field2' => 'title2',
             'field3' => 'field3',
         ];
 
@@ -322,7 +322,31 @@ class RequestAttributesGeneratorTraitTest extends TestCase
         };
 
         $expected = [
-            'customName' => 'custom name',
+            'actualPropertyName' => 'custom name',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function reflectedPropertyNameHasPriorityOverAttributePropertyName(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(
+                property: 'attributePropertyName',
+                description: 'display name',
+                type: 'string'
+            )]
+            public string $reflectedPropertyName;
+        };
+
+        $expected = [
+            'reflectedPropertyName' => 'display name',
         ];
 
         $actual = $class->generatedAttributes();
