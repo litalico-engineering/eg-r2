@@ -599,4 +599,320 @@ class RequestAttributesGeneratorTraitTest extends TestCase
 
         self::assertEquals($expected, $actual);
     }
+
+    #[Test]
+    public function canGenerateAttributesFromNestedFormRequestClass(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            public NestedSchemaClass $nested;
+        };
+
+        $expected = [
+            'nested.code' => 'code description',
+            'nested.name' => 'name description',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function nestedFormRequestClassSkipsPropertiesWithoutPropertyAttribute(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            public NestedSchemaClassWithMixedProperties $nested;
+        };
+
+        $expected = [
+            'nested.annotated' => 'annotated field',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function classTypedPropertyWithoutSchemaAttributeFallsThrough(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            public ClassWithoutSchema $noSchema;
+        };
+
+        $expected = [];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function publicPropertyWithoutOpenApiAttributesIsSkipped(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            public string $noAttribute;
+
+            #[Property(
+                property: 'name',
+                description: 'name field',
+                type: 'string'
+            )]
+            public string $name;
+        };
+
+        $expected = [
+            'name' => 'name field',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function nonPublicPropertiesAreSkipped(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(
+                property: 'visible',
+                description: 'visible field',
+                type: 'string'
+            )]
+            public string $visible;
+
+            #[Property(
+                property: 'hidden',
+                description: 'hidden field',
+                type: 'string'
+            )]
+            protected string $hidden;
+
+            #[Property(
+                property: 'secret',
+                description: 'secret field',
+                type: 'string'
+            )]
+            private string $secret; /** @phpstan-ignore-line */
+        };
+
+        $actual = $class->generatedAttributes();
+
+        self::assertArrayHasKey('visible', $actual);
+        self::assertArrayNotHasKey('hidden', $actual);
+        self::assertArrayNotHasKey('secret', $actual);
+    }
+
+    #[Test]
+    public function canGenerateAttributesFromSchemaOnlyWithoutParameter(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Schema(title: 'status', description: 'status value', type: 'string')]
+            public string $status;
+        };
+
+        $expected = [
+            'status' => 'status value',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function schemaWithDescriptionKeepsPriorityOverParameterDescription(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[
+                Parameter('code', name: 'code', description: 'parameter desc', in: 'path', required: true),
+                Schema(description: 'schema desc', type: 'string')
+            ]
+            public string $code;
+        };
+
+        $expected = [
+            'code' => 'schema desc',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function schemaArrayTypeWithParameterNameContainingBrackets(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[
+                Parameter('ids', name: 'ids[]', description: 'id list', in: 'query'),
+                Schema(
+                    type: 'array',
+                    items: new Items(type: 'integer')
+                )
+            ]
+            public array $ids;
+        };
+
+        $expected = [
+            'ids' => 'id list',
+            'ids.*' => 'id listの各項目',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function schemaWithTitleOnly(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Schema(title: 'myField', type: 'string')]
+            public string $myField;
+        };
+
+        $expected = [
+            'myField' => 'myField',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function canGenerateAttributesFromObjectInsideArrayWithEmptyRootDescription(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(
+                property: 'records',
+                description: 'records',
+                type: 'array',
+                items: new Items(
+                    properties: [
+                        new Property(
+                            property: 'detail',
+                            description: 'detail object',
+                            properties: [
+                                new Property(
+                                    property: 'value',
+                                    description: 'value field',
+                                    type: 'string'
+                                ),
+                            ],
+                            type: 'object'
+                        ),
+                    ]
+                )
+            )]
+            public array $records;
+        };
+
+        $expected = [
+            'records' => 'records',
+            'records.*' => 'recordsの各項目',
+            'records.*.detail' => 'detail object',
+            'records.*.detail.value' => 'recordsの :position 行目の「value field」',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function canGenerateAttributesFromNestedFormRequestWithArrayProperty(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            public NestedSchemaClassWithArray $nested;
+        };
+
+        $expected = [
+            'nested.items' => 'item list',
+            'nested.items.*' => 'item listの各項目',
+            'nested.items.*.id' => 'item listの :position 行目の「item id」',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+}
+
+#[Schema(schema: 'NestedSchemaClass')]
+class NestedSchemaClass
+{
+    #[Property(property: 'code', description: 'code description', type: 'string')]
+    public string $code;
+
+    #[Property(property: 'name', description: 'name description', type: 'string')]
+    public string $name;
+}
+
+#[Schema(schema: 'NestedSchemaClassWithMixedProperties')]
+class NestedSchemaClassWithMixedProperties
+{
+    #[Property(property: 'annotated', description: 'annotated field', type: 'string')]
+    public string $annotated;
+
+    public string $notAnnotated;
+}
+
+class ClassWithoutSchema
+{
+    public string $field;
+}
+
+#[Schema(schema: 'NestedSchemaClassWithArray')]
+class NestedSchemaClassWithArray
+{
+    #[Property(
+        property: 'items',
+        description: 'item list',
+        type: 'array',
+        items: new Items(
+            properties: [
+                new Property(
+                    property: 'id',
+                    description: 'item id',
+                    type: 'string'
+                ),
+            ]
+        )
+    )]
+    public array $items;
 }
