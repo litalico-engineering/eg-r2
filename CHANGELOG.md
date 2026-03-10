@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.1](https://github.com/litalico-engineering/eg-r2/compare/1.4.0...1.4.1) - 2026-03-10
+### Other Changes
+- Add test for nullable enum parameter validation by @k2tzumi in https://github.com/litalico-engineering/eg-r2/pull/41
+- add php8.5 support by @tyamahori in https://github.com/litalico-engineering/eg-r2/pull/46
+
 ## [1.4.0](https://github.com/litalico-engineering/eg-r2/compare/1.3.1...1.4.0) - 2026-02-06
 ### New Features 🎉
 - default value by @tyamahori in https://github.com/litalico-engineering/eg-r2/pull/33
