@@ -307,7 +307,7 @@ class RequestAttributesGeneratorTraitTest extends TestCase
     }
 
     #[Test]
-    public function canGenerateAttributesWithTitleAsPropertyName(): void
+    public function canGenerateAttributesWithTitleAsLabel(): void
     {
         $class = new class extends FormRequest
         {
