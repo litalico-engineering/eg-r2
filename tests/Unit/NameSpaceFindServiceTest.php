@@ -7,7 +7,7 @@ namespace Tests\Unit;
 use Generator;
 use Illuminate\Foundation\Application;
 use Litalico\EgR2\Console\Commands\GenerateRoute;
-use Litalico\EgR2\Providers\GenerateRouteServiceProvider;
+use Litalico\EgR2\Providers\EgR2ServiceProvider;
 use Litalico\EgR2\Services\NameSpaceFindService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -72,7 +72,7 @@ class NameSpaceFindServiceTest extends TestCase
      */
     public static function namespacePattern(): iterable
     {
-        yield 'Litalico\EgR2\Providers' => ['Litalico\EgR2\Providers', [GenerateRouteServiceProvider::class]];
+        yield 'Litalico\EgR2\Providers' => ['Litalico\EgR2\Providers', [EgR2ServiceProvider::class]];
         yield 'Litalico\EgR2\Console\Commands' => ['Litalico\EgR2\Console\Commands', [GenerateRoute::class]];
     }
 }

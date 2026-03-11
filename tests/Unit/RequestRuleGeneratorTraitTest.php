@@ -83,9 +83,9 @@ class RequestRuleGeneratorTraitTest extends TestCase
             'minItems' => [new Property('key', minItems: 5), ['key' => ['min:5']]],
             'maxItems' => [new Property('key', maxItems: 5), ['key' => ['max:5']]],
             'pattern' => [new Property('key', pattern: '^[a-z]{3}_[0-9]+'), ['key' => ['regex:/^[a-z]{3}_[0-9]+/']]],
-            'date_format:Ymd' => [new Property('key', maxLength: 8, minLength: 8, pattern: '^[0-9]{4}(0[1-9]|1[0-2])[0-3][0-9]', x: ['date_format' => 'Ymd']), ['key' => ['date_format:Ymd']]],
-            'date_format:Ym' => [new Property('key', maxLength: 6, minLength: 6, pattern: '^[0-9]{4}(0[1-9]|1[0-2])', x: ['date_format' => 'Ym']), ['key' => ['date_format:Ym']]],
-            'date_format:Hi' => [new Property('key', maxLength: 4, minLength: 4, pattern: '^[0-2][0-9][0-5][0-9]', x: ['date_format' => 'Hi']), ['key' => ['date_format:Hi']]],
+            'date_format:Ymd' => [new Property('key', pattern: '^[0-9]{4}(0[1-9]|1[0-2])[0-3][0-9]', maxLength: 8, minLength: 8, x: ['date_format' => 'Ymd']), ['key' => ['date_format:Ymd']]],
+            'date_format:Ym' => [new Property('key', pattern: '^[0-9]{4}(0[1-9]|1[0-2])', maxLength: 6, minLength: 6, x: ['date_format' => 'Ym']), ['key' => ['date_format:Ym']]],
+            'date_format:Hi' => [new Property('key', pattern: '^[0-2][0-9][0-5][0-9]', maxLength: 4, minLength: 4, x: ['date_format' => 'Hi']), ['key' => ['date_format:Hi']]],
         ];
     }
 
@@ -195,13 +195,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                 {
                     use RequestRuleGeneratorTrait;
 
-                    #[Property(
-                        'status',
-                        type: 'string',
-                        enum: Status::class,
-                        example: Status::AVAILABLE,
-                        nullable: true
-                    )]
+                    #[Property('status', type: 'string', example: Status::AVAILABLE, nullable: true, enum: Status::class)]
                     public string $status;
                 },
                 '["status: Nullable definitions are different in property and schema. "]',
@@ -211,12 +205,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                 {
                     use RequestRuleGeneratorTrait;
 
-                    #[Property(
-                        'status',
-                        type: 'string',
-                        enum: Status::class,
-                        example: Status::AVAILABLE,
-                    )]
+                    #[Property('status', type: 'string', example: Status::AVAILABLE, enum: Status::class)]
                     public ?string $status = null;
                 },
                 '["status: Nullable definitions are different in property and schema. "]',
@@ -226,13 +215,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                 {
                     use RequestRuleGeneratorTrait;
 
-                    #[Property(
-                        'status',
-                        type: 'integer',
-                        enum: Status::class,
-                        example: Status::AVAILABLE,
-                        nullable: true
-                    )]
+                    #[Property('status', type: 'integer', example: Status::AVAILABLE, nullable: true, enum: Status::class)]
                     public ?string $status = null;
                 },
                 '["status: Type definitions are different in property and schema. "]',
@@ -242,13 +225,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                 {
                     use RequestRuleGeneratorTrait;
 
-                    #[Property(
-                        'status',
-                        type: 'integer',
-                        enum: Status::class,
-                        example: Status::AVAILABLE,
-                        nullable: true
-                    )]
+                    #[Property('status', type: 'integer', example: Status::AVAILABLE, nullable: true, enum: Status::class)]
                     public string $status;
                 },
                 '["status: Nullable definitions are different in property and schema. ","status: Type definitions are different in property and schema. "]',
@@ -269,7 +246,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
 
                     #[
                         Parameter('code', name: 'Code', in: 'path', required: true),
-                        \OpenApi\Attributes\Schema(type: 'string', maxLength: 19, pattern: '^[0-9]{1,19}', example: '1000000004')
+                        \OpenApi\Attributes\Schema(type: 'string', pattern: '^[0-9]{1,19}', example: '1000000004', maxLength: 19)
                     ]
                     public ?string $code = null;
                 },
@@ -282,7 +259,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
 
                     #[
                         Parameter('code', name: 'Code', in: 'path', required: true),
-                        \OpenApi\Attributes\Schema(type: 'string', maxLength: 19, pattern: '^[0-9]{1,19}', example: '1000000004', nullable: true)
+                        \OpenApi\Attributes\Schema(type: 'string', pattern: '^[0-9]{1,19}', example: '1000000004', nullable: true, maxLength: 19)
                     ]
                     public string $code;
                 },
@@ -295,7 +272,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
 
                     #[
                         Parameter('code', name: 'Code', in: 'path', required: true),
-                        \OpenApi\Attributes\Schema(type: 'string', maxLength: 19, pattern: '^[0-9]{1,19}', example: '1000000004')
+                        \OpenApi\Attributes\Schema(type: 'string', pattern: '^[0-9]{1,19}', example: '1000000004', maxLength: 19)
                     ]
                     public int $code;
                 },
@@ -308,7 +285,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
 
                     #[
                         Parameter('code', name: 'Code', in: 'path', required: true),
-                        \OpenApi\Attributes\Schema(type: 'string', maxLength: 19, pattern: '^[0-9]{1,19}', example: '1000000004')
+                        \OpenApi\Attributes\Schema(type: 'string', pattern: '^[0-9]{1,19}', example: '1000000004', maxLength: 19)
                     ]
                     public ?int $code = null;
                 },
@@ -434,7 +411,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
             use RequestRuleGeneratorTrait;
             #[
                 Parameter('Key', name: 'key', required: true),
-                \OpenApi\Attributes\Schema(type: 'string', maxLength: 19, pattern: '^[0-9]{1,19}')
+                \OpenApi\Attributes\Schema(type: 'string', pattern: '^[0-9]{1,19}', maxLength: 19)
             ]
             public string $test;
         };
@@ -477,9 +454,9 @@ class RequestRuleGeneratorTraitTest extends TestCase
                                     maximum:12,
                                     minimum:9,
                                 ),
+                                nullable: false,
                                 maxItems: 5,
                                 minItems: 1,
-                                nullable: false,
                             ),
                         ],
                         type: 'array',
@@ -553,13 +530,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
             use RequestRuleGeneratorTrait;
 
             #[
-                Property(
-                    'parent',
-                    type: 'string',
-                    format: 'string',
-                    maxLength: 10,
-                    nullable: true
-                ),
+                Property('parent', type: 'string', format: 'string', nullable: true, maxLength: 10),
             ]
             public ?string $test = null;
 
@@ -601,7 +572,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
             use RequestRuleGeneratorTrait;
             #[
                 Parameter('Status', name: 'status', required: false),
-                \OpenApi\Attributes\Schema(type: 'string', enum: Status::class, nullable: true)
+                \OpenApi\Attributes\Schema(type: 'string', nullable: true, enum: Status::class)
             ]
             public ?string $status = null;
         };
@@ -658,17 +629,10 @@ class ForClassSchemaAndPropertyTest extends FormRequest
     )]
     public array $key5;
 
-    #[Property(
-        'key6',
-        type: 'array',
-        items: new Items(
-            type: 'string',
-            enum: Status::class,
-        ),
-        maxItems: 5,
-        minItems: 0,
-        nullable: true,
-    )]
+    #[Property('key6', type: 'array', items: new Items(
+        type: 'string',
+        enum: Status::class,
+    ), nullable: true, maxItems: 5, minItems: 0)]
     public ?array $key6 = null;
 
     #[Property(

@@ -116,109 +116,49 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
             )]
             public float $floatWithInitialValueWithoutDefault = 0.8888;
 
-            #[Property(
-                type: 'integer',
-                default: 8989,
-                nullable: true
-            )]
+            #[Property(type: 'integer', nullable: true, default: 8989)]
             public int $intWithInitialValueAndDefault = 3;
 
-            #[Property(
-                type: 'integer',
-                default: '888',
-                nullable: true
-            )]
+            #[Property(type: 'integer', nullable: true, default: '888')]
             public int $intWithInitialValueAndDefaultAsString = 3;
 
-            #[Property(
-                type: 'string',
-                default: '33333',
-                nullable: true
-            )]
+            #[Property(type: 'string', nullable: true, default: '33333')]
             public string $stringWithInitialValueAndDefault = 'string';
 
-            #[Property(
-                type: 'array',
-                default: ['bbc', 'abc', 'cnn'],
-                nullable: true
-            )]
+            #[Property(type: 'array', nullable: true, default: ['bbc', 'abc', 'cnn'])]
             public array $arrayWithInitialValueAndDefault = ['litalico', 'eg-r2'];
 
-            #[Property(
-                type: 'bool',
-                default: 'true',
-                nullable: true
-            )]
+            #[Property(type: 'bool', nullable: true, default: 'true')]
             public bool $boolWithInitialValueAndDefaultAsStringTrue = false;
 
-            #[Property(
-                type: 'bool',
-                default: true,
-                nullable: true
-            )]
+            #[Property(type: 'bool', nullable: true, default: true)]
             public bool $boolWithInitialValueAndDefaultAsTrue = false;
 
-            #[Property(
-                type: 'bool',
-                default: '1',
-                nullable: true
-            )]
+            #[Property(type: 'bool', nullable: true, default: '1')]
             public bool $boolWithInitialValueAndDefaultAsString1 = false;
 
-            #[Property(
-                type: 'float',
-                default: 3.14,
-                nullable: true
-            )]
+            #[Property(type: 'float', nullable: true, default: 3.14)]
             public float $floatWithInitialValueAndDefault = 0.5;
 
-            #[Property(
-                type: 'float',
-                default: '2.718',
-                nullable: true
-            )]
+            #[Property(type: 'float', nullable: true, default: '2.718')]
             public float $floatWithInitialValueAndDefaultAsString = 0.5;
 
-            #[Property(
-                type: 'integer',
-                default: 999,
-                nullable: true
-            )]
+            #[Property(type: 'integer', nullable: true, default: 999)]
             public ?int $nullableIntWithoutInitialValueAndDefault = null;
 
-            #[Property(
-                type: 'string',
-                default: 'default_string',
-                nullable: true
-            )]
+            #[Property(type: 'string', nullable: true, default: 'default_string')]
             public ?string $nullableStringWithoutInitialValueAndDefault = null;
 
-            #[Property(
-                type: 'array',
-                default: ['x', 'y', 'z'],
-                nullable: true
-            )]
+            #[Property(type: 'array', nullable: true, default: ['x', 'y', 'z'])]
             public ?array $nullableArrayWithoutInitialValueAndDefault = null;
 
-            #[Property(
-                type: 'bool',
-                default: true,
-                nullable: true
-            )]
+            #[Property(type: 'bool', nullable: true, default: true)]
             public ?bool $nullableBoolWithoutInitialValueAndDefault = null;
 
-            #[Property(
-                type: 'float',
-                default: 1.23,
-                nullable: true
-            )]
+            #[Property(type: 'float', nullable: true, default: 1.23)]
             public ?float $nullableFloatWithoutInitialValueAndDefault = null;
 
-            #[Property(
-                type: 'float',
-                default: 'aa',
-                nullable: true
-            )]
+            #[Property(type: 'float', nullable: true, default: 'aa')]
             public $unknownProperty;
         };
 

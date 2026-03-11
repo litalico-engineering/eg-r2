@@ -46,6 +46,8 @@ return RectorConfig::configure()
         RemoveUselessVarTagRector::class,
         TernaryToBooleanOrFalseToBooleanAndRector::class,
         ShortenElseIfRector::class,
+        SortAttributeNamedArgsRector::class,
+        SortCallLikeNamedArgsRector::class,
         ListToArrayDestructRector::class,
         SortAttributeNamedArgsRector::class,
         SortCallLikeNamedArgsRector::class,
