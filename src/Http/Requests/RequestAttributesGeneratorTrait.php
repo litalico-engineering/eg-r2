@@ -120,9 +120,8 @@ trait RequestAttributesGeneratorTrait
     {
         $reflectionType = $phpProperty->getType();
         if (
-            $reflectionType === null ||
-            $reflectionType->isBuiltin() ||
-            !$reflectionType instanceof ReflectionNamedType
+            !$reflectionType instanceof ReflectionNamedType ||  // 先に型確認
+            $reflectionType->isBuiltin()                       // その後isBuiltin()を呼ぶ
         ) {
             return null;
         }
@@ -273,7 +272,11 @@ trait RequestAttributesGeneratorTrait
             // Recurse into nested properties in array items
             $newRootDescription = $isArrayItem && $this->isInsideArrayWildcard($parentNames) ? $rootArrayDescription : $description;
 
-            if ($schema->items->properties !== Generator::UNDEFINED) {  /** @phpstan-ignore-line */
+            // Guard: items must be defined and have properties before recursing
+            if (
+                $this->isDefined($schema->items) &&  /** @phpstan-ignore-line */
+                $this->isDefined($schema->items->properties)  /** @phpstan-ignore-line */
+            ) {
                 foreach ($schema->items->properties as $innerProperty) {
                     yield from $this->flattenSchema(
                         $innerProperty,
