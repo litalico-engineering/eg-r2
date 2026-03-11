@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.2](https://github.com/litalico-engineering/eg-r2/compare/1.4.1...1.4.2) - 2026-03-11
+### Other Changes
+- Add Trait for Auto-generating FormRequest attributes() Method from OpenAPI Property Attributes by @k2tzumi in https://github.com/litalico-engineering/eg-r2/pull/45
+
 ## [1.4.1](https://github.com/litalico-engineering/eg-r2/compare/1.4.0...1.4.1) - 2026-03-10
 ### Other Changes
 - Add test for nullable enum parameter validation by @k2tzumi in https://github.com/litalico-engineering/eg-r2/pull/41
