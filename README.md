@@ -15,7 +15,7 @@
     ```console
     php artisan vendor:publish --provider="Litalico\EgR2\Providers\EgR2ServiceProvider" --tag=eg-r2-config
     ```
-    This creates `config/eg-r2.php` for customization. If not published, default configuration will be used.
+    This creates `config/eg_r2.php` for customization. If not published, default configuration will be used.
 
 3. (Optional) Publish language files
     ```console
@@ -33,9 +33,9 @@ see. https://zircote.github.io/swagger-php/guide/attributes.html
 > [!IMPORTANT]  
 > No need to define routing for Controller methods
 
-2. Configure the `config/eg-r2.php` (if you published it in step 2 of Installation)  
+2. Configure the `config/eg_r2.php` (if you published it in step 2 of Installation)  
 Describe the namespace of the Controller that describes the OpenAPI Attribute.  
-If you didn't publish the config file, you can create it manually at `config/eg-r2.php`:
+If you didn't publish the config file, you can create it manually at `config/eg_r2.php`:
     ```php
     <?php
     
