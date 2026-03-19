@@ -9,6 +9,7 @@ use Illuminate\Foundation\Application;
 use Litalico\EgR2\Console\Commands\GenerateRoute;
 use Litalico\EgR2\Providers\EgR2ServiceProvider;
 use Litalico\EgR2\Services\NameSpaceFindService;
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -17,6 +18,7 @@ use Tests\TestCase;
 #[CoversClass(NameSpaceFindService::class)]
 class NameSpaceFindServiceTest extends TestCase
 {
+    #[Override]
     public static function setUpBeforeClass(): void
     {
     }
