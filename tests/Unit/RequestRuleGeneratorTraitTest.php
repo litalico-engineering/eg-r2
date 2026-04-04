@@ -13,7 +13,6 @@ use OpenApi\Annotations\Schema;
 use OpenApi\Attributes\Items;
 use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Property;
-use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -29,7 +28,6 @@ use Tests\TestCase;
 #[CoversClass(Integer::class)]
 class RequestRuleGeneratorTraitTest extends TestCase
 {
-    #[Override]
     public static function setUpBeforeClass(): void
     {
     }

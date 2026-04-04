@@ -7,7 +7,6 @@ namespace Litalico\EgR2\Providers;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Litalico\EgR2\Console\Commands\GenerateRoute;
-use Override;
 
 /**
  * Service provider for the EgR2 package.
@@ -57,7 +56,6 @@ class EgR2ServiceProvider extends ServiceProvider
     /**
      * @inheritDoc
      */
-    #[Override]
     public function register(): void
     {
         $this->mergeConfigFrom(
@@ -69,7 +67,6 @@ class EgR2ServiceProvider extends ServiceProvider
     /**
      * @return list<class-string>
      */
-    #[Override]
     public function provides(): array
     {
         return [GenerateRoute::class];

@@ -10,7 +10,6 @@ use Litalico\EgR2\Http\Requests\FormRequestPropertyHandlerTrait;
 use Litalico\EgR2\Rules\Integer;
 use Mockery;
 use OpenApi\Attributes\Property;
-use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,7 +26,6 @@ use Tests\TestCase;
 #[CoversClass(Integer::class)]
 class FormRequestPropertyHandlerTraitTest extends TestCase
 {
-    #[Override]
     public static function setUpBeforeClass(): void
     {
     }
