@@ -37,8 +37,13 @@ jobs:
     strategy:
       matrix:
         php: ["8.2", "8.3", "8.4", "8.5"]
-        laravel: ["11.*", "12.*"]
+        laravel: ["11.*", "12.*", "13.*"]
         swagger_php: ["^4.0", "^5.0", "^6.0"]
+        exclude:
+          - php: "8.2"
+            laravel: "13.*"
+          - php: "8.5"
+            laravel: "11.*"
 
     steps:
       - name: Checkout Code

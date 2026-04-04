@@ -16,7 +16,7 @@ jobs:
       - name: Get PHP version
         id: php-version
         run: |
-          echo "PHP_VERSION=`jq -r '.config.platform.php' composer.json`" >> $GITHUB_ENV
+          echo "PHP_VERSION=`jq -r '.config.ci.php' composer.json`" >> $GITHUB_ENV
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
