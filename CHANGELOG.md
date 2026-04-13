@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.3](https://github.com/litalico-engineering/eg-r2/compare/1.4.2...1.4.3) - 2026-04-13
+### Other Changes
+- laravel13 by @tyamahori in https://github.com/litalico-engineering/eg-r2/pull/48
+
 ## [1.4.2](https://github.com/litalico-engineering/eg-r2/compare/1.4.1...1.4.2) - 2026-03-11
 ### Other Changes
 - Add Trait for Auto-generating FormRequest attributes() Method from OpenAPI Property Attributes by @k2tzumi in https://github.com/litalico-engineering/eg-r2/pull/45
