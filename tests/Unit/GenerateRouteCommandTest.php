@@ -203,10 +203,6 @@ class GenerateRouteCommandTest extends TestCase
 
         $this->app['config']->set('eg_r2.route_path', $routePath);
         $this->app['config']->set('eg_r2.namespaces', ['api.' => $namespace]);
-        $this->app['config']->set('eg_r2.security', array_merge([
-            'mapping' => [],
-            'undefined_scheme_policy' => 'ignore',
-            'multiple_requirements_policy' => 'error',
-        ], $security));
+        $this->app['config']->set('eg_r2.security', ['mapping' => [], 'undefined_scheme_policy' => 'ignore', 'multiple_requirements_policy' => 'error', ...$security]);
     }
 }

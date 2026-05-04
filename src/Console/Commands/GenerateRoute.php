@@ -192,7 +192,7 @@ class GenerateRoute extends Command
         if ($middlewares !== []) {
             $placeholders = implode(',', array_fill(0, count($middlewares), '?'));
             $literal .= "->middleware([{$placeholders}])";
-            $arguments = array_merge($arguments, $middlewares);
+            $arguments = [...$arguments, ...$middlewares];
         }
 
         $literal .= ";\n";
@@ -358,7 +358,7 @@ class GenerateRoute extends Command
                 continue;
             }
 
-            $middlewares = array_merge($middlewares, $this->convertMappingToMiddlewares($mapping[$scheme], array_values($scopes)));
+            $middlewares = [...$middlewares, ...$this->convertMappingToMiddlewares($mapping[$scheme], array_values($scopes))];
         }
 
         return $middlewares;
