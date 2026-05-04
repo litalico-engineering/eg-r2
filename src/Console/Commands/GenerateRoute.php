@@ -20,7 +20,6 @@ use function array_fill;
 use function array_filter;
 use function array_key_exists;
 use function array_map;
-use function array_merge;
 use function count;
 use function explode;
 use function implode;
