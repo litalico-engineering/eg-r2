@@ -8,7 +8,6 @@ use Litalico\EgR2\Services\NameSpaceFindService;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
-use Tests\Fixtures\Security\ClassSecurityController;
 use Tests\Fixtures\Security\CompositeMultiScopesSecurityController;
 use Tests\Fixtures\Security\CompositeSecurityController;
 use Tests\Fixtures\Security\MultipleRequirementsSecurityController;
@@ -61,25 +60,6 @@ class GenerateRouteCommandTest extends TestCase
         $contents = (string) file_get_contents($routePath);
 
         self::assertStringContainsString("Route::get('/composite-multi-scopes','index')->middleware(['auth:bearer_and_api','authorize.scope:read,write']);", $contents);
-    }
-
-    #[Test]
-    public function it_inherits_class_level_security_and_allows_operation_empty_override(): void
-    {
-        $routePath = $this->runCommandWithControllers(
-            [ClassSecurityController::class],
-            [
-                'mapping' => [
-                    'bearerAuth' => ['auth:api', 'scope:{scopes}'],
-                ],
-            ]
-        );
-
-        $contents = (string) file_get_contents($routePath);
-
-        self::assertStringContainsString("Route::get('/class-inherited','inherited')->middleware(['auth:api','scope:write']);", $contents);
-        self::assertStringContainsString("Route::get('/class-override-empty','overrideEmpty');", $contents);
-        self::assertStringNotContainsString("Route::get('/class-override-empty','overrideEmpty')->middleware", $contents);
     }
 
     #[Test]
@@ -159,6 +139,58 @@ class GenerateRouteCommandTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->artisan('eg-r2:generate-route');
+    }
+
+    #[Test]
+    public function error_message_includes_context_for_multiple_requirements(): void
+    {
+        $routePath = $this->prepareRoutePath();
+        $this->setupCommandConfig(
+            $routePath,
+            [MultipleRequirementsSecurityController::class],
+            [
+                'multiple_requirements_policy' => 'error',
+            ]
+        );
+
+        try {
+            $this->artisan('eg-r2:generate-route');
+            self::fail('Expected RuntimeException was not thrown');
+        } catch (RuntimeException $e) {
+            // Error message should contain path and method name for context
+            self::assertStringContainsString('/multi', $e->getMessage());
+            self::assertStringContainsString('multi', $e->getMessage());
+        }
+    }
+
+    #[Test]
+    public function default_policy_is_warning_skip_and_generates_routes_without_middleware(): void
+    {
+        // Test without explicitly setting multiple_requirements_policy
+        // It should default to 'warning_skip' instead of 'error'
+        $routePath = $this->prepareRoutePath();
+        $namespace = 'Tests\\Fixtures\\Security';
+
+        $service = Mockery::mock(NameSpaceFindService::class);
+        $service->shouldReceive('getClassesOfNameSpace')
+            ->once()
+            ->with($namespace)
+            ->andReturn([MultipleRequirementsSecurityController::class]);
+
+        $this->app->instance(NameSpaceFindService::class, $service);
+
+        $this->app['config']->set('eg_r2.route_path', $routePath);
+        $this->app['config']->set('eg_r2.namespaces', ['api.' => $namespace]);
+        // Only set mapping, not explicitly setting multiple_requirements_policy
+        $this->app['config']->set('eg_r2.security', ['mapping' => [], 'undefined_scheme_policy' => 'ignore']);
+
+        // Should succeed without throwing error (default warning_skip policy)
+        $this->artisan('eg-r2:generate-route')->assertExitCode(0);
+
+        $contents = (string) file_get_contents($routePath);
+        // Should generate route without middleware (skipped due to multiple requirements)
+        self::assertStringContainsString("Route::get('/multi','multi');", $contents);
+        self::assertStringNotContainsString("Route::get('/multi','multi')->middleware", $contents);
     }
 
     /**

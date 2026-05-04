@@ -13,7 +13,6 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PsrPrinter;
 use OpenApi\Annotations\Operation;
 use OpenApi\Generator;
-use ReflectionClass;
 use ReflectionException;
 use RuntimeException;
 use function array_fill;
@@ -136,9 +135,7 @@ class GenerateRoute extends Command
      */
     private function generateRoute(string $controller): ?Literal
     {
-        $reflection = new ReflectionClass($controller);
-        $methods = $reflection->getMethods();
-        $controllerSecurity = $this->extractClassSecurity($reflection);
+        $methods = (new \ReflectionClass($controller))->getMethods();
 
         $closure = new Closure();
         $bodies = '';
@@ -149,7 +146,7 @@ class GenerateRoute extends Command
                 $instance = $attribute->newInstance();
 
                 if ($instance instanceof Operation) {
-                    $middlewares = $this->resolveOperationMiddlewares($instance, $controllerSecurity);
+                    $middlewares = $this->resolveOperationMiddlewares($instance, $instance->path, $method->getName());
                     $bodies .= $this->convertOperation($instance, $method->getName(), $middlewares);
                 }
             }
@@ -200,39 +197,16 @@ class GenerateRoute extends Command
     }
 
     /**
-     * @param ReflectionClass<object> $reflection
-     * @return list<array<string, array<int, string>>>
-     */
-    private function extractClassSecurity(ReflectionClass $reflection): array
-    {
-        foreach ($reflection->getAttributes() as $attribute) {
-            $instance = $attribute->newInstance();
-
-            if (!property_exists($instance, 'security')) {
-                continue;
-            }
-
-            $security = $instance->security;
-            if (Generator::isDefault($security) || !is_array($security)) {
-                return [];
-            }
-
-            return $this->normalizeSecurityRequirements($security);
-        }
-
-        return [];
-    }
-
-    /**
      * @param Operation $operation
-     * @param list<array<string, array<int, string>>> $controllerSecurity
+     * @param string $path
+     * @param string $action
      * @return list<string>
      */
-    private function resolveOperationMiddlewares(Operation $operation, array $controllerSecurity): array
+    private function resolveOperationMiddlewares(Operation $operation, string $path, string $action): array
     {
         $operationSecurity = $operation->security;
         if (Generator::isDefault($operationSecurity)) {
-            $requirements = $controllerSecurity;
+            return [];
         } else {
             $requirements = $this->normalizeSecurityRequirements($operationSecurity);
         }
@@ -241,7 +215,7 @@ class GenerateRoute extends Command
             return [];
         }
 
-        return $this->convertSecurityRequirementsToMiddlewares($requirements);
+        return $this->convertSecurityRequirementsToMiddlewares($requirements, $path, $action);
     }
 
     /**
@@ -294,35 +268,39 @@ class GenerateRoute extends Command
 
     /**
      * @param list<array<string, array<int, string>>> $requirements
+     * @param string $path
+     * @param string $action
      * @return list<string>
      */
-    private function convertSecurityRequirementsToMiddlewares(array $requirements): array
+    private function convertSecurityRequirementsToMiddlewares(array $requirements, string $path, string $action): array
     {
         if (count($requirements) > 1) {
-            $policy = config('eg_r2.security.multiple_requirements_policy', 'error');
+            $policy = config('eg_r2.security.multiple_requirements_policy', 'warning_skip');
             if ($policy === 'warning_skip') {
-                $this->warn('OpenAPI security has multiple requirement objects. Skipping middleware generation.');
+                $this->warn(sprintf('OpenAPI security has multiple requirement objects at %s::%s. Skipping middleware generation.', $path, $action));
 
                 return [];
             }
             if ($policy === 'warning_first') {
-                $this->warn('OpenAPI security has multiple requirement objects. Using only the first requirement object.');
+                $this->warn(sprintf('OpenAPI security has multiple requirement objects at %s::%s. Using only the first requirement object.', $path, $action));
                 $requirements = [$requirements[0]];
             } elseif ($policy === 'error') {
-                throw new RuntimeException('OpenAPI security with multiple requirement objects is not supported by current middleware mapping policy.');
+                throw new RuntimeException(sprintf('OpenAPI security with multiple requirement objects at %s::%s is not supported by current middleware mapping policy.', $path, $action));
             } else {
                 throw new RuntimeException(sprintf('Invalid multiple_requirements_policy: %s', var_export($policy, true)));
             }
         }
 
-        return $this->convertSingleRequirementToMiddlewares($requirements[0]);
+        return $this->convertSingleRequirementToMiddlewares($requirements[0], $path, $action);
     }
 
     /**
      * @param array<string, array<int, string>> $requirement
+     * @param string $path
+     * @param string $action
      * @return list<string>
      */
-    private function convertSingleRequirementToMiddlewares(array $requirement): array
+    private function convertSingleRequirementToMiddlewares(array $requirement, string $path, string $action): array
     {
         $rawMapping = config('eg_r2.security.mapping', []);
         if (!is_array($rawMapping)) {
@@ -332,7 +310,9 @@ class GenerateRoute extends Command
         /** @var array<string, string|array<mixed, mixed>> $mapping */
         $mapping = $rawMapping;
 
+        // Iterate mapping order, not requirement order, to ensure stable middleware execution order
         $middlewares = [];
+        $processedSchemes = [];
 
         if (count($requirement) > 1) {
             $compositeValue = $this->findCompositeMapping($requirement, $mapping);
@@ -350,14 +330,25 @@ class GenerateRoute extends Command
             }
         }
 
-        foreach ($requirement as $scheme => $scopes) {
-            if (!array_key_exists($scheme, $mapping)) {
-                $this->handleUndefinedScheme($scheme);
-
+        // Process schemes in mapping order, not requirement order
+        foreach ($mapping as $key => $value) {
+            if (str_contains($key, self::AND_DELIMITER)) {
                 continue;
             }
 
-            $middlewares = [...$middlewares, ...$this->convertMappingToMiddlewares($mapping[$scheme], array_values($scopes))];
+            if (!array_key_exists($key, $requirement)) {
+                continue;
+            }
+
+            $middlewares = [...$middlewares, ...$this->convertMappingToMiddlewares($value, array_values($requirement[$key]))];
+            $processedSchemes[] = $key;
+        }
+
+        // Check for undefined schemes in requirement
+        foreach (array_keys($requirement) as $scheme) {
+            if (!in_array($scheme, $processedSchemes, true)) {
+                $this->handleUndefinedScheme($scheme, $path, $action);
+            }
         }
 
         return $middlewares;
@@ -428,7 +419,7 @@ class GenerateRoute extends Command
         return $middlewares;
     }
 
-    private function handleUndefinedScheme(string $scheme): void
+    private function handleUndefinedScheme(string $scheme, string $path, string $action): void
     {
         $policy = config('eg_r2.security.undefined_scheme_policy', 'ignore');
 
@@ -436,12 +427,12 @@ class GenerateRoute extends Command
             return;
         }
         if ($policy === 'warning') {
-            $this->warn(sprintf('OpenAPI security scheme "%s" has no middleware mapping. Skipped.', $scheme));
+            $this->warn(sprintf('OpenAPI security scheme "%s" has no middleware mapping at %s::%s. Skipped.', $scheme, $path, $action));
 
             return;
         }
         if ($policy === 'error') {
-            throw new RuntimeException(sprintf('OpenAPI security scheme "%s" has no middleware mapping.', $scheme));
+            throw new RuntimeException(sprintf('OpenAPI security scheme "%s" has no middleware mapping at %s::%s.', $scheme, $path, $action));
         }
 
         throw new RuntimeException(sprintf('Invalid undefined_scheme_policy: %s', var_export($policy, true)));

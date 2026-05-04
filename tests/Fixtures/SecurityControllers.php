@@ -4,19 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures\Security;
 
-use Attribute;
 use OpenApi\Attributes as OA;
-
-#[Attribute(Attribute::TARGET_CLASS)]
-class ControllerSecurity
-{
-    /**
-     * @param array<int, array<string, array<int, string>>> $security
-     */
-    public function __construct(public array $security)
-    {
-    }
-}
 
 class CompositeSecurityController
 {
@@ -44,24 +32,6 @@ class ClassInheritedSecurityController
 {
     #[OA\Get(path: '/inherited')]
     public function inherited(): void
-    {
-    }
-}
-
-#[ControllerSecurity([
-    [
-        'bearerAuth' => ['write'],
-    ],
-])]
-class ClassSecurityController
-{
-    #[OA\Get(path: '/class-inherited')]
-    public function inherited(): void
-    {
-    }
-
-    #[OA\Get(path: '/class-override-empty', security: [])]
-    public function overrideEmpty(): void
     {
     }
 }

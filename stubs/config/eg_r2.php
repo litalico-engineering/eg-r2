@@ -51,6 +51,6 @@ return [
         'undefined_scheme_policy' => 'ignore',
 
         // Policy when OpenAPI security has multiple requirement objects (OR): error | warning_first | warning_skip
-        'multiple_requirements_policy' => 'error',
+        'multiple_requirements_policy' => 'warning_skip',
     ],
 ];
