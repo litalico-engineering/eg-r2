@@ -8,6 +8,7 @@ COMPOSER_AUTOLOAD_OBJ := ./$(COMPOSER_DIR)/composer/autoload_classmap.php
 DIFF_PHP_SRCS := $(shell find src tests -name "*.php" -type f)
 GIT_HEAD := ./.git/HEAD
 FIXER_DIFF_STATUS := .fixer-diff.status
+RECTOR_DIFF_STATUS := .rector-diff.status
 PHPSTAN_STATUS := .phpstan/resultCache.php
 CS_FIXER_CACHE := .php-cs-fixer.cache
 COVERAGE_OBJ := coverage.xml
@@ -15,7 +16,7 @@ CREDITS_OBJ := CREDITS
 
 .DEFAULT_GOAL := help
 
-.PHONY: help coverage install phpstan fixer fixer-all lint lint-all credits
+.PHONY: help coverage install phpstan fixer fixer-all rector rector-all lint lint-all credits
 
 $(COMPOSER_CACHE_SRCS):
 	@composer install
@@ -38,6 +39,11 @@ $(FIXER_DIFF_STATUS): $(COMPOSER_CACHE_SRCS) $(COMPOSER_AUTOLOAD_OBJ)
 		xargs -r $(COMPOSER_DIR)/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php;
 	@echo $(FIXER_DIFF_STATUS) > $@
 
+$(RECTOR_DIFF_STATUS): $(COMPOSER_CACHE_SRCS) $(COMPOSER_AUTOLOAD_OBJ)
+	@git diff --name-only --diff-filter=d origin/$(DEFAULT_BRANCH) '*.php' | \
+		xargs -r $(COMPOSER_DIR)/bin/rector process --config=rector.php;
+	@echo $(RECTOR_DIFF_STATUS) > $@
+
 $(COVERAGE_OBJ): $(COMPOSER_CACHE_SRCS) $(COMPOSER_AUTOLOAD_OBJ)
 	@$(COMPOSER_DIR)/bin/phpunit --configuration phpunit.xml --coverage-clover $@
 
@@ -54,13 +60,18 @@ coverage: $(COVERAGE_OBJ) ## Run coverage tests
 test: $(COMPOSER_CACHE_SRCS) $(COMPOSER_AUTOLOAD_OBJ) ## Run PHPUnit
 	@composer test
 
-lint-all: $(CS_FIXER_CACHE) $(PHPSTAN_STATUS) ## Run Linter with current project
+lint-all: $(CS_FIXER_CACHE) rector-all $(PHPSTAN_STATUS) ## Run Linter with current project
 
-lint: $(FIXER_DIFF_STATUS) $(PHPSTAN_STATUS) ## Run Linter diff of default branch
+lint: $(FIXER_DIFF_STATUS) $(RECTOR_DIFF_STATUS) $(PHPSTAN_STATUS) ## Run Linter diff of default branch
 
 fixer-all: $(CS_FIXER_CACHE) ## Run CS-Fixer with current project
 
 fixer: $(FIXER_DIFF_STATUS) ## Run CS-Fixer with diff of default branch
+
+rector-all: $(COMPOSER_CACHE_SRCS) $(COMPOSER_AUTOLOAD_OBJ) ## Run Rector with current project
+	@$(COMPOSER_DIR)/bin/rector process --config=rector.php
+
+rector: $(RECTOR_DIFF_STATUS) ## Run Rector with diff of default branch
 
 phpstan: $(PHPSTAN_STATUS) ## Run PHPStan with current project
 

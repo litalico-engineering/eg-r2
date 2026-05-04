@@ -12,3 +12,4 @@ phpunit-ci.xml
 /.fixer-diff.status
 composer.lock
 .rector
+.rector-diff.status
