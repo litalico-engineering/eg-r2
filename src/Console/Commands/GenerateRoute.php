@@ -13,6 +13,7 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PsrPrinter;
 use OpenApi\Annotations\Operation;
 use OpenApi\Generator;
+use ReflectionClass;
 use ReflectionException;
 use RuntimeException;
 use function array_fill;
@@ -135,7 +136,7 @@ class GenerateRoute extends Command
      */
     private function generateRoute(string $controller): ?Literal
     {
-        $methods = (new \ReflectionClass($controller))->getMethods();
+        $methods = (new ReflectionClass($controller))->getMethods();
 
         $closure = new Closure();
         $bodies = '';
