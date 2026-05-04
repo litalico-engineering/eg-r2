@@ -44,6 +44,15 @@ If you didn't publish the config file, you can create it manually at `config/eg_
             'App\\Http\\Controllers',
         ],
         'route_path' => base_path('routes/eg_r2.php'),
+        'security' => [
+            'mapping' => [
+                'bearerAuth' => ['auth:api', 'scope:{scopes}'],
+                'apiKeyAuth' => 'auth.apikey',
+                'bearerAuth&&apiKeyAuth' => ['auth:bearer_and_api'],
+            ],
+            'undefined_scheme_policy' => 'ignore',
+            'multiple_requirements_policy' => 'error',
+        ],
     ];
     ```
 
@@ -51,6 +60,59 @@ If you didn't publish the config file, you can create it manually at `config/eg_
     ```console
     php artisan eg-r2:generate-route
     ```
+
+### Security Middleware Mapping
+
+`eg-r2:generate-route` can convert OpenAPI `security` definitions into Laravel route middleware.
+
+- Single requirement object with multiple schemes is treated as `AND`.
+- Multiple requirement objects are OpenAPI `OR`, and controlled by `security.multiple_requirements_policy`.
+
+Configuration keys:
+
+- `security.mapping`
+    - Maps OpenAPI scheme names to middleware (`string` or `string[]`).
+    - `{scopes}` placeholder is replaced with comma-separated scopes from OpenAPI.
+    - AND composite mapping can be defined with `&&` (for example, `bearerAuth&&apiKeyAuth`).
+    - Composite key matching is order-insensitive (`apiKeyAuth&&bearerAuth` equals `bearerAuth&&apiKeyAuth`).
+    - Middleware output order follows your config definition order.
+- `security.undefined_scheme_policy`
+    - `ignore`: skip unknown schemes.
+    - `warning`: output warning and skip.
+    - `error`: fail route generation.
+- `security.multiple_requirements_policy`
+    - `error`: fail route generation.
+    - `warning_first`: warn and use only the first requirement object.
+    - `warning_skip`: warn and skip middleware generation for that operation.
+
+Example for a real project:
+
+```php
+'security' => [
+    'mapping' => [
+        // Standard bearer token endpoints
+        'bearerAuth' => ['auth:api', 'scope:{scopes}'],
+
+        // Internal API key endpoints
+        'apiKeyAuth' => 'auth.internal_api_key',
+
+        // Endpoints that require both bearer token and internal API key
+        'bearerAuth&&apiKeyAuth' => [
+            'auth:bearer_and_internal_key',
+            'scope:{scopes}',
+        ],
+    ],
+    'undefined_scheme_policy' => 'error',
+    'multiple_requirements_policy' => 'warning_skip',
+],
+```
+
+In this example:
+
+- `bearerAuth` routes become `auth:api` and `scope:{scopes}`.
+- `apiKeyAuth` routes become `auth.internal_api_key`.
+- `bearerAuth&&apiKeyAuth` matches the same OpenAPI requirement even if the schemes are written in reverse order.
+- `warning_skip` lets route generation continue for OpenAPI `OR` security definitions while leaving those routes without generated security middleware.
 
 ### Auto-generating FormRequest attributes() Method
 
