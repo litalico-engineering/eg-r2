@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.4](https://github.com/litalico-engineering/eg-r2/compare/1.4.3...1.4.4) - 2026-05-11
+### Other Changes
+- Add OpenAPI security middleware mapping by @k2tzumi in https://github.com/litalico-engineering/eg-r2/pull/51
+
 ## [1.4.3](https://github.com/litalico-engineering/eg-r2/compare/1.4.2...1.4.3) - 2026-04-13
 ### Other Changes
 - laravel13 by @tyamahori in https://github.com/litalico-engineering/eg-r2/pull/48
