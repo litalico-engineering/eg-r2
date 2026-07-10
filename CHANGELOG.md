@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.0](https://github.com/litalico-engineering/eg-r2/compare/1.4.4...1.5.0) - 2026-07-10
+
+### Other Changes
+- Drop Laravel 11 support and migrate compatibility baseline by @katsumi-kato-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/56
+- feat: generate unique route names from operationId by @katsumi-kato-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/54
+
 ## [1.4.4](https://github.com/litalico-engineering/eg-r2/compare/1.4.3...1.4.4) - 2026-05-11
 ### Other Changes
 - Add OpenAPI security middleware mapping by @k2tzumi in https://github.com/litalico-engineering/eg-r2/pull/51
