@@ -62,7 +62,6 @@ trait FormRequestPropertyHandlerTrait
      * Values are normalized to match the declared property type.
      *
      * @param ReflectionProperty $property
-     * @return mixed
      * @throws ReflectionException
      */
     private function getDefaultValueFromProperty(ReflectionProperty $property): mixed
@@ -98,7 +97,6 @@ trait FormRequestPropertyHandlerTrait
      * Get the default value from the Property attribute if it exists.
      *
      * @param ReflectionProperty $property
-     * @return mixed
      */
     private function getPropertyDefaultValue(ReflectionProperty $property): mixed
     {
@@ -119,9 +117,7 @@ trait FormRequestPropertyHandlerTrait
     /**
      * Normalize a value to match the declared property type.
      *
-     * @param mixed $value
      * @param ReflectionType|null $type
-     * @return mixed
      */
     private function normalizeValueToType(mixed $value, ReflectionType|null $type): mixed
     {
@@ -153,7 +149,6 @@ trait FormRequestPropertyHandlerTrait
 
     /**
      * @param ReflectionType|null $type
-     * @return mixed
      * @throws ReflectionException
      */
     private function initialValue(?ReflectionType $type): mixed
