@@ -418,7 +418,6 @@ trait RequestAttributesGeneratorTrait
      *
      * OpenAPI library uses Generator::UNDEFINED as a sentinel for unset values.
      *
-     * @param mixed $value
      * @return bool
      */
     private function isDefined(mixed $value): bool
