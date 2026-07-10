@@ -257,7 +257,6 @@ class GenerateRoute extends Command
     }
 
     /**
-     * @param mixed $scopes
      * @return list<string>
      */
     private function normalizeScopes(mixed $scopes): array
