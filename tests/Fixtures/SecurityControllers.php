@@ -56,3 +56,30 @@ class UndefinedSchemeSecurityController
     {
     }
 }
+
+class ResourceController
+{
+    #[OA\Get(
+        path: '/resources/{id}',
+        operationId: 'showResource',
+    )]
+    public function show(): void
+    {
+    }
+
+    #[OA\Post(
+        path: '/resources',
+        operationId: 'createResource',
+    )]
+    public function create(): void
+    {
+    }
+
+    #[OA\Put(
+        path: '/resources/{id}',
+        operationId: 'updateResource',
+    )]
+    public function update(): void
+    {
+    }
+}

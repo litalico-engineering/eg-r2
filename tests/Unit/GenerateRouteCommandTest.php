@@ -11,6 +11,7 @@ use RuntimeException;
 use Tests\Fixtures\Security\CompositeMultiScopesSecurityController;
 use Tests\Fixtures\Security\CompositeSecurityController;
 use Tests\Fixtures\Security\MultipleRequirementsSecurityController;
+use Tests\Fixtures\Security\ResourceController;
 use Tests\Fixtures\Security\UndefinedSchemeSecurityController;
 use Tests\TestCase;
 
@@ -39,7 +40,7 @@ class GenerateRouteCommandTest extends TestCase
 
         $contents = (string) file_get_contents($routePath);
 
-        self::assertStringContainsString("Route::get('/composite','index')->middleware(['auth:bearer_and_api','authorize.scope:read']);", $contents);
+        self::assertStringContainsString("Route::get('/composite','index')->name('index')->middleware(['auth:bearer_and_api','authorize.scope:read']);", $contents);
     }
 
     #[Test]
@@ -59,7 +60,7 @@ class GenerateRouteCommandTest extends TestCase
 
         $contents = (string) file_get_contents($routePath);
 
-        self::assertStringContainsString("Route::get('/composite-multi-scopes','index')->middleware(['auth:bearer_and_api','authorize.scope:read,write']);", $contents);
+        self::assertStringContainsString("Route::get('/composite-multi-scopes','index')->name('index')->middleware(['auth:bearer_and_api','authorize.scope:read,write']);", $contents);
     }
 
     #[Test]
@@ -98,7 +99,7 @@ class GenerateRouteCommandTest extends TestCase
 
         $contents = (string) file_get_contents($routePath);
 
-        self::assertStringContainsString("Route::get('/multi','multi')->middleware(['auth:api']);", $contents);
+        self::assertStringContainsString("Route::get('/multi','multi')->name('multi')->middleware(['auth:api']);", $contents);
         self::assertStringNotContainsString('auth.apikey', $contents);
     }
 
@@ -118,8 +119,8 @@ class GenerateRouteCommandTest extends TestCase
 
         $contents = (string) file_get_contents($routePath);
 
-        self::assertStringContainsString("Route::get('/multi','multi');", $contents);
-        self::assertStringNotContainsString("Route::get('/multi','multi')->middleware", $contents);
+        self::assertStringContainsString("Route::get('/multi','multi')->name('multi');", $contents);
+        self::assertStringNotContainsString("Route::get('/multi','multi')->name('multi')->middleware", $contents);
     }
 
     #[Test]
@@ -189,8 +190,24 @@ class GenerateRouteCommandTest extends TestCase
 
         $contents = (string) file_get_contents($routePath);
         // Should generate route without middleware (skipped due to multiple requirements)
-        self::assertStringContainsString("Route::get('/multi','multi');", $contents);
-        self::assertStringNotContainsString("Route::get('/multi','multi')->middleware", $contents);
+        self::assertStringContainsString("Route::get('/multi','multi')->name('multi');", $contents);
+        self::assertStringNotContainsString("Route::get('/multi','multi')->name('multi')->middleware", $contents);
+    }
+
+    #[Test]
+    public function it_generates_unique_route_names_using_operationId(): void
+    {
+        $routePath = $this->runCommandWithControllers(
+            [ResourceController::class],
+            []
+        );
+
+        $contents = (string) file_get_contents($routePath);
+
+        // Each route should have a unique name derived from operationId
+        self::assertStringContainsString("Route::get('/resources/{id}','show')->name('showResource');", $contents);
+        self::assertStringContainsString("Route::post('/resources','create')->name('createResource');", $contents);
+        self::assertStringContainsString("Route::put('/resources/{id}','update')->name('updateResource');", $contents);
     }
 
     /**
