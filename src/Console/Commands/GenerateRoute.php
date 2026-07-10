@@ -183,8 +183,13 @@ class GenerateRoute extends Command
             }
         }
 
-        $literal = "Route::{$operation->method}(?,?)";
-        $arguments = [$path, $action];
+        // Determine the route name from operationId or fallback to action
+        $operationId = Generator::isDefault($operation->operationId)
+            ? $action
+            : $operation->operationId;
+
+        $literal = "Route::{$operation->method}(?,?)->name(?)";
+        $arguments = [$path, $action, $operationId];
 
         if ($middlewares !== []) {
             $placeholders = implode(',', array_fill(0, count($middlewares), '?'));
