@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.1](https://github.com/litalico-engineering/eg-r2/compare/1.5.0...1.5.1) - 2026-07-13
+
+### Other Changes
+- Fix route name generation for route cache compatibility by @katsumi-kato-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/59
+
 ## [1.5.0](https://github.com/litalico-engineering/eg-r2/compare/1.4.4...1.5.0) - 2026-07-10
 
 ### Other Changes
