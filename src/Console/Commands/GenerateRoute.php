@@ -28,6 +28,7 @@ use function is_array;
 use function is_string;
 use function sprintf;
 use function str_contains;
+use function str_ends_with;
 use function trim;
 
 /**
@@ -100,6 +101,8 @@ class GenerateRoute extends Command
                 throw new RuntimeException($message);
             }
             $controllers = $this->nameSpaceFindService->getClassesOfNameSpace($namespaceName);
+            // Ensure Route::as() prefix composes hierarchical names with ->name().
+            $group = $this->normalizeRouteNameGroup($group);
 
             $closure = new Closure();
             $bodies = '';
@@ -127,6 +130,28 @@ class GenerateRoute extends Command
         fclose($this->fp);
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Normalizes the route name group prefix for Route::as().
+     *
+     * Laravel concatenates Route::as() and ->name() literally, so we ensure
+     * the group ends with '.' to keep names hierarchical (e.g. api.users.index).
+     *
+     * @param string $group
+     * @return string
+     */
+    private function normalizeRouteNameGroup(string $group): string
+    {
+        if ($group === '') {
+            return '';
+        }
+
+        if (str_ends_with($group, '.')) {
+            return $group;
+        }
+
+        return "{$group}.";
     }
 
     /**
