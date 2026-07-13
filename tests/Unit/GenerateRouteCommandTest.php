@@ -210,6 +210,32 @@ class GenerateRouteCommandTest extends TestCase
         self::assertStringContainsString("Route::put('/resources/{id}','update')->name('updateResource');", $contents);
     }
 
+    #[Test]
+    public function it_normalizes_route_name_group_with_trailing_dot(): void
+    {
+        $routePath = $this->prepareRoutePath();
+        $namespace = 'Tests\\Fixtures\\Security';
+
+        $service = Mockery::mock(NameSpaceFindService::class);
+        $service->shouldReceive('getClassesOfNameSpace')
+            ->once()
+            ->with($namespace)
+            ->andReturn([ResourceController::class]);
+
+        $this->app->instance(NameSpaceFindService::class, $service);
+
+        $this->app['config']->set('eg_r2.route_path', $routePath);
+        $this->app['config']->set('eg_r2.namespaces', ['api' => $namespace]);
+        $this->app['config']->set('eg_r2.security', ['mapping' => [], 'undefined_scheme_policy' => 'ignore']);
+
+        $this->artisan('eg-r2:generate-route')->assertExitCode(0);
+
+        $contents = (string) file_get_contents($routePath);
+
+        self::assertStringContainsString("Route::as('api.')->group(function ()", $contents);
+        self::assertStringNotContainsString("Route::as('api')->group(function ()", $contents);
+    }
+
     /**
      * @param list<class-string> $controllers
      * @param array<string, mixed> $security
