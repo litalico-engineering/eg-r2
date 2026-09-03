@@ -276,48 +276,70 @@ If the current locale is not supported, the package will fallback to the configu
 
 ### Generating response examples
 
-`ResponseExampleGeneratorTrait::generatedExample()` creates a deterministic array example from a response DTO's OpenAPI schema.
+`ResponseExampleGenerator` builds a random example payload from an OpenAPI schema in a document scanned by swagger-php.
+`$ref`, `allOf`, `oneOf`, and `anyOf` are resolved against that document, so response DTOs can be composed the same way as in the published specification.
 
 ```php
-use Litalico\EgR2\Http\Responses\ResponseExampleGeneratorTrait;
+use Litalico\EgR2\Services\ResponseExampleGenerator;
 use OpenApi\Attributes\Items;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
+use OpenApi\Generator;
 
-#[Schema(type: 'object')]
+#[Schema]
 final class FacilityResponse
 {
-    use ResponseExampleGeneratorTrait;
-
     #[Property(property: 'id', type: 'integer', minimum: 1)]
     public int $id;
 
-    #[Property(
-        property: 'contacts',
-        type: 'array',
-        minItems: 1,
-        items: new Items(
-            type: 'object',
-            properties: [
-                new Property(property: 'email', type: 'string', format: 'email'),
-                new Property(property: 'name', type: 'string', minLength: 1),
-            ],
-        ),
-    )]
+    #[Property(property: 'owner', ref: OwnerResponse::class)]
+    public OwnerResponse $owner;
+
+    #[Property(property: 'contacts', type: 'array', minItems: 1, maxItems: 3, items: new Items(ref: OwnerResponse::class))]
     public array $contacts;
 }
 
-$response = new FacilityResponse();
-$json = json_encode($response->generatedExample(), JSON_THROW_ON_ERROR);
+$openApi = (new Generator())->generate([app_path('Http/Responses')]);
+$generator = new ResponseExampleGenerator($openApi);
+
+$json = json_encode($generator->generateForClass(FacilityResponse::class), JSON_THROW_ON_ERROR);
+// or, for any schema object taken from the document (e.g. an operation response):
+$example = $generator->generate($schema);
 ```
 
-An explicit array `example` on `#[Schema]` is returned as the complete example.
-Otherwise, inline `#[Schema(properties: [...])]` definitions are used, or public `#[Property]` attributes when inline properties are absent.
-For each value, the priority is `example`, then the first enum value, then `default`, then a generated value for its type.
+For each schema the value is resolved in this order: `example`, a matching custom rule, a random `enum` value, `default`, then a random value for its type.
+Random values honor `minimum`, `maximum`, and exclusive bounds, `minLength`, `maxLength`, and supported `pattern` syntax, and `minItems` and `maxItems`.
+`date`, `date-time`, `email`, and `uuid` formats produce valid values.
+Properties marked `writeOnly` are omitted.
 
-Generated scalar values are deterministic.
-`date`, `date-time`, `email`, and `uuid` formats are valid and stable.
-Numeric minimum, maximum, and exclusive bounds, string lengths and supported patterns, and array `minItems` and `maxItems` are honored.
-Inline arrays and objects generate recursively, and enum class strings use the first case (a backed value for `BackedEnum`, otherwise the case name).
+`allOf` merges the generated objects of every branch; `oneOf` and `anyOf` pick one branch at random.
+A recursive `$ref` produces `null` when the referencing schema is nullable, or an empty array when it is the item schema of an array without `minItems`; otherwise it is reported as invalid.
 
-This trait does not resolve `$ref` values or schema composition, and does not map examples to mock endpoints.
+Pass a seeded `Random\Randomizer` to make output reproducible, for example in tests:
+
+```php
+use Random\Engine\Mt19937;
+use Random\Randomizer;
+
+$generator = new ResponseExampleGenerator($openApi, randomizer: new Randomizer(new Mt19937(42)));
+```
+
+#### Custom generation rules
+
+Rules override generated values for a property name, a format, or a type, in that order of precedence.
+They are read from `eg_r2.response_example.rules`, or passed to the constructor directly.
+A rule is a fixed value, a callable receiving `(Schema $schema, string $path)`, or the class name of an invokable.
+
+```php
+// config/eg_r2.php
+'response_example' => [
+    'rules' => [
+        'property:user_id' => App\OpenApi\UuidExample::class,
+        'format:uri' => 'https://example.com',
+        'type:boolean' => true,
+    ],
+],
+```
+
+An explicit `example` on the schema always wins over a rule.
+Mapping examples to mock endpoints is not provided.
