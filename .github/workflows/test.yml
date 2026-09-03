@@ -51,7 +51,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          tools: composer:v2, cs2pr
+          tools: composer:v2, cs2pr:1.8.7
           ini-values: pcov.directory=src
         env:
           update: true
@@ -62,7 +62,7 @@ jobs:
       - name: Get Composer Cache Directory
         id: get-composer-cache-dir
         run: |
-          echo "path=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+          echo "path=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
 
       - name: Get Composer Cache Directory
         id: composer-cache
@@ -116,7 +116,7 @@ jobs:
       - name: Check steps outcome
         if: steps.stan.outcome == 'failure' || steps.fixer-all.outcome == 'failure' || steps.fixer.outcome == 'failure' || steps.fixer-all.outcome == 'failure' || steps.rector.outcome == 'failure'|| steps.rector-all.outcome == 'failure'
         run: |
-          echo "Lint is failed. stan: ${{ steps.stan.outcome }}, fixer: ${{ steps.fixer.outcome }}, fixer-all: ${{ steps.fixer-all.outcome }}, rector: ${{ steps.rector.outcome }}, rector-all: ${{ steps.rector-all.outcome }}
+          echo "Lint is failed. stan: ${{ steps.stan.outcome }}, fixer: ${{ steps.fixer.outcome }}, fixer-all: ${{ steps.fixer-all.outcome }}, rector: ${{ steps.rector.outcome }}, rector-all: ${{ steps.rector-all.outcome }}"
           exit 1
 
       - name: test & coverage
