@@ -448,9 +448,19 @@ final class ResponseExampleGenerator
 
     private function randomString(int $minimum, int $maximum): string
     {
-        $length = $this->randomizer->getInt($minimum, max($minimum, $maximum));
+        return $this->bytesFromString(self::ALPHANUMERIC, $this->randomizer->getInt($minimum, max($minimum, $maximum)));
+    }
 
-        return $length === 0 ? '' : $this->randomizer->getBytesFromString(self::ALPHANUMERIC, $length);
+    /** Randomizer::getBytesFromString() requires PHP 8.3; composer allows 8.2. */
+    private function bytesFromString(string $characters, int $length): string
+    {
+        $last = strlen($characters) - 1;
+        $value = '';
+        for ($index = 0; $index < $length; ++$index) {
+            $value .= $characters[$this->randomizer->getInt(0, $last)];
+        }
+
+        return $value;
     }
 
     private function randomDate(): DateTimeImmutable
@@ -535,7 +545,7 @@ final class ResponseExampleGenerator
 
         $value = '';
         foreach ($segments as $segment) {
-            $value .= $segment['count'] === 0 ? '' : $this->randomizer->getBytesFromString($segment['characters'], $segment['count']);
+            $value .= $this->bytesFromString($segment['characters'], $segment['count']);
         }
 
         $delimiterSafePattern = str_replace('~', '\\~', $pattern);
