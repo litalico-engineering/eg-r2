@@ -53,4 +53,26 @@ return [
         // Policy when OpenAPI security has multiple requirement objects (OR): error | warning_first | warning_skip
         'multiple_requirements_policy' => 'warning_skip',
     ],
+
+    /*
+    |---------------------------------------------------------------------------
+    | Response example generation
+    |---------------------------------------------------------------------------
+    |
+    | Custom rules used by ResponseExampleGenerator. Keys are matched in this order:
+    |   'property:<name>'  a property name, e.g. 'property:user_id'
+    |   'format:<format>'  an OpenAPI format, e.g. 'format:uuid'
+    |   'type:<type>'      an OpenAPI type, e.g. 'type:string'
+    | Values are a fixed value, a callable fn(Schema $schema, string $path): mixed,
+    | or the class name of an invokable (use class names to keep `config:cache` working).
+    |
+    | Example:
+    | 'rules' => [
+    |     'property:user_id' => App\OpenApi\UuidExample::class,
+    |     'format:uri' => 'https://example.com',
+    | ],
+    */
+    'response_example' => [
+        'rules' => [],
+    ],
 ];
