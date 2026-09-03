@@ -17,7 +17,6 @@ use Tests\TestCase;
 
 class GenerateRouteCommandTest extends TestCase
 {
-
     #[Test]
     public function it_generates_middlewares_from_composite_and_mapping_order_is_preserved(): void
     {
