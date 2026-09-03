@@ -114,9 +114,9 @@ jobs:
           vendor/bin/rector process --config rector.php --dry-run
 
       - name: Check steps outcome
-        if: steps.stan.outcome == 'failure' || steps.fixer-all.outcome == 'failure' || steps.fixer.outcome == 'failure' || steps.fixer-all.outcome == 'failure' || steps.rector.outcome == 'failure'|| steps.rector-all.outcome == 'failure'
+        if: steps.stan.outcome == 'failure' || steps.fixer.outcome == 'failure' || steps.fixer-all.outcome == 'failure' || steps.rector.outcome == 'failure' || steps.rector-all.outcome == 'failure'
         run: |
-          echo "Lint is failed. stan: ${{ steps.stan.outcome }}, fixer: ${{ steps.fixer.outcome }}, fixer-all: ${{ steps.fixer-all.outcome }}, rector: ${{ steps.rector.outcome }}, rector-all: ${{ steps.rector-all.outcome }}"
+          echo "Lint failed. stan: ${{ steps.stan.outcome }}, fixer: ${{ steps.fixer.outcome }}, fixer-all: ${{ steps.fixer-all.outcome }}, rector: ${{ steps.rector.outcome }}, rector-all: ${{ steps.rector-all.outcome }}"
           exit 1
 
       - name: test & coverage
