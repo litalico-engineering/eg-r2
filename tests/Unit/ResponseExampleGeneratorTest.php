@@ -88,6 +88,28 @@ class ResponseExampleGeneratorTest extends TestCase
     }
 
     #[Test]
+    public function emailExamplesFitLengthBoundsThatAllowAValidAddress(): void
+    {
+        $generator = new ResponseExampleGenerator(self::$openApi, []);
+
+        foreach ([[13, 13], [15, 15], [30, 30], [1, 19], [25, null]] as list($minLength, $maxLength)) {
+            $email = $generator->generate(new SchemaAttribute(type: 'string', format: 'email', minLength: $minLength, maxLength: $maxLength));
+            self::assertIsString($email);
+            self::assertNotFalse(filter_var($email, FILTER_VALIDATE_EMAIL), $email);
+            self::assertStringEndsWith('@example.com', $email);
+            self::assertGreaterThanOrEqual($minLength, strlen($email));
+            self::assertLessThanOrEqual($maxLength ?? PHP_INT_MAX, strlen($email));
+        }
+
+        try {
+            $generator->generate(new SchemaAttribute(type: 'string', format: 'email', maxLength: 3));
+            self::fail('Expected an exception.');
+        } catch (InvalidOpenApiDefinitionException $exception) {
+            self::assertSame(['$: String constraints cannot be satisfied for format "email".'], $exception->getMessages());
+        }
+    }
+
+    #[Test]
     public function allOfMergesBranchesAndAnyOfPicksOneBranch(): void
     {
         $example = (new ResponseExampleGenerator(self::$openApi, []))->generateForClass(AdminResponse::class);
