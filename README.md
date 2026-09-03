@@ -273,3 +273,51 @@ return [
 - `:position` - Row number placeholder (replaced by Laravel during validation)
 
 If the current locale is not supported, the package will fallback to the configured `app.fallback_locale` (Laravel default: `en`).
+
+### Generating response examples
+
+`ResponseExampleGeneratorTrait::generatedExample()` creates a deterministic array example from a response DTO's OpenAPI schema.
+
+```php
+use Litalico\EgR2\Http\Responses\ResponseExampleGeneratorTrait;
+use OpenApi\Attributes\Items;
+use OpenApi\Attributes\Property;
+use OpenApi\Attributes\Schema;
+
+#[Schema(type: 'object')]
+final class FacilityResponse
+{
+    use ResponseExampleGeneratorTrait;
+
+    #[Property(property: 'id', type: 'integer', minimum: 1)]
+    public int $id;
+
+    #[Property(
+        property: 'contacts',
+        type: 'array',
+        minItems: 1,
+        items: new Items(
+            type: 'object',
+            properties: [
+                new Property(property: 'email', type: 'string', format: 'email'),
+                new Property(property: 'name', type: 'string', minLength: 1),
+            ],
+        ),
+    )]
+    public array $contacts;
+}
+
+$response = new FacilityResponse();
+$json = json_encode($response->generatedExample(), JSON_THROW_ON_ERROR);
+```
+
+An explicit array `example` on `#[Schema]` is returned as the complete example.
+Otherwise, inline `#[Schema(properties: [...])]` definitions are used, or public `#[Property]` attributes when inline properties are absent.
+For each value, the priority is `example`, then the first enum value, then `default`, then a generated value for its type.
+
+Generated scalar values are deterministic.
+`date`, `date-time`, `email`, and `uuid` formats are valid and stable.
+Numeric minimum, maximum, and exclusive bounds, string lengths and supported patterns, and array `minItems` and `maxItems` are honored.
+Inline arrays and objects generate recursively, and enum class strings use the first case (a backed value for `BackedEnum`, otherwise the case name).
+
+This trait does not resolve `$ref` values or schema composition, and does not map examples to mock endpoints.
