@@ -420,7 +420,8 @@ final class ResponseExampleGenerator
         $value = match ($format) {
             'date' => $this->randomDate()->format('Y-m-d'),
             'date-time' => $this->randomDate()->format('Y-m-d\TH:i:s\Z'),
-            'email' => $this->randomString(8, 8) . '@example.com',
+            // '@example.com' is 12 characters; size the local part so the bounds are met when they can be.
+            'email' => $this->randomString(max(1, $minimum - 12), max(1, ($maximum ?? max($minimum, 20)) - 12)) . '@example.com',
             'uuid' => $this->randomUuid(),
             default => $this->randomString($minimum, $maximum ?? $minimum + self::DEFAULT_LENGTH_SPAN),
         };
