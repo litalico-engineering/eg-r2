@@ -34,7 +34,7 @@ class FacilityResponse
     public string $secret;
 
     #[OA\Property(property: 'parent', ref: self::class, nullable: true)]
-    public ?FacilityResponse $parent;
+    public ?FacilityResponse $parent = null;
 
     #[OA\Property(property: 'children', type: 'array', items: new OA\Items(ref: self::class))]
     public array $children;
