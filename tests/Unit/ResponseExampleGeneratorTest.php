@@ -78,7 +78,7 @@ class ResponseExampleGeneratorTest extends TestCase
         self::assertNotFalse($date);
         self::assertSame($example['birthday'], $date->format('Y-m-d'));
         self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $example['createdAt']);
-        self::assertSame(1, preg_match('/^[a-c]{2}_[0-9]+$/', $example['code']));
+        self::assertSame(1, preg_match('/^[a-c]{2}_\d+$/', $example['code']));
         self::assertGreaterThanOrEqual(6, strlen($example['code']));
         self::assertLessThanOrEqual(8, strlen($example['code']));
         self::assertGreaterThan(1.5, $example['score']);
@@ -172,7 +172,7 @@ class ResponseExampleGeneratorTest extends TestCase
 
 final class ResponseExampleFalseRule
 {
-    public function __invoke(Schema $schema, string $path): bool
+    public function __invoke(): bool
     {
         return false;
     }

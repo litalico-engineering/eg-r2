@@ -16,7 +16,6 @@ use OpenApi\OpenApiException;
 use Random\Randomizer;
 use UnitEnum;
 use function abs;
-use function array_merge;
 use function array_pop;
 use function array_values;
 use function bin2hex;
@@ -243,10 +242,10 @@ final class ResponseExampleGenerator
             if (!is_array($value)) {
                 $this->invalid($path, 'allOf branches must generate objects.');
             }
-            $merged = array_merge($merged, $value);
+            $merged = [...$merged, ...$value];
         }
 
-        return array_merge($merged, $this->properties($schema, $path));
+        return [...$merged, ...$this->properties($schema, $path)];
     }
 
     /**
