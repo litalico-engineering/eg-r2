@@ -273,3 +273,73 @@ return [
 - `:position` - Row number placeholder (replaced by Laravel during validation)
 
 If the current locale is not supported, the package will fallback to the configured `app.fallback_locale` (Laravel default: `en`).
+
+### Generating response examples
+
+`ResponseExampleGenerator` builds a random example payload from an OpenAPI schema in a document scanned by swagger-php.
+`$ref`, `allOf`, `oneOf`, and `anyOf` are resolved against that document, so response DTOs can be composed the same way as in the published specification.
+
+```php
+use Litalico\EgR2\Services\ResponseExampleGenerator;
+use OpenApi\Attributes\Items;
+use OpenApi\Attributes\Property;
+use OpenApi\Attributes\Schema;
+use OpenApi\Generator;
+
+#[Schema]
+final class FacilityResponse
+{
+    #[Property(property: 'id', type: 'integer', minimum: 1)]
+    public int $id;
+
+    #[Property(property: 'owner', ref: OwnerResponse::class)]
+    public OwnerResponse $owner;
+
+    #[Property(property: 'contacts', type: 'array', minItems: 1, maxItems: 3, items: new Items(ref: OwnerResponse::class))]
+    public array $contacts;
+}
+
+$openApi = (new Generator())->generate([app_path('Http/Responses')]);
+$generator = new ResponseExampleGenerator($openApi);
+
+$json = json_encode($generator->generateForClass(FacilityResponse::class), JSON_THROW_ON_ERROR);
+// or, for any schema object taken from the document (e.g. an operation response):
+$example = $generator->generate($schema);
+```
+
+For each schema the value is resolved in this order: `example`, a matching custom rule, a random `enum` value, `default`, then a random value for its type.
+Random values honor `minimum`, `maximum`, and exclusive bounds, `minLength`, `maxLength`, and supported `pattern` syntax, and `minItems` and `maxItems`.
+`date`, `date-time`, `email`, and `uuid` formats produce valid values.
+Properties marked `writeOnly` are omitted.
+
+`allOf` merges the generated objects of every branch; `oneOf` and `anyOf` pick one branch at random.
+A recursive `$ref` produces `null` when the referencing schema is nullable, or an empty array when it is the item schema of an array without `minItems`; otherwise it is reported as invalid.
+
+Pass a seeded `Random\Randomizer` to make output reproducible, for example in tests:
+
+```php
+use Random\Engine\Mt19937;
+use Random\Randomizer;
+
+$generator = new ResponseExampleGenerator($openApi, randomizer: new Randomizer(new Mt19937(42)));
+```
+
+#### Custom generation rules
+
+Rules override generated values for a property name, a format, or a type, in that order of precedence.
+They are read from `eg_r2.response_example.rules`, or passed to the constructor directly.
+A rule is a fixed value, a callable receiving `(Schema $schema, string $path)`, or the class name of an invokable.
+
+```php
+// config/eg_r2.php
+'response_example' => [
+    'rules' => [
+        'property:user_id' => App\OpenApi\UuidExample::class,
+        'format:uri' => 'https://example.com',
+        'type:boolean' => true,
+    ],
+],
+```
+
+An explicit `example` on the schema always wins over a rule.
+Mapping examples to mock endpoints is not provided.
