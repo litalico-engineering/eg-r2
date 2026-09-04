@@ -238,9 +238,8 @@ class GenerateRoute extends Command
         $operationSecurity = $operation->security;
         if (Generator::isDefault($operationSecurity)) {
             return [];
-        } else {
-            $requirements = $this->normalizeSecurityRequirements($operationSecurity);
         }
+        $requirements = $this->normalizeSecurityRequirements($operationSecurity);
 
         if ($requirements === []) {
             return [];
