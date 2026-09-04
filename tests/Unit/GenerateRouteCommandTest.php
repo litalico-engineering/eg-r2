@@ -17,12 +17,6 @@ use Tests\TestCase;
 
 class GenerateRouteCommandTest extends TestCase
 {
-    public static function setUpBeforeClass(): void
-    {
-        parent::setUpBeforeClass();
-        require_once __DIR__ . '/../Fixtures/SecurityControllers.php';
-    }
-
     #[Test]
     public function it_generates_middlewares_from_composite_and_mapping_order_is_preserved(): void
     {
