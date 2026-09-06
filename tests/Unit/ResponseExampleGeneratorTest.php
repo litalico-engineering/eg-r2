@@ -9,11 +9,13 @@ use Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException;
 use Litalico\EgR2\Services\ResponseExampleGenerator;
 use OpenApi\Annotations\OpenApi;
 use OpenApi\Annotations\Schema;
+use OpenApi\Attributes\AdditionalProperties;
 use OpenApi\Attributes\Items;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema as SchemaAttribute;
 use OpenApi\Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Log\NullLogger;
 use Random\Engine\Mt19937;
@@ -26,6 +28,7 @@ use function array_keys;
 use function array_unique;
 use function count;
 use function filter_var;
+use function json_encode;
 use function preg_match;
 use function strlen;
 
@@ -195,6 +198,133 @@ class ResponseExampleGeneratorTest extends TestCase
             self::fail('Expected an exception.');
         } catch (InvalidOpenApiDefinitionException $exception) {
             self::assertSame(['$: Rule class "Tests\Unit\ResponseExampleNotInvokable" is not invokable.'], $exception->getMessages());
+        }
+    }
+
+    #[Test]
+    public function objectsWithoutPropertiesEncodeAsJsonObjects(): void
+    {
+        $generator = new ResponseExampleGenerator(self::$openApi, []);
+
+        self::assertSame('{}', json_encode($generator->generate(new SchemaAttribute(type: 'object'))));
+        self::assertSame('{}', json_encode($generator->generate(new SchemaAttribute(type: 'object', additionalProperties: new AdditionalProperties(type: 'string')))));
+        self::assertSame('{}', json_encode($generator->generate(new SchemaAttribute(properties: [new Property(property: 'secret', type: 'string', writeOnly: true)]))));
+        // An empty branch merges nothing; an array branch is not an object.
+        self::assertSame('{"a":1}', json_encode($generator->generate(new SchemaAttribute(allOf: [
+            new SchemaAttribute(type: 'object'),
+            new SchemaAttribute(properties: [new Property(property: 'a', type: 'integer', example: 1)]),
+        ]))));
+
+        try {
+            $generator->generate(new SchemaAttribute(allOf: [new SchemaAttribute(type: 'array', items: new Items(type: 'string'))]));
+            self::fail('Expected an exception.');
+        } catch (InvalidOpenApiDefinitionException $exception) {
+            self::assertSame(['$: allOf branches must generate objects.'], $exception->getMessages());
+        }
+    }
+
+    #[Test]
+    public function arrayCountsHonorMaxItemsAndUniqueItems(): void
+    {
+        $generator = new ResponseExampleGenerator(self::$openApi, []);
+
+        self::assertSame([], $generator->generate(new SchemaAttribute(type: 'array', maxItems: 0, items: new Items(type: 'string'))));
+
+        $unique = new SchemaAttribute(type: 'array', minItems: 3, maxItems: 3, uniqueItems: true, items: new Items(type: 'string', enum: ['a', 'b', 'c']));
+        for ($index = 0; $index < 20; ++$index) {
+            $values = $generator->generate($unique);
+            self::assertCount(3, $values);
+            self::assertSame($values, array_unique($values));
+        }
+
+        try {
+            $generator->generate(new SchemaAttribute(type: 'array', minItems: 2, uniqueItems: true, items: new Items(type: 'string', enum: ['only'])));
+            self::fail('Expected an exception.');
+        } catch (InvalidOpenApiDefinitionException $exception) {
+            self::assertSame(['$: uniqueItems cannot be satisfied with the item schema.'], $exception->getMessages());
+        }
+    }
+
+    #[Test]
+    public function integerBoundsKeepInt64PrecisionAndHonorMultipleOf(): void
+    {
+        $generator = new ResponseExampleGenerator(self::$openApi, []);
+
+        self::assertSame(PHP_INT_MAX, $generator->generate(new SchemaAttribute(type: 'integer', minimum: PHP_INT_MAX, maximum: PHP_INT_MAX)));
+        self::assertSame(PHP_INT_MIN, $generator->generate(new SchemaAttribute(type: 'integer', minimum: PHP_INT_MIN, maximum: PHP_INT_MIN)));
+        $value = $generator->generate(new SchemaAttribute(type: 'integer', minimum: 0, maximum: PHP_INT_MAX));
+        self::assertIsInt($value);
+        self::assertGreaterThanOrEqual(0, $value);
+        // OAS 3.1 numeric exclusive bounds on integers round inward.
+        self::assertSame(8, $generator->generate(new SchemaAttribute(type: 'integer', exclusiveMinimum: 7.5, exclusiveMaximum: 9)));
+
+        // The attribute constructor has no multipleOf argument; the annotation form accepts every property.
+        for ($index = 0; $index < 20; ++$index) {
+            $multiple = $generator->generate(new Schema(['type' => 'integer', 'minimum' => 1, 'maximum' => 100, 'multipleOf' => 10]));
+            self::assertIsInt($multiple);
+            self::assertSame(0, $multiple % 10);
+            self::assertGreaterThanOrEqual(10, $multiple);
+            self::assertLessThanOrEqual(100, $multiple);
+            $decimal = $generator->generate(new Schema(['type' => 'number', 'minimum' => 0.5, 'maximum' => 0.75, 'multipleOf' => 0.25]));
+            self::assertContains($decimal, [0.5, 0.75]);
+        }
+
+        foreach ([
+            [new SchemaAttribute(type: 'integer', minimum: 9.3e18), '$: Integer bound 9.3E+18 exceeds the supported range.'],
+            [new SchemaAttribute(type: 'integer', minimum: PHP_INT_MAX, exclusiveMinimum: true), '$: Numeric bounds contain no integer value.'],
+            [new Schema(['type' => 'integer', 'minimum' => 11, 'maximum' => 19, 'multipleOf' => 10]), '$: Numeric bounds contain no multiple of 10.'],
+        ] as list($schema, $message)) {
+            try {
+                $generator->generate($schema);
+                self::fail('Expected an exception.');
+            } catch (InvalidOpenApiDefinitionException $exception) {
+                self::assertSame([$message], $exception->getMessages());
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string, int|null, int|null}>
+     */
+    public static function supportedPatterns(): iterable
+    {
+        yield 'unbounded quantifier fills an exact length' => ['^[a-z]+$', 20, 20];
+        yield 'open range' => ['^\d{3,}$', 10, null];
+        yield 'optional and star' => ['^a?b*c$', null, null];
+        yield 'escaped literal and word class' => ['^\w{2}\.[A-F0-9-]{1,4}$', null, 6];
+        yield 'unanchored' => ['x[0-9]', null, null];
+    }
+
+    #[Test]
+    #[DataProvider('supportedPatterns')]
+    public function patternsGenerateMatchingStringsWithinLengthBounds(string $pattern, ?int $minLength, ?int $maxLength): void
+    {
+        $generator = new ResponseExampleGenerator(self::$openApi, []);
+        for ($index = 0; $index < 20; ++$index) {
+            $value = $generator->generate(new SchemaAttribute(type: 'string', pattern: $pattern, minLength: $minLength, maxLength: $maxLength));
+            self::assertMatchesRegularExpression('~' . $pattern . '~', $value);
+            self::assertGreaterThanOrEqual($minLength ?? 0, strlen($value));
+            self::assertLessThanOrEqual($maxLength ?? PHP_INT_MAX, strlen($value));
+        }
+    }
+
+    #[Test]
+    public function unsupportedPatternsAreReported(): void
+    {
+        $generator = new ResponseExampleGenerator(self::$openApi, []);
+        foreach ([
+            ['^(ab)+$', null, null, 'Pattern "^(ab)+$" uses unsupported syntax.'],
+            ['^[^a]$', null, null, 'Negated character classes are not supported for example generation.'],
+            ['^[ぁ-ん]+$', null, null, 'Pattern "^[ぁ-ん]+$" uses unsupported syntax: only ASCII patterns are supported.'],
+            ['^[a-z]{2}$', 3, null, 'Pattern "^[a-z]{2}$" cannot satisfy minLength.'],
+            ['^[a-z]{3}$', null, 2, 'Pattern "^[a-z]{3}$" cannot satisfy maxLength.'],
+        ] as list($pattern, $minLength, $maxLength, $message)) {
+            try {
+                $generator->generate(new SchemaAttribute(type: 'string', pattern: $pattern, minLength: $minLength, maxLength: $maxLength));
+                self::fail('Expected an exception.');
+            } catch (InvalidOpenApiDefinitionException $exception) {
+                self::assertSame(['$: ' . $message], $exception->getMessages());
+            }
         }
     }
 }

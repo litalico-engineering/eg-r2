@@ -308,9 +308,9 @@ $example = $generator->generate($schema);
 ```
 
 For each schema the value is resolved in this order: `example`, a matching custom rule, a random `enum` value, `default`, then a random value for its type.
-Random values honor `minimum`, `maximum`, and exclusive bounds, `minLength`, `maxLength`, and supported `pattern` syntax, and `minItems` and `maxItems`.
+Random values honor `minimum`, `maximum`, exclusive bounds, and `multipleOf`, `minLength`, `maxLength`, and supported `pattern` syntax (ASCII only), and `minItems`, `maxItems`, and `uniqueItems`.
 `date`, `date-time`, `email`, and `uuid` formats produce valid values.
-Properties marked `writeOnly` are omitted.
+Properties marked `writeOnly` are omitted; an object without generated properties is an empty object (`{}`), not an empty array.
 
 `allOf` merges the generated objects of every branch; `oneOf` and `anyOf` pick one branch at random.
 A recursive `$ref` produces `null` when the referencing schema is nullable, or an empty array when it is the item schema of an array without `minItems`; otherwise it is reported as invalid.

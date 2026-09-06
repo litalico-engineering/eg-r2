@@ -14,8 +14,10 @@ use OpenApi\Context;
 use OpenApi\Generator;
 use OpenApi\OpenApiException;
 use Random\Randomizer;
+use stdClass;
 use UnitEnum;
 use function abs;
+use function array_is_list;
 use function array_pop;
 use function array_values;
 use function bin2hex;
@@ -31,6 +33,7 @@ use function is_a;
 use function is_array;
 use function is_bool;
 use function is_callable;
+use function is_int;
 use function is_string;
 use function ltrim;
 use function max;
@@ -39,6 +42,8 @@ use function ord;
 use function preg_match;
 use function preg_match_all;
 use function range;
+use function round;
+use function serialize;
 use function sprintf;
 use function str_contains;
 use function str_ends_with;
@@ -69,7 +74,7 @@ final class ResponseExampleGenerator
      * @param OpenApi $openApi Scanned document used to resolve `$ref` values.
      * @param array<string, mixed>|null $rules Custom generation rules; defaults to `eg_r2.response_example.rules`.
      *                                         Keys: `property:<name>`, `format:<format>`, `type:<type>`.
-     *                                         Values: a fixed value, a callable `fn(Schema $schema, string $path): mixed`, or the class name of an invokable.
+     *                                         Values: a fixed value, a non-string callable `fn(Schema $schema, string $path): mixed`, or the class name of an invokable.
      */
     public function __construct(
         private readonly OpenApi $openApi,
@@ -155,7 +160,7 @@ final class ResponseExampleGenerator
         $type = $this->resolveType($schema);
 
         return match ($type) {
-            'object' => $this->properties($schema, $path),
+            'object' => $this->properties($schema, $path) ?: new stdClass(),
             'array' => $this->arrayValue($schema, $path),
             'string' => $this->stringValue($schema, $path),
             'integer' => $this->number($schema, $path, true),
@@ -202,6 +207,7 @@ final class ResponseExampleGenerator
             }
         }
 
+        // A callable string ('date', 'time', ...) is a fixed value: rules such as 'format:date' => 'date' must not call date().
         return !is_string($rule) && is_callable($rule) ? $rule($schema, $path) : $rule;
     }
 
@@ -235,20 +241,23 @@ final class ResponseExampleGenerator
     }
 
     /**
-     * @return array<mixed>
+     * @return array<mixed>|stdClass
      */
-    private function allOf(Schema $schema, string $path): array
+    private function allOf(Schema $schema, string $path): array|stdClass
     {
         $merged = [];
         foreach (array_values($schema->allOf) as $index => $branch) {
             $value = $this->value($branch, sprintf('%s.allOf[%d]', $path, $index));
-            if (!is_array($value)) {
+            if ($value instanceof stdClass) {
+                continue;
+            }
+            if (!is_array($value) || array_is_list($value)) {
                 $this->invalid($path, 'allOf branches must generate objects.');
             }
             $merged = [...$merged, ...$value];
         }
 
-        return [...$merged, ...$this->properties($schema, $path)];
+        return [...$merged, ...$this->properties($schema, $path)] ?: new stdClass();
     }
 
     /**
@@ -322,9 +331,9 @@ final class ResponseExampleGenerator
         $items = $this->isDefined($schema->items) ? $schema->items : null;
         $cyclic = $items !== null && is_string($items->ref) && in_array($items->ref, $this->refStack, true);
 
-        $minimum ??= $cyclic ? 0 : 1;
+        $minimum ??= min($cyclic ? 0 : 1, $maximum ?? 1);
         $maximum = min($maximum ?? $minimum + self::DEFAULT_ITEMS_SPAN, $cyclic ? $minimum : PHP_INT_MAX);
-        $count = $this->randomizer->getInt($minimum, max($minimum, $maximum));
+        $count = $this->randomizer->getInt($minimum, $maximum);
         if ($count === 0) {
             return [];
         }
@@ -332,9 +341,23 @@ final class ResponseExampleGenerator
             $this->invalid($path, 'Array schemas must define items.');
         }
 
+        $unique = $this->isDefined($schema->uniqueItems) && $schema->uniqueItems === true;
         $values = [];
-        for ($index = 0; $index < $count; ++$index) {
-            $values[] = $this->value($items, sprintf('%s[%d]', $path, $index));
+        $seen = [];
+        // ponytail: uniqueItems is satisfied by resampling duplicates; enumerate the value space if small enums make this fail.
+        for ($attempt = 0; count($values) < $count; ++$attempt) {
+            if ($attempt >= $count * 10) {
+                $this->invalid($path, 'uniqueItems cannot be satisfied with the item schema.');
+            }
+            $value = $this->value($items, sprintf('%s[%d]', $path, count($values)));
+            if ($unique) {
+                $key = serialize($value);
+                if (isset($seen[$key])) {
+                    continue;
+                }
+                $seen[$key] = true;
+            }
+            $values[] = $value;
         }
 
         return $values;
@@ -342,8 +365,8 @@ final class ResponseExampleGenerator
 
     private function number(Schema $schema, string $path, bool $integer): int|float
     {
-        $minimum = $this->isDefined($schema->minimum) ? (float) $schema->minimum : null;
-        $maximum = $this->isDefined($schema->maximum) ? (float) $schema->maximum : null;
+        $minimum = $this->isDefined($schema->minimum) ? $this->bound($schema->minimum, $integer, true, $path) : null;
+        $maximum = $this->isDefined($schema->maximum) ? $this->bound($schema->maximum, $integer, false, $path) : null;
 
         if ($this->isDefined($schema->exclusiveMinimum)) {
             if (is_bool($schema->exclusiveMinimum)) {
@@ -351,10 +374,10 @@ final class ResponseExampleGenerator
                     $this->invalid($path, 'exclusiveMinimum requires minimum when expressed as a boolean.');
                 }
                 if ($schema->exclusiveMinimum) {
-                    $minimum = $this->nextNumber($minimum, $integer);
+                    $minimum = $this->step($minimum, 1, $integer, $path);
                 }
             } else {
-                $exclusiveMinimum = $this->nextNumber((float) $schema->exclusiveMinimum, $integer);
+                $exclusiveMinimum = $this->step($this->bound($schema->exclusiveMinimum, $integer, false, $path), 1, $integer, $path);
                 $minimum = $minimum === null ? $exclusiveMinimum : max($minimum, $exclusiveMinimum);
             }
         }
@@ -364,28 +387,37 @@ final class ResponseExampleGenerator
                     $this->invalid($path, 'exclusiveMaximum requires maximum when expressed as a boolean.');
                 }
                 if ($schema->exclusiveMaximum) {
-                    $maximum = $this->previousNumber($maximum, $integer);
+                    $maximum = $this->step($maximum, -1, $integer, $path);
                 }
             } else {
-                $exclusiveMaximum = $this->previousNumber((float) $schema->exclusiveMaximum, $integer);
+                $exclusiveMaximum = $this->step($this->bound($schema->exclusiveMaximum, $integer, true, $path), -1, $integer, $path);
                 $maximum = $maximum === null ? $exclusiveMaximum : min($maximum, $exclusiveMaximum);
             }
         }
 
-        $minimum ??= $maximum === null ? 0.0 : $maximum - self::DEFAULT_NUMBER_SPAN;
+        $minimum ??= $maximum === null ? 0 : $maximum - self::DEFAULT_NUMBER_SPAN;
         $maximum ??= $minimum + self::DEFAULT_NUMBER_SPAN;
         if ($minimum > $maximum) {
             $this->invalid($path, 'Numeric minimum is greater than maximum.');
         }
 
-        if ($integer) {
-            $low = (int) ceil($minimum);
-            $high = (int) floor($maximum);
-            if ($low > $high) {
-                $this->invalid($path, 'Numeric bounds contain no integer value.');
+        if ($this->isDefined($schema->multipleOf)) {
+            $multipleOf = $schema->multipleOf;
+            if ($multipleOf <= 0) {
+                $this->invalid($path, 'multipleOf must be greater than zero.');
             }
+            $low = (int) ceil($minimum / $multipleOf);
+            $high = (int) floor($maximum / $multipleOf);
+            if ($low > $high) {
+                $this->invalid($path, sprintf('Numeric bounds contain no multiple of %s.', $multipleOf));
+            }
+            $value = $this->randomizer->getInt($low, $high) * $multipleOf;
 
-            return $this->randomizer->getInt($low, $high);
+            return $integer ? (int) round($value) : $value;
+        }
+
+        if ($integer) {
+            return $this->randomizer->getInt((int) $minimum, (int) $maximum);
         }
 
         $value = $minimum + ($maximum - $minimum) * ($this->randomizer->getInt(0, PHP_INT_MAX) / PHP_INT_MAX);
@@ -393,18 +425,32 @@ final class ResponseExampleGenerator
         return min(max($value, $minimum), $maximum);
     }
 
-    private function nextNumber(float $number, bool $integer): float
+    /**
+     * Integer schemas keep `int` bounds: a float round-trip loses int64 precision and wraps on cast.
+     */
+    private function bound(int|float $value, bool $integer, bool $up, string $path): int|float
     {
-        return $integer
-            ? floor($number) + 1
-            : $number + max(1, abs($number)) * PHP_FLOAT_EPSILON;
+        if (!$integer || is_int($value)) {
+            return $value;
+        }
+        if ($value < PHP_INT_MIN || $value >= PHP_INT_MAX) {
+            $this->invalid($path, sprintf('Integer bound %s exceeds the supported range.', $value));
+        }
+
+        return (int) ($up ? ceil($value) : floor($value));
     }
 
-    private function previousNumber(float $number, bool $integer): float
+    private function step(int|float $number, int $direction, bool $integer, string $path): int|float
     {
-        return $integer
-            ? ceil($number) - 1
-            : $number - max(1, abs($number)) * PHP_FLOAT_EPSILON;
+        if (!$integer) {
+            return $number + $direction * max(1, abs($number)) * PHP_FLOAT_EPSILON;
+        }
+        $next = $number + $direction;
+        if (!is_int($next)) {
+            $this->invalid($path, 'Numeric bounds contain no integer value.');
+        }
+
+        return $next;
     }
 
     private function stringValue(Schema $schema, string $path): string
@@ -487,6 +533,10 @@ final class ResponseExampleGenerator
 
     private function patternString(string $pattern, int $minimum, ?int $maximum, string $path): string
     {
+        // Character classes and generated bytes are ASCII; reject multibyte input up front instead of failing the final match.
+        if (preg_match('/[^\x20-\x7E]/', $pattern) === 1) {
+            $this->invalid($path, sprintf('Pattern "%s" uses unsupported syntax: only ASCII patterns are supported.', $pattern));
+        }
         $body = str_starts_with($pattern, '^') ? substr($pattern, 1) : $pattern;
         $body = str_ends_with($body, '$') ? substr($body, 0, -1) : $body;
         $tokenPattern = '/(\[[^\]]+\]|\\\\[dws]|\\\\.|[^\\\\\[\]{}+*?()|])(\{(\d+)(?:,(\d*))?\}|[+*?])?/u';
@@ -528,12 +578,19 @@ final class ResponseExampleGenerator
             $this->invalid($path, sprintf('Pattern "%s" cannot satisfy maxLength.', $pattern));
         }
 
-        // Grow quantified segments to a random total length within the string bounds.
-        $capacity = 0;
+        // Grow quantified segments to a random total length within the string bounds; unbounded quantifiers can absorb any minLength.
+        $bounded = $length;
+        $unbounded = false;
         foreach ($segments as $segment) {
-            $capacity += $segment['maximum'] === null ? self::DEFAULT_LENGTH_SPAN : $segment['maximum'] - $segment['count'];
+            if ($segment['maximum'] === null) {
+                $unbounded = true;
+            } else {
+                $bounded += $segment['maximum'] - $segment['count'];
+            }
         }
-        $upper = min($length + $capacity, $maximum ?? $length + $capacity);
+        $upper = $unbounded
+            ? $maximum ?? max($minimum, $length) + self::DEFAULT_LENGTH_SPAN
+            : min($bounded, $maximum ?? $bounded);
         if ($upper < $minimum) {
             $this->invalid($path, sprintf('Pattern "%s" cannot satisfy minLength.', $pattern));
         }
