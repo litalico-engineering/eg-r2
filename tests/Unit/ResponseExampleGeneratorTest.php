@@ -6,6 +6,7 @@ namespace Tests\Unit;
 
 use Closure;
 use DateTimeImmutable;
+use JsonException;
 use Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException;
 use Litalico\EgR2\Services\ResponseExampleGenerator;
 use OpenApi\Annotations\OpenApi;
@@ -103,6 +104,10 @@ class ResponseExampleGeneratorTest extends TestCase
         yield 'no maximum' => [25, null];
     }
 
+    /**
+     * @param int $minLength
+     * @param int|null $maxLength
+     */
     #[Test]
     #[DataProvider('emailLengthBounds')]
     public function emailExamplesFitLengthBoundsThatAllowAValidAddress(int $minLength, ?int $maxLength): void
@@ -181,6 +186,11 @@ class ResponseExampleGeneratorTest extends TestCase
         ]), '{"a":1}'];
     }
 
+    /**
+     * @param Schema $schema
+     * @param string $json
+     * @throws JsonException
+     */
     #[Test]
     #[DataProvider('objectSchemasWithoutProperties')]
     public function objectsWithoutPropertiesEncodeAsJsonObjects(Schema $schema, string $json): void
@@ -214,6 +224,10 @@ class ResponseExampleGeneratorTest extends TestCase
         yield 'fractional exclusive bounds' => [new SchemaAttribute(type: 'integer', exclusiveMaximum: 9, exclusiveMinimum: 7.5), 8];
     }
 
+    /**
+     * @param Schema $schema
+     * @param int $expected
+     */
     #[Test]
     #[DataProvider('exactIntegerBounds')]
     public function integerBoundsKeepInt64Precision(Schema $schema, int $expected): void
@@ -242,6 +256,7 @@ class ResponseExampleGeneratorTest extends TestCase
     }
 
     /**
+     * @param Schema $schema
      * @param list<int|float> $allowed
      */
     #[Test]
@@ -266,6 +281,11 @@ class ResponseExampleGeneratorTest extends TestCase
         yield 'unanchored' => ['x[0-9]', null, null];
     }
 
+    /**
+     * @param string $pattern
+     * @param int|null $minLength
+     * @param int|null $maxLength
+     */
     #[Test]
     #[DataProvider('supportedPatterns')]
     public function patternsGenerateMatchingStringsWithinLengthBounds(string $pattern, ?int $minLength, ?int $maxLength): void
@@ -337,6 +357,8 @@ class ResponseExampleGeneratorTest extends TestCase
 
     /**
      * @param Closure(ResponseExampleGenerator): mixed $generate
+     * @param string $message
+     * @throws JsonException
      */
     #[Test]
     #[DataProvider('invalidDefinitions')]
