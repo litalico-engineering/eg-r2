@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Closure;
 use DateTimeImmutable;
 use Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException;
 use Litalico\EgR2\Services\ResponseExampleGenerator;
@@ -103,13 +104,6 @@ class ResponseExampleGeneratorTest extends TestCase
             self::assertGreaterThanOrEqual($minLength, strlen($email));
             self::assertLessThanOrEqual($maxLength ?? PHP_INT_MAX, strlen($email));
         }
-
-        try {
-            $generator->generate(new SchemaAttribute(type: 'string', format: 'email', maxLength: 3));
-            self::fail('Expected an exception.');
-        } catch (InvalidOpenApiDefinitionException $exception) {
-            self::assertSame(['$: String constraints cannot be satisfied for format "email".'], $exception->getMessages());
-        }
     }
 
     #[Test]
@@ -164,44 +158,6 @@ class ResponseExampleGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function invalidDefinitionsAreReportedWithTheirPath(): void
-    {
-        $generator = new ResponseExampleGenerator(self::$openApi, []);
-
-        $schema = new SchemaAttribute(properties: [
-            new Property(property: 'items', type: 'array', minItems: 3, maxItems: 1, items: new Items(type: 'string')),
-        ]);
-
-        try {
-            $generator->generate($schema);
-            self::fail('Expected an exception.');
-        } catch (InvalidOpenApiDefinitionException $exception) {
-            self::assertSame(['$.items: Array minItems is greater than maxItems.'], $exception->getMessages());
-        }
-
-        try {
-            $generator->generate(new SchemaAttribute(ref: '#/components/schemas/Missing'));
-            self::fail('Expected an exception.');
-        } catch (InvalidOpenApiDefinitionException $exception) {
-            self::assertStringStartsWith('$: ', $exception->getMessages()[0]);
-        }
-
-        try {
-            $generator->generateForClass(self::class);
-            self::fail('Expected an exception.');
-        } catch (InvalidOpenApiDefinitionException $exception) {
-            self::assertSame(['$: No component schema is declared on class "Tests\Unit\ResponseExampleGeneratorTest".'], $exception->getMessages());
-        }
-
-        try {
-            (new ResponseExampleGenerator(self::$openApi, ['type:string' => ResponseExampleNotInvokable::class]))->generate(new SchemaAttribute(type: 'string'));
-            self::fail('Expected an exception.');
-        } catch (InvalidOpenApiDefinitionException $exception) {
-            self::assertSame(['$: Rule class "Tests\Unit\ResponseExampleNotInvokable" is not invokable.'], $exception->getMessages());
-        }
-    }
-
-    #[Test]
     public function objectsWithoutPropertiesEncodeAsJsonObjects(): void
     {
         $generator = new ResponseExampleGenerator(self::$openApi, []);
@@ -214,13 +170,6 @@ class ResponseExampleGeneratorTest extends TestCase
             new SchemaAttribute(type: 'object'),
             new SchemaAttribute(properties: [new Property(property: 'a', type: 'integer', example: 1)]),
         ]))));
-
-        try {
-            $generator->generate(new SchemaAttribute(allOf: [new SchemaAttribute(type: 'array', items: new Items(type: 'string'))]));
-            self::fail('Expected an exception.');
-        } catch (InvalidOpenApiDefinitionException $exception) {
-            self::assertSame(['$: allOf branches must generate objects.'], $exception->getMessages());
-        }
     }
 
     #[Test]
@@ -235,13 +184,6 @@ class ResponseExampleGeneratorTest extends TestCase
             $values = $generator->generate($unique);
             self::assertCount(3, $values);
             self::assertSame($values, array_unique($values));
-        }
-
-        try {
-            $generator->generate(new SchemaAttribute(type: 'array', minItems: 2, uniqueItems: true, items: new Items(type: 'string', enum: ['only'])));
-            self::fail('Expected an exception.');
-        } catch (InvalidOpenApiDefinitionException $exception) {
-            self::assertSame(['$: uniqueItems cannot be satisfied with the item schema.'], $exception->getMessages());
         }
     }
 
@@ -267,19 +209,6 @@ class ResponseExampleGeneratorTest extends TestCase
             self::assertLessThanOrEqual(100, $multiple);
             $decimal = $generator->generate(new Schema(['type' => 'number', 'minimum' => 0.5, 'maximum' => 0.75, 'multipleOf' => 0.25]));
             self::assertContains($decimal, [0.5, 0.75]);
-        }
-
-        foreach ([
-            [new SchemaAttribute(type: 'integer', minimum: 9.3e18), '$: Integer bound 9.3E+18 exceeds the supported range.'],
-            [new SchemaAttribute(type: 'integer', minimum: PHP_INT_MAX, exclusiveMinimum: true), '$: Numeric bounds contain no integer value.'],
-            [new Schema(['type' => 'integer', 'minimum' => 11, 'maximum' => 19, 'multipleOf' => 10]), '$: Numeric bounds contain no multiple of 10.'],
-        ] as list($schema, $message)) {
-            try {
-                $generator->generate($schema);
-                self::fail('Expected an exception.');
-            } catch (InvalidOpenApiDefinitionException $exception) {
-                self::assertSame([$message], $exception->getMessages());
-            }
         }
     }
 
@@ -308,24 +237,73 @@ class ResponseExampleGeneratorTest extends TestCase
         }
     }
 
-    #[Test]
-    public function unsupportedPatternsAreReported(): void
+    /**
+     * @return iterable<string, array{Closure(ResponseExampleGenerator): mixed, string}>
+     */
+    public static function invalidDefinitions(): iterable
     {
-        $generator = new ResponseExampleGenerator(self::$openApi, []);
-        foreach ([
-            ['^(ab)+$', null, null, 'Pattern "^(ab)+$" uses unsupported syntax.'],
-            ['^[^a]$', null, null, 'Negated character classes are not supported for example generation.'],
-            ['^[ぁ-ん]+$', null, null, 'Pattern "^[ぁ-ん]+$" uses unsupported syntax: only ASCII patterns are supported.'],
-            ['^[a-z]{2}$', 3, null, 'Pattern "^[a-z]{2}$" cannot satisfy minLength.'],
-            ['^[a-z]{3}$', null, 2, 'Pattern "^[a-z]{3}$" cannot satisfy maxLength.'],
-        ] as list($pattern, $minLength, $maxLength, $message)) {
-            try {
-                $generator->generate(new SchemaAttribute(type: 'string', pattern: $pattern, minLength: $minLength, maxLength: $maxLength));
-                self::fail('Expected an exception.');
-            } catch (InvalidOpenApiDefinitionException $exception) {
-                self::assertSame(['$: ' . $message], $exception->getMessages());
-            }
-        }
+        $string = static fn (string $pattern, ?int $minLength = null, ?int $maxLength = null): Closure => static fn (ResponseExampleGenerator $generator): mixed => $generator->generate(new SchemaAttribute(type: 'string', pattern: $pattern, minLength: $minLength, maxLength: $maxLength));
+
+        yield 'minItems above maxItems' => [
+            static fn (ResponseExampleGenerator $generator): mixed => $generator->generate(new SchemaAttribute(properties: [
+                new Property(property: 'items', type: 'array', minItems: 3, maxItems: 1, items: new Items(type: 'string')),
+            ])),
+            '$.items: Array minItems is greater than maxItems.',
+        ];
+        yield 'missing $ref' => [
+            static fn (ResponseExampleGenerator $generator): mixed => $generator->generate(new SchemaAttribute(ref: '#/components/schemas/Missing')),
+            '$: $ref "#/components/schemas/Missing" not found',
+        ];
+        yield 'class without a component schema' => [
+            static fn (ResponseExampleGenerator $generator): mixed => $generator->generateForClass(self::class),
+            '$: No component schema is declared on class "Tests\Unit\ResponseExampleGeneratorTest".',
+        ];
+        yield 'non-invokable rule class' => [
+            static fn (): mixed => (new ResponseExampleGenerator(self::$openApi, ['type:string' => ResponseExampleNotInvokable::class]))->generate(new SchemaAttribute(type: 'string')),
+            '$: Rule class "Tests\Unit\ResponseExampleNotInvokable" is not invokable.',
+        ];
+        yield 'email too short for the domain' => [
+            static fn (ResponseExampleGenerator $generator): mixed => $generator->generate(new SchemaAttribute(type: 'string', format: 'email', maxLength: 3)),
+            '$: String constraints cannot be satisfied for format "email".',
+        ];
+        yield 'allOf with an array branch' => [
+            static fn (ResponseExampleGenerator $generator): mixed => $generator->generate(new SchemaAttribute(allOf: [new SchemaAttribute(type: 'array', items: new Items(type: 'string'))])),
+            '$: allOf branches must generate objects.',
+        ];
+        yield 'uniqueItems with too few distinct items' => [
+            static fn (ResponseExampleGenerator $generator): mixed => $generator->generate(new SchemaAttribute(type: 'array', minItems: 2, uniqueItems: true, items: new Items(type: 'string', enum: ['only']))),
+            '$: uniqueItems cannot be satisfied with the item schema.',
+        ];
+        yield 'integer bound beyond int64' => [
+            static fn (ResponseExampleGenerator $generator): mixed => $generator->generate(new SchemaAttribute(type: 'integer', minimum: 9.3e18)),
+            '$: Integer bound 9.3E+18 exceeds the supported range.',
+        ];
+        yield 'exclusive minimum at PHP_INT_MAX' => [
+            static fn (ResponseExampleGenerator $generator): mixed => $generator->generate(new SchemaAttribute(type: 'integer', minimum: PHP_INT_MAX, exclusiveMinimum: true)),
+            '$: Numeric bounds contain no integer value.',
+        ];
+        yield 'no multiple within bounds' => [
+            static fn (ResponseExampleGenerator $generator): mixed => $generator->generate(new Schema(['type' => 'integer', 'minimum' => 11, 'maximum' => 19, 'multipleOf' => 10])),
+            '$: Numeric bounds contain no multiple of 10.',
+        ];
+        yield 'pattern with a group' => [$string('^(ab)+$'), '$: Pattern "^(ab)+$" uses unsupported syntax.'];
+        yield 'pattern with a negated class' => [$string('^[^a]$'), '$: Negated character classes are not supported for example generation.'];
+        yield 'non-ASCII pattern' => [$string('^[ぁ-ん]+$'), '$: Pattern "^[ぁ-ん]+$" uses unsupported syntax: only ASCII patterns are supported.'];
+        yield 'pattern shorter than minLength' => [$string('^[a-z]{2}$', 3), '$: Pattern "^[a-z]{2}$" cannot satisfy minLength.'];
+        yield 'pattern longer than maxLength' => [$string('^[a-z]{3}$', null, 2), '$: Pattern "^[a-z]{3}$" cannot satisfy maxLength.'];
+    }
+
+    /**
+     * @param Closure(ResponseExampleGenerator): mixed $generate
+     */
+    #[Test]
+    #[DataProvider('invalidDefinitions')]
+    public function invalidDefinitionsAreReportedWithTheirPath(Closure $generate, string $message): void
+    {
+        $this->expectException(InvalidOpenApiDefinitionException::class);
+        $this->expectExceptionMessage(json_encode([$message], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+
+        $generate(new ResponseExampleGenerator(self::$openApi, []));
     }
 }
 
