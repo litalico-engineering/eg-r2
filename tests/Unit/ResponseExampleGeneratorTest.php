@@ -189,6 +189,13 @@ class ResponseExampleGeneratorTest extends TestCase
         } catch (InvalidOpenApiDefinitionException $exception) {
             self::assertSame(['$: No component schema is declared on class "Tests\Unit\ResponseExampleGeneratorTest".'], $exception->getMessages());
         }
+
+        try {
+            (new ResponseExampleGenerator(self::$openApi, ['type:string' => ResponseExampleNotInvokable::class]))->generate(new SchemaAttribute(type: 'string'));
+            self::fail('Expected an exception.');
+        } catch (InvalidOpenApiDefinitionException $exception) {
+            self::assertSame(['$: Rule class "Tests\Unit\ResponseExampleNotInvokable" is not invokable.'], $exception->getMessages());
+        }
     }
 }
 
@@ -198,4 +205,8 @@ final class ResponseExampleFalseRule
     {
         return false;
     }
+}
+
+final class ResponseExampleNotInvokable
+{
 }

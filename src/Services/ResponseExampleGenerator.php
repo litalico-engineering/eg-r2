@@ -197,6 +197,9 @@ final class ResponseExampleGenerator
     {
         if (is_string($rule) && class_exists($rule)) {
             $rule = new $rule();
+            if (!is_callable($rule)) {
+                $this->invalid($path, sprintf('Rule class "%s" is not invokable.', $rule::class));
+            }
         }
 
         return !is_string($rule) && is_callable($rule) ? $rule($schema, $path) : $rule;
