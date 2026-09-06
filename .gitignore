@@ -13,3 +13,5 @@ phpunit-ci.xml
 composer.lock
 .rector
 .rector-diff.status
+/qodana.yaml
+/.qodana
