@@ -328,7 +328,8 @@ $generator = new ResponseExampleGenerator($openApi, randomizer: new Randomizer(n
 
 Rules override generated values for a property name, a format, or a type, in that order of precedence.
 They are read from `eg_r2.response_example.rules`, or passed to the constructor directly.
-A rule is a fixed value, a callable receiving `(Schema $schema, string $path)`, or the class name of an invokable.
+A rule is a fixed value, a non-string callable receiving `(Schema $schema, string $path)` (a `Closure`, callable array, or invokable object), or the class name of an invokable.
+A string that happens to name a function (for example `'date'`) is treated as a fixed value.
 
 ```php
 // config/eg_r2.php

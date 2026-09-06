@@ -63,8 +63,9 @@ return [
     |   'property:<name>'  a property name, e.g. 'property:user_id'
     |   'format:<format>'  an OpenAPI format, e.g. 'format:uuid'
     |   'type:<type>'      an OpenAPI type, e.g. 'type:string'
-    | Values are a fixed value, a callable fn(Schema $schema, string $path): mixed,
-    | or the class name of an invokable (use class names to keep `config:cache` working).
+    | Values are a fixed value (strings are never called, even if they name a function),
+    | a non-string callable fn(Schema $schema, string $path): mixed, or the class name
+    | of an invokable (use class names to keep `config:cache` working).
     |
     | Example:
     | 'rules' => [
