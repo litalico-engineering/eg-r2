@@ -25,12 +25,12 @@ use Tests\Fixtures\Responses\AdminResponse;
 use Tests\Fixtures\Responses\FacilityResponse;
 use Tests\Fixtures\Responses\OwnerResponse;
 use Tests\TestCase;
-use function array_keys;
 use function array_unique;
 use function count;
 use function filter_var;
 use function json_encode;
 use function preg_match;
+use function range;
 use function strlen;
 
 #[CoversClass(ResponseExampleGenerator::class)]
@@ -91,19 +91,29 @@ class ResponseExampleGeneratorTest extends TestCase
         self::assertSame('free', $example['plan']);
     }
 
-    #[Test]
-    public function emailExamplesFitLengthBoundsThatAllowAValidAddress(): void
+    /**
+     * @return iterable<string, array{int, int|null}>
+     */
+    public static function emailLengthBounds(): iterable
     {
-        $generator = new ResponseExampleGenerator(self::$openApi, []);
+        yield 'shortest possible address' => [13, 13];
+        yield 'exact length' => [15, 15];
+        yield 'long exact length' => [30, 30];
+        yield 'minimum below the domain length' => [1, 19];
+        yield 'no maximum' => [25, null];
+    }
 
-        foreach ([[13, 13], [15, 15], [30, 30], [1, 19], [25, null]] as list($minLength, $maxLength)) {
-            $email = $generator->generate(new SchemaAttribute(type: 'string', format: 'email', minLength: $minLength, maxLength: $maxLength));
-            self::assertIsString($email);
-            self::assertNotFalse(filter_var($email, FILTER_VALIDATE_EMAIL), $email);
-            self::assertStringEndsWith('@example.com', $email);
-            self::assertGreaterThanOrEqual($minLength, strlen($email));
-            self::assertLessThanOrEqual($maxLength ?? PHP_INT_MAX, strlen($email));
-        }
+    #[Test]
+    #[DataProvider('emailLengthBounds')]
+    public function emailExamplesFitLengthBoundsThatAllowAValidAddress(int $minLength, ?int $maxLength): void
+    {
+        $email = (new ResponseExampleGenerator(self::$openApi, []))->generate(new SchemaAttribute(type: 'string', format: 'email', minLength: $minLength, maxLength: $maxLength));
+
+        self::assertIsString($email);
+        self::assertNotFalse(filter_var($email, FILTER_VALIDATE_EMAIL), $email);
+        self::assertStringEndsWith('@example.com', $email);
+        self::assertGreaterThanOrEqual($minLength, strlen($email));
+        self::assertLessThanOrEqual($maxLength ?? PHP_INT_MAX, strlen($email));
     }
 
     #[Test]
@@ -157,19 +167,25 @@ class ResponseExampleGeneratorTest extends TestCase
         self::assertSame(99, (new ResponseExampleGenerator(self::$openApi))->generateForClass(FacilityResponse::class)['id']);
     }
 
-    #[Test]
-    public function objectsWithoutPropertiesEncodeAsJsonObjects(): void
+    /**
+     * @return iterable<string, array{Schema, string}>
+     */
+    public static function objectSchemasWithoutProperties(): iterable
     {
-        $generator = new ResponseExampleGenerator(self::$openApi, []);
-
-        self::assertSame('{}', json_encode($generator->generate(new SchemaAttribute(type: 'object'))));
-        self::assertSame('{}', json_encode($generator->generate(new SchemaAttribute(type: 'object', additionalProperties: new AdditionalProperties(type: 'string')))));
-        self::assertSame('{}', json_encode($generator->generate(new SchemaAttribute(properties: [new Property(property: 'secret', type: 'string', writeOnly: true)]))));
-        // An empty branch merges nothing; an array branch is not an object.
-        self::assertSame('{"a":1}', json_encode($generator->generate(new SchemaAttribute(allOf: [
+        yield 'bare object' => [new SchemaAttribute(type: 'object'), '{}'];
+        yield 'additionalProperties map' => [new SchemaAttribute(type: 'object', additionalProperties: new AdditionalProperties(type: 'string')), '{}'];
+        yield 'only writeOnly properties' => [new SchemaAttribute(properties: [new Property(property: 'secret', type: 'string', writeOnly: true)]), '{}'];
+        yield 'allOf with an empty branch' => [new SchemaAttribute(allOf: [
             new SchemaAttribute(type: 'object'),
             new SchemaAttribute(properties: [new Property(property: 'a', type: 'integer', example: 1)]),
-        ]))));
+        ]), '{"a":1}'];
+    }
+
+    #[Test]
+    #[DataProvider('objectSchemasWithoutProperties')]
+    public function objectsWithoutPropertiesEncodeAsJsonObjects(Schema $schema, string $json): void
+    {
+        self::assertSame($json, json_encode((new ResponseExampleGenerator(self::$openApi, []))->generate($schema)));
     }
 
     #[Test]
@@ -187,28 +203,54 @@ class ResponseExampleGeneratorTest extends TestCase
         }
     }
 
-    #[Test]
-    public function integerBoundsKeepInt64PrecisionAndHonorMultipleOf(): void
+    /**
+     * @return iterable<string, array{Schema, int}>
+     */
+    public static function exactIntegerBounds(): iterable
     {
-        $generator = new ResponseExampleGenerator(self::$openApi, []);
+        yield 'PHP_INT_MAX' => [new SchemaAttribute(type: 'integer', minimum: PHP_INT_MAX, maximum: PHP_INT_MAX), PHP_INT_MAX];
+        yield 'PHP_INT_MIN' => [new SchemaAttribute(type: 'integer', minimum: PHP_INT_MIN, maximum: PHP_INT_MIN), PHP_INT_MIN];
+        // OAS 3.1 numeric exclusive bounds on integers round inward.
+        yield 'fractional exclusive bounds' => [new SchemaAttribute(type: 'integer', exclusiveMinimum: 7.5, exclusiveMaximum: 9), 8];
+    }
 
-        self::assertSame(PHP_INT_MAX, $generator->generate(new SchemaAttribute(type: 'integer', minimum: PHP_INT_MAX, maximum: PHP_INT_MAX)));
-        self::assertSame(PHP_INT_MIN, $generator->generate(new SchemaAttribute(type: 'integer', minimum: PHP_INT_MIN, maximum: PHP_INT_MIN)));
-        $value = $generator->generate(new SchemaAttribute(type: 'integer', minimum: 0, maximum: PHP_INT_MAX));
+    #[Test]
+    #[DataProvider('exactIntegerBounds')]
+    public function integerBoundsKeepInt64Precision(Schema $schema, int $expected): void
+    {
+        self::assertSame($expected, (new ResponseExampleGenerator(self::$openApi, []))->generate($schema));
+    }
+
+    #[Test]
+    public function integersAcrossTheFullInt64RangeStayIntegers(): void
+    {
+        $value = (new ResponseExampleGenerator(self::$openApi, []))->generate(new SchemaAttribute(type: 'integer', minimum: 0, maximum: PHP_INT_MAX));
+
         self::assertIsInt($value);
         self::assertGreaterThanOrEqual(0, $value);
-        // OAS 3.1 numeric exclusive bounds on integers round inward.
-        self::assertSame(8, $generator->generate(new SchemaAttribute(type: 'integer', exclusiveMinimum: 7.5, exclusiveMaximum: 9)));
+    }
 
-        // The attribute constructor has no multipleOf argument; the annotation form accepts every property.
+    /**
+     * The attribute constructor has no multipleOf argument; the annotation form accepts every property.
+     *
+     * @return iterable<string, array{Schema, list<int|float>}>
+     */
+    public static function multipleOfSchemas(): iterable
+    {
+        yield 'integer' => [new Schema(['type' => 'integer', 'minimum' => 1, 'maximum' => 100, 'multipleOf' => 10]), range(10, 100, 10)];
+        yield 'number' => [new Schema(['type' => 'number', 'minimum' => 0.5, 'maximum' => 0.75, 'multipleOf' => 0.25]), [0.5, 0.75]];
+    }
+
+    /**
+     * @param list<int|float> $allowed
+     */
+    #[Test]
+    #[DataProvider('multipleOfSchemas')]
+    public function numbersHonorMultipleOf(Schema $schema, array $allowed): void
+    {
+        $generator = new ResponseExampleGenerator(self::$openApi, []);
         for ($index = 0; $index < 20; ++$index) {
-            $multiple = $generator->generate(new Schema(['type' => 'integer', 'minimum' => 1, 'maximum' => 100, 'multipleOf' => 10]));
-            self::assertIsInt($multiple);
-            self::assertSame(0, $multiple % 10);
-            self::assertGreaterThanOrEqual(10, $multiple);
-            self::assertLessThanOrEqual(100, $multiple);
-            $decimal = $generator->generate(new Schema(['type' => 'number', 'minimum' => 0.5, 'maximum' => 0.75, 'multipleOf' => 0.25]));
-            self::assertContains($decimal, [0.5, 0.75]);
+            self::assertContains($generator->generate($schema), $allowed);
         }
     }
 
