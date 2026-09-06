@@ -332,7 +332,7 @@ final class ResponseExampleGenerator
         $cyclic = $items !== null && is_string($items->ref) && in_array($items->ref, $this->refStack, true);
 
         $minimum ??= min($cyclic ? 0 : 1, $maximum ?? 1);
-        $maximum = min($maximum ?? $minimum + self::DEFAULT_ITEMS_SPAN, $cyclic ? $minimum : PHP_INT_MAX);
+        $maximum = min($maximum ?? ($minimum + self::DEFAULT_ITEMS_SPAN), $cyclic ? $minimum : PHP_INT_MAX);
         $count = $this->randomizer->getInt($minimum, $maximum);
         if ($count === 0) {
             return [];
@@ -420,7 +420,7 @@ final class ResponseExampleGenerator
             return $this->randomizer->getInt((int) $minimum, (int) $maximum);
         }
 
-        $value = $minimum + ($maximum - $minimum) * ($this->randomizer->getInt(0, PHP_INT_MAX) / PHP_INT_MAX);
+        $value = $minimum + (($maximum - $minimum) * ($this->randomizer->getInt(0, PHP_INT_MAX) / PHP_INT_MAX));
 
         return min(max($value, $minimum), $maximum);
     }
@@ -443,7 +443,7 @@ final class ResponseExampleGenerator
     private function step(int|float $number, int $direction, bool $integer, string $path): int|float
     {
         if (!$integer) {
-            return $number + $direction * max(1, abs($number)) * PHP_FLOAT_EPSILON;
+            return $number + ($direction * max(1, abs($number)) * PHP_FLOAT_EPSILON);
         }
         $next = $number + $direction;
         if (!is_int($next)) {
@@ -472,7 +472,7 @@ final class ResponseExampleGenerator
             // '@example.com' is 12 characters; size the local part so the bounds are met when they can be.
             'email' => $this->randomString(max(1, $minimum - 12), max(1, ($maximum ?? max($minimum, 20)) - 12)) . '@example.com',
             'uuid' => $this->randomUuid(),
-            default => $this->randomString($minimum, $maximum ?? $minimum + self::DEFAULT_LENGTH_SPAN),
+            default => $this->randomString($minimum, $maximum ?? ($minimum + self::DEFAULT_LENGTH_SPAN)),
         };
 
         if (strlen($value) < $minimum) {
@@ -589,7 +589,7 @@ final class ResponseExampleGenerator
             }
         }
         $upper = $unbounded
-            ? $maximum ?? max($minimum, $length) + self::DEFAULT_LENGTH_SPAN
+            ? $maximum ?? (max($minimum, $length) + self::DEFAULT_LENGTH_SPAN)
             : min($bounded, $maximum ?? $bounded);
         if ($upper < $minimum) {
             $this->invalid($path, sprintf('Pattern "%s" cannot satisfy minLength.', $pattern));
@@ -674,7 +674,11 @@ final class ResponseExampleGenerator
             }
             $value = $values[$this->randomizer->getInt(0, count($values) - 1)];
 
-            return $value instanceof BackedEnum ? $value->value : ($value instanceof UnitEnum ? $value->name : $value);
+            return match (true) {
+                $value instanceof BackedEnum => $value->value,
+                $value instanceof UnitEnum => $value->name,
+                default => $value,
+            };
         }
 
         return $enum;

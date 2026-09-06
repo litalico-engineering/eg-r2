@@ -29,7 +29,7 @@ use function array_unique;
 use function count;
 use function filter_var;
 use function json_encode;
-use function preg_match;
+use function preg_quote;
 use function range;
 use function strlen;
 
@@ -82,7 +82,7 @@ class ResponseExampleGeneratorTest extends TestCase
         self::assertNotFalse($date);
         self::assertSame($example['birthday'], $date->format('Y-m-d'));
         self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $example['createdAt']);
-        self::assertSame(1, preg_match('/^[a-c]{2}_\d+$/', $example['code']));
+        self::assertMatchesRegularExpression('/^[a-c]{2}_\d+$/', $example['code']);
         self::assertGreaterThanOrEqual(6, strlen($example['code']));
         self::assertLessThanOrEqual(8, strlen($example['code']));
         self::assertGreaterThan(1.5, $example['score']);
@@ -185,7 +185,7 @@ class ResponseExampleGeneratorTest extends TestCase
     #[DataProvider('objectSchemasWithoutProperties')]
     public function objectsWithoutPropertiesEncodeAsJsonObjects(Schema $schema, string $json): void
     {
-        self::assertSame($json, json_encode((new ResponseExampleGenerator(self::$openApi, []))->generate($schema)));
+        self::assertSame($json, json_encode((new ResponseExampleGenerator(self::$openApi, []))->generate($schema), JSON_THROW_ON_ERROR));
     }
 
     #[Test]
@@ -208,10 +208,10 @@ class ResponseExampleGeneratorTest extends TestCase
      */
     public static function exactIntegerBounds(): iterable
     {
-        yield 'PHP_INT_MAX' => [new SchemaAttribute(type: 'integer', minimum: PHP_INT_MAX, maximum: PHP_INT_MAX), PHP_INT_MAX];
-        yield 'PHP_INT_MIN' => [new SchemaAttribute(type: 'integer', minimum: PHP_INT_MIN, maximum: PHP_INT_MIN), PHP_INT_MIN];
+        yield 'PHP_INT_MAX' => [new SchemaAttribute(type: 'integer', maximum: PHP_INT_MAX, minimum: PHP_INT_MAX), PHP_INT_MAX];
+        yield 'PHP_INT_MIN' => [new SchemaAttribute(type: 'integer', maximum: PHP_INT_MIN, minimum: PHP_INT_MIN), PHP_INT_MIN];
         // OAS 3.1 numeric exclusive bounds on integers round inward.
-        yield 'fractional exclusive bounds' => [new SchemaAttribute(type: 'integer', exclusiveMinimum: 7.5, exclusiveMaximum: 9), 8];
+        yield 'fractional exclusive bounds' => [new SchemaAttribute(type: 'integer', exclusiveMaximum: 9, exclusiveMinimum: 7.5), 8];
     }
 
     #[Test]
@@ -343,7 +343,8 @@ class ResponseExampleGeneratorTest extends TestCase
     public function invalidDefinitionsAreReportedWithTheirPath(Closure $generate, string $message): void
     {
         $this->expectException(InvalidOpenApiDefinitionException::class);
-        $this->expectExceptionMessage(json_encode([$message], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        // expectExceptionMessage() is deprecated in PHPUnit 13 and expectExceptionMessageIs() is missing from 11/12.
+        $this->expectExceptionMessageMatches('/^' . preg_quote(json_encode([$message], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), '/') . '$/');
 
         $generate(new ResponseExampleGenerator(self::$openApi, []));
     }
