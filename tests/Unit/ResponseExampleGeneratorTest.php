@@ -154,6 +154,7 @@ class ResponseExampleGeneratorTest extends TestCase
     {
         $generator = new ResponseExampleGenerator(self::$openApi, [
             'property:uuid' => 'fixed-uuid',
+            'property:score' => null,
             'format:email' => static fn (Schema $schema, string $path): string => $path . '@rule.test',
             'type:boolean' => ResponseExampleFalseRule::class,
             'type:string' => 'type rule must lose to the more specific keys',
@@ -161,6 +162,8 @@ class ResponseExampleGeneratorTest extends TestCase
         $example = $generator->generateForClass(OwnerResponse::class);
 
         self::assertSame('fixed-uuid', $example['uuid']);
+        self::assertArrayHasKey('score', $example);
+        self::assertNull($example['score']);
         self::assertSame('$.email@rule.test', $example['email']);
         self::assertFalse($example['active']);
         self::assertSame('type rule must lose to the more specific keys', $example['name']);

@@ -18,6 +18,7 @@ use stdClass;
 use UnitEnum;
 use function abs;
 use function array_is_list;
+use function array_key_exists;
 use function array_pop;
 use function array_values;
 use function bin2hex;
@@ -190,7 +191,7 @@ final class ResponseExampleGenerator
         }
 
         foreach ($candidates as $candidate) {
-            if (isset($this->rules[$candidate])) {
+            if (array_key_exists($candidate, $this->rules)) {
                 return $candidate;
             }
         }
