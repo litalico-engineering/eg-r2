@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.2](https://github.com/litalico-engineering/eg-r2/compare/1.5.1...1.5.2) - 2026-09-13
+
+### Other Changes
+- fix: make security fixtures PSR-4 compliant by @tyamahori in https://github.com/litalico-engineering/eg-r2/pull/61
+- feat: generate response examples from OpenAPI schemas by @tyamahori in https://github.com/litalico-engineering/eg-r2/pull/62
+
 ## [1.5.1](https://github.com/litalico-engineering/eg-r2/compare/1.5.0...1.5.1) - 2026-07-13
 
 ### Other Changes
