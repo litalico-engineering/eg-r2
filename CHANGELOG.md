@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.3](https://github.com/litalico-engineering/eg-r2/compare/1.5.2...1.5.3) - 2026-10-13
+
+### Other Changes
+- :bug: Recognize attribute classes that inherit from Property during reflection by @yuichiro-takeda-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/64
+
 ## [1.5.2](https://github.com/litalico-engineering/eg-r2/compare/1.5.1...1.5.2) - 2026-09-13
 
 ### Other Changes
