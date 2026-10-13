@@ -12,6 +12,7 @@ use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
 use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Fixtures\Attributes\ExtendedProperty;
 use Tests\TestCase;
 
 /**
@@ -871,6 +872,56 @@ class RequestAttributesGeneratorTraitTest extends TestCase
 
         self::assertEquals($expected, $actual);
     }
+
+    #[Test]
+    public function canGenerateAttributesFromPropertyAttributeSubclass(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[ExtendedProperty(property: 'extended', description: 'extended description')]
+            public string $extended;
+
+            #[Property(property: 'plain', description: 'plain description', type: 'string')]
+            public string $plain;
+        };
+
+        $expected = [
+            'extended' => 'extended description',
+            'plain' => 'plain description',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function canGenerateAttributesFromPropertyAttributeSubclassInNestedFormRequestClass(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            public NestedSchemaClassWithPropertySubclass $nested;
+        };
+
+        $expected = [
+            'nested.extended' => 'extended description',
+        ];
+
+        $actual = $class->generatedAttributes();
+
+        self::assertEquals($expected, $actual);
+    }
+}
+
+#[Schema(schema: 'NestedSchemaClassWithPropertySubclass')]
+class NestedSchemaClassWithPropertySubclass
+{
+    #[ExtendedProperty(property: 'extended', description: 'extended description')]
+    public string $extended;
 }
 
 #[Schema(schema: 'NestedSchemaClass')]

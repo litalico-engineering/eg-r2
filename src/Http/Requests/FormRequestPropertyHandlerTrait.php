@@ -8,6 +8,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use InvalidArgumentException;
 use OpenApi\Attributes\Property;
 use OpenApi\Generator;
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -100,7 +101,7 @@ trait FormRequestPropertyHandlerTrait
      */
     private function getPropertyDefaultValue(ReflectionProperty $property): mixed
     {
-        $attributes = $property->getAttributes(Property::class);
+        $attributes = $property->getAttributes(Property::class, ReflectionAttribute::IS_INSTANCEOF);
 
         if (!isset($attributes[0])) {
             return null;

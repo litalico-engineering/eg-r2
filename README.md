@@ -174,6 +174,43 @@ For each property, the trait uses:
 2. **Title field** - if description is not set
 3. **Property name** - if neither description nor title is set
 
+#### Custom Attributes Extending `Property`
+
+Attribute classes that extend `OpenApi\Attributes\Property` are resolved as
+well. This lets you factor out a schema definition that would otherwise be
+repeated across many requests:
+
+```php
+use Attribute;
+use OpenApi\Attributes\Property;
+
+#[Attribute(Attribute::TARGET_PROPERTY | Attribute::IS_REPEATABLE)]
+class ExtendedProperty extends Property
+{
+    public function __construct(string $property, string $description = 'extended property')
+    {
+        parent::__construct(
+            property: $property,
+            description: $description,
+            type: 'string',
+            pattern: '^[0-9]{3,5}$',
+            maxLength: 5,
+            minLength: 3,
+        );
+    }
+}
+
+class MyFormRequest extends FormRequest
+{
+    use RequestAttributesGeneratorTrait;
+
+    #[ExtendedProperty(property: 'extended')]
+    public string $extended; // => 'extended property'
+}
+```
+
+The same applies to `RequestRuleGeneratorTrait` and `FormRequestPropertyHandlerTrait`.
+
 #### Array Item Formatting
 
 For properties inside array items, the trait automatically:

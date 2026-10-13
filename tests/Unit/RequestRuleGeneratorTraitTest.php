@@ -18,6 +18,7 @@ use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionException;
+use Tests\Fixtures\Attributes\ExtendedProperty;
 use Tests\FullAccessWrapper;
 use Tests\TestCase;
 
@@ -564,6 +565,40 @@ class RequestRuleGeneratorTraitTest extends TestCase
     }
 
     #[Test]
+    public function propertyAttributeSubclassInNestedSchemaCanBeConverted(): void
+    {
+        setup:
+        $class = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+
+            #[
+                Property(
+                    property: 'nested',
+                    ref: '#/components/schemas/NestedObjectWithPropertySubclass',
+                ),
+            ]
+            public NestedObjectWithPropertySubclass $nested;
+        };
+
+        $expected = [
+            'nested.extended' => [
+                'required_with:nested',
+                'string',
+                'max:5',
+                'min:3',
+                'regex:/^[0-9]{3,5}$/',
+            ],
+        ];
+
+        when:
+        $actual = $class->rules();
+
+        then:
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
     public function nullableEnumParameterCanBeConverted(): void
     {
         setup:
@@ -681,4 +716,16 @@ class NestedObject extends FormRequest
         format: 'string'
     )]
     public string $name;
+}
+
+#[\OpenApi\Attributes\Schema(
+    schema: 'NestedObjectWithPropertySubclass',
+    required: ['extended']
+)]
+class NestedObjectWithPropertySubclass extends FormRequest
+{
+    use RequestRuleGeneratorTrait;
+
+    #[ExtendedProperty(property: 'extended')]
+    public string $extended;
 }
