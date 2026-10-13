@@ -10,6 +10,7 @@ use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
 use OpenApi\Generator;
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -134,7 +135,7 @@ trait RequestAttributesGeneratorTrait
         $result = [];
         $parentNames = [$phpProperty->getName()];
         foreach ($nestedClass->getProperties() as $innerProperty) {
-            $attributeProperties = $innerProperty->getAttributes(Property::class);
+            $attributeProperties = $innerProperty->getAttributes(Property::class, ReflectionAttribute::IS_INSTANCEOF);
             if ($attributeProperties !== []) {
                 /** @var Property $nestedSchemaProperty */
                 $nestedSchemaProperty = $attributeProperties[0]->newInstance();
@@ -165,7 +166,7 @@ trait RequestAttributesGeneratorTrait
      */
     private function flattenPropertyAttribute(ReflectionProperty $phpProperty, AttributeMessageService $messageService): ?array
     {
-        $attributes = $phpProperty->getAttributes(Property::class);
+        $attributes = $phpProperty->getAttributes(Property::class, ReflectionAttribute::IS_INSTANCEOF);
         if ($attributes === []) {
             return null;
         }

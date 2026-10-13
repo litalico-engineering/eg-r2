@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionException;
 use stdClass;
+use Tests\Fixtures\Attributes\ExtendedProperty;
 use Tests\FullAccessWrapper;
 use Tests\TestCase;
 
@@ -360,6 +361,31 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
         self::assertInstanceOf(NestedObject2::class, $instance->nested);
         self::assertEquals(2, $instance->nested->id);
         self::assertEquals('bob', $instance->nested->name);
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    #[Test]
+    public function defaultValueOfPropertyAttributeSubclassIsApplied(): void
+    {
+        setup:
+        $class = new class extends FormRequest
+        {
+            use FormRequestPropertyHandlerTrait;
+
+            #[ExtendedProperty(property: 'extended', nullable: true, default: '12345')]
+            public ?string $extended;
+        };
+
+        /** @var FullAccessWrapper&FormRequest $instance */
+        $instance = new FullAccessWrapper($class);
+
+        when:
+        $instance->passedValidation();
+
+        then:
+        self::assertSame('12345', $instance->extended);
     }
 }
 

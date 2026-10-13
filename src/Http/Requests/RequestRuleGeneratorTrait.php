@@ -15,6 +15,7 @@ use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
 use OpenApi\Generator;
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -79,7 +80,7 @@ trait RequestRuleGeneratorTrait
 
                     $parentNames = [$phpProperty->getName()];
                     foreach ($nestedClass->getProperties() as $innerProperty) {
-                        $attributeProperties = $innerProperty->getAttributes(Property::class);
+                        $attributeProperties = $innerProperty->getAttributes(Property::class, ReflectionAttribute::IS_INSTANCEOF);
                         if ($attributeProperties !== []) {
                             /** @var Property $nestedSchemaProperty */
                             $nestedSchemaProperty = $attributeProperties[0]->newInstance();
