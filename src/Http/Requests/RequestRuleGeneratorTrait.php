@@ -10,6 +10,7 @@ use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Rules\In;
 use Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException;
 use Litalico\EgR2\Rules\Integer;
+use Litalico\EgR2\Services\SchemaTypeResolver;
 use OpenApi\Annotations\Schema as AnnotationSchema;
 use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Property;
@@ -106,8 +107,8 @@ trait RequestRuleGeneratorTrait
                         ...$errorMessages,
                         ...$this->checkDiffInPropertyAndSchema(
                             $phpProperty,
-                            $obj->nullable === true,
-                            $obj->type
+                            SchemaTypeResolver::isNullable($obj),
+                            SchemaTypeResolver::baseType($obj)
                         ),
                     ];
                 } elseif ($obj instanceof Schema) {
@@ -122,7 +123,7 @@ trait RequestRuleGeneratorTrait
                     if ($parameter->name !== Generator::UNDEFINED) {    /** @phpstan-ignore-line */
                         // If the Schema is an array, assign the parameter names without [].
                         // (Because a [] at the end will cause a validation error)
-                        $schema->title = $schema->type === 'array'
+                        $schema->title = SchemaTypeResolver::is($schema, 'array')
                             ? str_replace('[]', '', $parameter->name)
                             : $parameter->name;
                     }
@@ -140,8 +141,8 @@ trait RequestRuleGeneratorTrait
                     ...$errorMessages,
                     ...$this->checkDiffInPropertyAndSchema(
                         $phpProperty,
-                        $schema->nullable === true,
-                        $schema->type
+                        SchemaTypeResolver::isNullable($schema),
+                        SchemaTypeResolver::baseType($schema)
                     ),
                 ];
             }
@@ -241,7 +242,7 @@ trait RequestRuleGeneratorTrait
     {
         $result = [];
 
-        if ($schema->type === 'array') {
+        if (SchemaTypeResolver::is($schema, 'array')) {
             // arraySet your own rules
             $required = in_array($this->getPropertyName($schema), $requires, true);
             $result += $this->convertRule($schema, $parentNames, $required);
@@ -258,7 +259,7 @@ trait RequestRuleGeneratorTrait
                 $ruleName = implode('.', $parentNames + [$this->getPropertyName($schema)]);
                 $result[$ruleName] = array_values($this->convertRule($schema->items))[0];
             }
-        } elseif ($schema->type === 'object') {
+        } elseif (SchemaTypeResolver::is($schema, 'object')) {
             $propertyName = $this->getPropertyName($schema);
             $result += $this->convertRule($schema, $parentNames, in_array($propertyName, $requires, true));
             $parentNames[] = $propertyName;
@@ -312,21 +313,21 @@ trait RequestRuleGeneratorTrait
         $rules = [];
 
         // Check if the schema value is nullable or not
-        if ($schema->nullable === true) {
+        $nullable = SchemaTypeResolver::isNullable($schema);
+        $type = SchemaTypeResolver::baseType($schema);
+        if ($nullable) {
             $rules[] = 'nullable';
-        } elseif ($schema->nullable === false) {
-            // nop
         }
 
         // Check if the field is required. If it is, ensure the key is present.
         if ($required) {
-            if ($schema->type === 'object') {
+            if ($type === 'object') {
                 $rules[] = 'present';
             } else {
                 // The path parameter etc. is treated as true for required, but the value may be null in some cases.
-                if ($schema->nullable === false || $schema->nullable === Generator::UNDEFINED) {
+                if (!$nullable) {
                     // If type is array, set to `present`.
-                    $requireRule = $schema->type === 'array' ? 'present' : 'required';
+                    $requireRule = $type === 'array' ? 'present' : 'required';
                     // In the case of a nested structure, it is required only when the parent element exists.
                     $rules[] = $names !== [] ? 'required_with:' . implode('.', $names) : $requireRule;
                 }
@@ -334,17 +335,17 @@ trait RequestRuleGeneratorTrait
         }
 
         // Specify the type of the schema
-        if (in_array($schema->type, ['string', 'number', 'integer', 'boolean', 'array', 'object'], true)) {
-            if ($schema->type === 'number') {
+        if (in_array($type, ['string', 'number', 'integer', 'boolean', 'array', 'object'], true)) {
+            if ($type === 'number') {
                 $rules[] = 'numeric';
-            } elseif ($schema->type === 'object') {
+            } elseif ($type === 'object') {
                 $rules[] = 'array';
-            } elseif ($schema->type === 'integer') {
+            } elseif ($type === 'integer') {
 
                 $rules[] = new Integer();
                 $rules[] = 'integer';
             } else {
-                $rules[] = $schema->type;
+                $rules[] = $type;
             }
         }
 

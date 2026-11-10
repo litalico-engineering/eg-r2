@@ -64,6 +64,11 @@ class RequestRuleGeneratorTraitTest extends TestCase
         return [
             'nullable-true' => [new Property('key', nullable: true), ['key' => ['nullable']]],
             'nullable-false' => [new Property('key', nullable: false), ['key' => []]],
+            'nullable-type-array|string' => [new Property('key', type: ['string', 'null']), ['key' => ['nullable', 'string']]],
+            'nullable-type-array|integer' => [new Property('key', type: ['null', 'integer']), ['key' => ['nullable', new Integer(), 'integer']]],
+            'nullable-type-array|array' => [new Property('key', type: ['array', 'null']), ['key' => ['nullable', 'array']]],
+            'nullable-type-array|object' => [new Property('key', type: ['object', 'null']), ['key' => ['nullable', 'array']]],
+            'type-array without null' => [new Property('key', type: ['string']), ['key' => ['string']]],
             'string' => [new Property('key', type: 'string'), ['key' => ['string']]],
             'number' => [new Property('key', type: 'number'), ['key' => ['numeric']]],
             'integer' => [new Property('key', type: 'integer'), ['key' => [new Integer(), 'integer']]],
@@ -175,6 +180,44 @@ class RequestRuleGeneratorTraitTest extends TestCase
     }
 
     #[Test]
+    public function nullableTypeArrayIsTreatedAsNullableInRules(): void
+    {
+        setup:
+        $class = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+
+            #[Property(
+                'parent',
+                required: ['key1', 'key2'],
+                properties: [
+                    new Property('key1', type: ['string', 'null']),
+                    new Property('key2', type: 'string'),
+                ],
+                type: ['object', 'null']
+            )]
+            public ?array $parent = null;
+
+            #[Property('list', type: ['array', 'null'], items: new Items(type: 'string'))]
+            public ?array $list = null;
+        };
+
+        $expected = [
+            'parent.key1' => ['nullable', 'string'],
+            'parent.key2' => ['required_with:parent', 'string'],
+            'parent' => ['nullable', 'array'],
+            'list' => ['nullable', 'array'],
+            'list.*' => ['string'],
+        ];
+
+        when:
+        $actual = $class->rules();
+
+        then:
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
     #[DataProvider('schemaDefinitionPropertyPattern')]
     #[DataProvider('schemaDefinitionParameterPattern')]
     public function errorOccursIfThereIsAConflictBetweenPropertyAndSchemaDefinition(FormRequest $instance, string $expectedMessage): void
@@ -200,6 +243,36 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     public string $status;
                 },
                 '["status: Nullable definitions are different in property and schema. "]',
+            ],
+            'property|schema:nullable type array, property:required' => [
+                new class() extends FormRequest
+                {
+                    use RequestRuleGeneratorTrait;
+
+                    #[Property('status', type: ['string', 'null'], example: Status::AVAILABLE, enum: Status::class)]
+                    public string $status;
+                },
+                '["status: Nullable definitions are different in property and schema. "]',
+            ],
+            'property|schema:required, property:nullable type array' => [
+                new class() extends FormRequest
+                {
+                    use RequestRuleGeneratorTrait;
+
+                    #[Property('status', type: 'string', example: Status::AVAILABLE, enum: Status::class)]
+                    public ?string $status = null;
+                },
+                '["status: Nullable definitions are different in property and schema. "]',
+            ],
+            'property|schema:integer nullable type array, property:string' => [
+                new class() extends FormRequest
+                {
+                    use RequestRuleGeneratorTrait;
+
+                    #[Property('status', type: ['integer', 'null'], example: Status::AVAILABLE, enum: Status::class)]
+                    public ?string $status = null;
+                },
+                '["status: Type definitions are different in property and schema. "]',
             ],
             'property|schema:required, property:nullable' => [
                 new class() extends FormRequest
