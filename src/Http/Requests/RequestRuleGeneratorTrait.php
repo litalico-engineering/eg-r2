@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Litalico\EgR2\Http\Requests;
 
+use BackedEnum;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -22,6 +23,7 @@ use ReflectionException;
 use ReflectionNamedType;
 use ReflectionProperty;
 use function count;
+use function enum_exists;
 use function in_array;
 use function is_array;
 use function is_string;
@@ -398,7 +400,17 @@ trait RequestRuleGeneratorTrait
             if (is_string($schema->enum)) {
                 $rules[] = new Enum($schema->enum);
             } else {
-                $rules[] = Rule::in($schema->enum);
+                $values = [];
+                foreach ($schema->enum as $value) {
+                    if (is_string($value) && enum_exists($value)) {
+                        foreach ($value::cases() as $case) {
+                            $values[] = $case instanceof BackedEnum ? $case->value : $case->name;
+                        }
+                    } else {
+                        $values[] = $value;
+                    }
+                }
+                $rules[] = Rule::in($values);
             }
         }
 

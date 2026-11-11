@@ -61,6 +61,25 @@ If you didn't publish the config file, you can create it manually at `config/eg_
     php artisan eg-r2:generate-route
     ```
 
+### Nullable Enum Values
+
+For OpenAPI 3.1 nullable enums, include `null` in both the type array and the enum values.
+You can reference the PHP enum class without duplicating its cases:
+
+```php
+#[Property(
+    property: 'status',
+    type: ['string', 'null'],
+    enum: [Status::class, null],
+)]
+public ?string $status = null;
+```
+
+Enum classes inside an `enum` array are expanded to their backed values (or case names for
+unit enums) when generating validation rules, matching swagger-php's enum expansion.
+Literal values, enum cases, and `null` can also be mixed in the array.
+Existing `enum: Status::class` declarations continue to use Laravel's `Enum` rule.
+
 ### Security Middleware Mapping
 
 `eg-r2:generate-route` can convert OpenAPI `security` definitions into Laravel route middleware.
