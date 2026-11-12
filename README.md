@@ -77,7 +77,9 @@ public ?string $status = null;
 
 Enum classes inside an `enum` array are expanded to their backed values (or case names for
 unit enums) when generating validation rules, matching swagger-php's enum expansion.
-Literal values, enum cases, and `null` can also be mixed in the array.
+Literal values and enum cases can also be mixed in the array.
+`null` is not passed to the `in` rule; it is accepted only when the `type` includes `'null'` (or `nullable: true`),
+and with a 3.1 type array it is accepted only if the `enum` also contains `null`.
 Existing `enum: Status::class` declarations continue to use Laravel's `Enum` rule.
 
 ### Security Middleware Mapping

@@ -201,13 +201,13 @@ trait RequestRuleGeneratorTrait
      *
      * @param ReflectionProperty $property The property to compare with the schema.
      * @param bool $schemaNullable Indicates whether the schema definition is nullable or not.
-     * @param string|non-empty-array<string> $schemaTypeName The type definition of the schema.
+     * @param string|non-empty-array<string>|null $schemaTypeName The type definition of the schema. null when undefined or null-only; the type check is skipped.
      * @return list<string> An array of error messages indicating the discrepancies between the property and the schema.
      */
     private function checkDiffInPropertyAndSchema(
         ReflectionProperty $property,
         bool $schemaNullable,
-        string|array $schemaTypeName,
+        string|array|null $schemaTypeName,
     ): array {
         /** @var ReflectionNamedType $propertyType */
         $propertyType = $property->getType();
@@ -221,8 +221,11 @@ trait RequestRuleGeneratorTrait
         }
 
         if (
-            ($propertyTypeName === 'array' && !in_array($schemaTypeName, ['array', 'object'], true))
-            || (is_string($schemaTypeName) && $propertyTypeName !== 'array' && !str_starts_with($schemaTypeName, $propertyTypeName))
+            $schemaTypeName !== null
+            && (
+                ($propertyTypeName === 'array' && !in_array($schemaTypeName, ['array', 'object'], true))
+                || (is_string($schemaTypeName) && $propertyTypeName !== 'array' && !str_starts_with($schemaTypeName, $propertyTypeName))
+            )
         ) {
             $errorMessages[] = "{$property->getName()}: Type definitions are different in property and schema. ";
         }
@@ -316,6 +319,11 @@ trait RequestRuleGeneratorTrait
 
         // Check if the schema value is nullable or not
         $nullable = SchemaTypeResolver::isNullable($schema);
+        // In OpenAPI 3.1, `type` and `enum` apply independently: an enum without null rejects null
+        // even if the type allows it. Legacy `nullable: true` keeps accepting null.
+        if ($nullable && $schema->nullable !== true && $schema->enum !== Generator::UNDEFINED) {   /** @phpstan-ignore-line */
+            $nullable = is_array($schema->enum) && in_array(null, $schema->enum, true);
+        }
         $type = SchemaTypeResolver::baseType($schema);
         if ($nullable) {
             $rules[] = 'nullable';
@@ -402,6 +410,10 @@ trait RequestRuleGeneratorTrait
             } else {
                 $values = [];
                 foreach ($schema->enum as $value) {
+                    // null cannot be expressed by the `in` rule; it is handled by the `nullable` rule.
+                    if ($value === null) {
+                        continue;
+                    }
                     if (is_string($value) && enum_exists($value)) {
                         foreach ($value::cases() as $case) {
                             $values[] = $case instanceof BackedEnum ? $case->value : $case->name;

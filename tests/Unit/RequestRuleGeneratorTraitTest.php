@@ -69,6 +69,8 @@ class RequestRuleGeneratorTraitTest extends TestCase
             'nullable-type-array|integer' => [new Property('key', type: ['null', 'integer']), ['key' => ['nullable', new Integer(), 'integer']]],
             'nullable-type-array|array' => [new Property('key', type: ['array', 'null']), ['key' => ['nullable', 'array']]],
             'nullable-type-array|object' => [new Property('key', type: ['object', 'null']), ['key' => ['nullable', 'array']]],
+            'type-array null with enum excluding null' => [new Property('key', type: ['string', 'null'], enum: ['a', 'b']), ['key' => ['string', Rule::in(['a', 'b'])]]],
+            'type-array null with enum class excluding null' => [new Property('key', type: ['string', 'null'], enum: [Status::class]), ['key' => ['string', Rule::in(['available', 'pending', 'sold'])]]],
             'type-array without null' => [new Property('key', type: ['string']), ['key' => ['string']]],
             'string' => [new Property('key', type: 'string'), ['key' => ['string']]],
             'number' => [new Property('key', type: 'number'), ['key' => ['numeric']]],
@@ -84,12 +86,12 @@ class RequestRuleGeneratorTraitTest extends TestCase
             'enum' => [new Property('key', enum: [1, 2, 3]), ['key' => [Rule::in([1, 2,3])]]],
             'enum-class-string' => [new Property('key', enum: Status::class), ['key' => [new Enum(Status::class)]]],
             'enum-class-array' => [new Property('key', enum: [Status::class]), ['key' => [Rule::in(['available', 'pending', 'sold'])]]],
-            'nullable-enum-class-array' => [new Property('key', type: ['string', 'null'], enum: [Status::class, null]), ['key' => ['nullable', 'string', Rule::in(['available', 'pending', 'sold', null])]]],
-            'legacy-nullable-enum-class-array' => [new Property('key', type: 'string', nullable: true, enum: [Status::class, null]), ['key' => ['nullable', 'string', Rule::in(['available', 'pending', 'sold', null])]]],
-            'enum-integer-class-array' => [new Property('key', enum: [EnumArrayNumberStatus::class, null]), ['key' => [Rule::in([0, 1, null])]]],
-            'enum-unit-class-array' => [new Property('key', enum: [EnumArrayUnitStatus::class, null]), ['key' => [Rule::in(['AVAILABLE', 'PENDING', null])]]],
-            'enum-mixed-array' => [new Property('key', enum: [Status::class, EnumArrayNumberStatus::class, 'legacy', null]), ['key' => [Rule::in(['available', 'pending', 'sold', 0, 1, 'legacy', null])]]],
-            'enum-case-array' => [new Property('key', enum: [Status::AVAILABLE, null]), ['key' => [Rule::in([Status::AVAILABLE, null])]]],
+            'nullable-enum-class-array' => [new Property('key', type: ['string', 'null'], enum: [Status::class, null]), ['key' => ['nullable', 'string', Rule::in(['available', 'pending', 'sold'])]]],
+            'legacy-nullable-enum-class-array' => [new Property('key', type: 'string', nullable: true, enum: [Status::class, null]), ['key' => ['nullable', 'string', Rule::in(['available', 'pending', 'sold'])]]],
+            'enum-integer-class-array' => [new Property('key', enum: [EnumArrayNumberStatus::class, null]), ['key' => [Rule::in([0, 1])]]],
+            'enum-unit-class-array' => [new Property('key', enum: [EnumArrayUnitStatus::class, null]), ['key' => [Rule::in(['AVAILABLE', 'PENDING'])]]],
+            'enum-mixed-array' => [new Property('key', enum: [Status::class, EnumArrayNumberStatus::class, 'legacy', null]), ['key' => [Rule::in(['available', 'pending', 'sold', 0, 1, 'legacy'])]]],
+            'enum-case-array' => [new Property('key', enum: [Status::AVAILABLE, null]), ['key' => [Rule::in([Status::AVAILABLE])]]],
             'enum-non-enum-class-array' => [new Property('key', enum: [FormRequest::class, 'UnknownEnumClass']), ['key' => [Rule::in([FormRequest::class, 'UnknownEnumClass'])]]],
             'maximum' => [new Property('key', maximum: 5), ['key' => ['max:5']]],
             'maxLength' => [new Property('key', maxLength: 5), ['key' => ['max:5']]],
@@ -738,6 +740,23 @@ class RequestRuleGeneratorTraitTest extends TestCase
             'enum class is not a value' => [Status::class, false],
             'wrong type' => [1, false],
         ];
+    }
+
+    #[Test]
+    public function nullOnlyOrOmittedTypeDoesNotThrowInConsistencyCheck(): void
+    {
+        $request = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+
+            #[Property('nullOnly', type: ['null'])]
+            public ?string $nullOnly = null;
+
+            #[Property('omitted', nullable: true)]
+            public ?string $omitted = null;
+        };
+
+        self::assertSame(['nullOnly' => ['nullable'], 'omitted' => ['nullable']], $request->rules());
     }
 
     #[Test]
