@@ -260,8 +260,18 @@ class RequestRuleGeneratorTraitTest extends TestCase
                 {
                     use RequestRuleGeneratorTrait;
 
-                    #[Property('status', type: ['string', 'null'], example: Status::AVAILABLE, enum: Status::class)]
+                    #[Property('status', type: ['string', 'null'], example: Status::AVAILABLE, enum: [Status::class, null])]
                     public string $status;
+                },
+                '["status: Nullable definitions are different in property and schema. "]',
+            ],
+            'property|schema:nullable type array with enum class (null not in enum), property:nullable' => [
+                new class() extends FormRequest
+                {
+                    use RequestRuleGeneratorTrait;
+
+                    #[Property('status', type: ['string', 'null'], example: Status::AVAILABLE, enum: Status::class)]
+                    public ?string $status = null;
                 },
                 '["status: Nullable definitions are different in property and schema. "]',
             ],
@@ -280,7 +290,7 @@ class RequestRuleGeneratorTraitTest extends TestCase
                 {
                     use RequestRuleGeneratorTrait;
 
-                    #[Property('status', type: ['integer', 'null'], example: Status::AVAILABLE, enum: Status::class)]
+                    #[Property('status', type: ['integer', 'null'], example: Status::AVAILABLE, enum: [Status::class, null])]
                     public ?string $status = null;
                 },
                 '["status: Type definitions are different in property and schema. "]',

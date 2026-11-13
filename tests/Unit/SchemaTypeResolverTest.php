@@ -40,6 +40,31 @@ class SchemaTypeResolverTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('acceptsNullPattern')]
+    public function canResolveAcceptsNull(Property $schema, bool $expected): void
+    {
+        self::assertSame($expected, SchemaTypeResolver::acceptsNull($schema));
+    }
+
+    /**
+     * @return iterable<string, array{Property, bool}>
+     */
+    public static function acceptsNullPattern(): iterable
+    {
+        return [
+            'undefined' => [new Property('key'), false],
+            '3.0 nullable true' => [new Property('key', type: 'string', nullable: true), true],
+            '3.0 nullable true with enum class' => [new Property('key', type: 'string', nullable: true, enum: Status::class), true],
+            '3.0 nullable false' => [new Property('key', type: 'string', nullable: false), false],
+            '3.1 type with null' => [new Property('key', type: ['string', 'null']), true],
+            '3.1 type with null, enum class' => [new Property('key', type: ['string', 'null'], enum: Status::class), false],
+            '3.1 type with null, enum without null' => [new Property('key', type: ['string', 'null'], enum: [Status::class]), false],
+            '3.1 type with null, enum with null' => [new Property('key', type: ['string', 'null'], enum: [Status::class, null]), true],
+            '3.1 type without null, enum with null' => [new Property('key', type: ['string'], enum: [Status::class, null]), false],
+        ];
+    }
+
+    #[Test]
     public function isChecksBaseType(): void
     {
         self::assertTrue(SchemaTypeResolver::is(new Property('key', type: ['array', 'null']), 'array'));

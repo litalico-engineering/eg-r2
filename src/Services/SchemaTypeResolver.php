@@ -29,6 +29,37 @@ final class SchemaTypeResolver
     }
 
     /**
+     * Returns true if the schema actually accepts null, taking `enum` into account.
+     *
+     * - 3.0: `nullable: true` always accepts null.
+     * - 3.1: `type` and `enum` apply independently, so with an `enum` null must also be listed in the enum values.
+     */
+    public static function acceptsNull(Schema $schema): bool
+    {
+        if ($schema->nullable === true) {
+            return true;
+        }
+        if (!self::hasNullType($schema)) {
+            return false;
+        }
+        if ($schema->enum === Generator::UNDEFINED) {   /** @phpstan-ignore-line */
+            return true;
+        }
+
+        return is_array($schema->enum) && self::containsNull($schema->enum);
+    }
+
+    /**
+     * swagger-php's PHPDoc for `enum` omits null, but OpenAPI 3.1 enums can list null.
+     *
+     * @param array<mixed> $values
+     */
+    private static function containsNull(array $values): bool
+    {
+        return in_array(null, $values, true);
+    }
+
+    /**
      * Returns the type without `'null'`.
      * A type array with a single non-null type is returned as that string.
      *

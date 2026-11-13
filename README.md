@@ -82,6 +82,21 @@ Literal values and enum cases can also be mixed in the array.
 and with a 3.1 type array it is accepted only if the `enum` also contains `null`.
 Existing `enum: Status::class` declarations continue to use Laravel's `Enum` rule.
 
+With a 3.1 type array, `enum: Status::class` never accepts `null`, because the expanded enum values do not include it.
+When migrating from 3.0, rewrite `nullable: true` + `enum: Status::class` as
+`type: [..., 'null']` + `enum: [Status::class, null]`:
+
+```php
+// 3.0
+#[Property('status', type: 'string', nullable: true, enum: Status::class)]
+// 3.1
+#[Property('status', type: ['string', 'null'], enum: [Status::class, null])]
+public ?string $status = null;
+```
+
+If only the type is rewritten (`type: ['string', 'null']` + `enum: Status::class`) while the PHP property is nullable,
+`rules()` throws `Nullable definitions are different in property and schema.` for that property.
+
 ### Security Middleware Mapping
 
 `eg-r2:generate-route` can convert OpenAPI `security` definitions into Laravel route middleware.

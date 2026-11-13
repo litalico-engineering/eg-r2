@@ -109,7 +109,7 @@ trait RequestRuleGeneratorTrait
                         ...$errorMessages,
                         ...$this->checkDiffInPropertyAndSchema(
                             $phpProperty,
-                            SchemaTypeResolver::isNullable($obj),
+                            SchemaTypeResolver::acceptsNull($obj),
                             SchemaTypeResolver::baseType($obj)
                         ),
                     ];
@@ -143,7 +143,7 @@ trait RequestRuleGeneratorTrait
                     ...$errorMessages,
                     ...$this->checkDiffInPropertyAndSchema(
                         $phpProperty,
-                        SchemaTypeResolver::isNullable($schema),
+                        SchemaTypeResolver::acceptsNull($schema),
                         SchemaTypeResolver::baseType($schema)
                     ),
                 ];
@@ -317,13 +317,8 @@ trait RequestRuleGeneratorTrait
     {
         $rules = [];
 
-        // Check if the schema value is nullable or not
-        $nullable = SchemaTypeResolver::isNullable($schema);
-        // In OpenAPI 3.1, `type` and `enum` apply independently: an enum without null rejects null
-        // even if the type allows it. Legacy `nullable: true` keeps accepting null.
-        if ($nullable && $schema->nullable !== true && $schema->enum !== Generator::UNDEFINED) {   /** @phpstan-ignore-line */
-            $nullable = is_array($schema->enum) && in_array(null, $schema->enum, true);
-        }
+        // Check if the schema value accepts null (enum-aware in OpenAPI 3.1)
+        $nullable = SchemaTypeResolver::acceptsNull($schema);
         $type = SchemaTypeResolver::baseType($schema);
         if ($nullable) {
             $rules[] = 'nullable';
