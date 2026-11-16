@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.0](https://github.com/litalico-engineering/eg-r2/compare/1.5.3...2.0.0) - 2026-11-16
+
+### Other Changes
+- feat: support OpenAPI 3.1 nullable type arrays by @yuichiro-takeda-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/66
+- ci: set up PHP before running tagpr by @katsumi-kato-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/68
+- ci: stop staging ignored composer.lock in prerelease_for_tagpr by @katsumi-kato-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/69
+- chore: bump rector to 2.8.5 to fix php-parser conflict with PHPStan 2.3 by @katsumi-kato-LITALICO in https://github.com/litalico-engineering/eg-r2/pull/70
+
 ## [1.5.3](https://github.com/litalico-engineering/eg-r2/compare/1.5.2...1.5.3) - 2026-10-13
 
 ### Other Changes
