@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Litalico\EgR2\Http\Requests;
 
 use Litalico\EgR2\Services\AttributeMessageService;
+use Litalico\EgR2\Services\SchemaTypeResolver;
 use OpenApi\Annotations\Schema as AnnotationSchema;
 use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Property;
@@ -215,7 +216,7 @@ trait RequestAttributesGeneratorTrait
             $parameter = $parameterAttributes[0]->newInstance();
 
             if ($this->isDefined($parameter->name)) {    /** @phpstan-ignore-line */
-                $propertyName = $schema->type === 'array'
+                $propertyName = SchemaTypeResolver::is($schema, 'array')
                     ? str_replace('[]', '', $parameter->name)
                     : $parameter->name;
             }
@@ -263,7 +264,7 @@ trait RequestAttributesGeneratorTrait
         $currentPath = $parentNames !== [] ? [...$parentNames, $propertyName] : [$propertyName];
         $pathKey = implode('.', $currentPath);
 
-        if ($schema->type === 'array') {
+        if (SchemaTypeResolver::is($schema, 'array')) {
             yield $pathKey => $this->resolveLabel($messageService, $isArrayItem, $parentNames, $rootArrayDescription, $description, false);
 
             $wildcardPath = [...$currentPath, '*'];
@@ -290,7 +291,7 @@ trait RequestAttributesGeneratorTrait
                     );
                 }
             }
-        } elseif ($schema->type === 'object') {
+        } elseif (SchemaTypeResolver::is($schema, 'object')) {
             yield $pathKey => $description;
 
             // Recurse into nested properties in object

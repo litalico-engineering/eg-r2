@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Litalico\EgR2\Http\Requests;
 
+use BackedEnum;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Rules\In;
 use Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException;
 use Litalico\EgR2\Rules\Integer;
+use Litalico\EgR2\Services\SchemaTypeResolver;
 use OpenApi\Annotations\Schema as AnnotationSchema;
 use OpenApi\Attributes\Parameter;
 use OpenApi\Attributes\Property;
@@ -21,6 +23,7 @@ use ReflectionException;
 use ReflectionNamedType;
 use ReflectionProperty;
 use function count;
+use function enum_exists;
 use function in_array;
 use function is_array;
 use function is_string;
@@ -106,8 +109,8 @@ trait RequestRuleGeneratorTrait
                         ...$errorMessages,
                         ...$this->checkDiffInPropertyAndSchema(
                             $phpProperty,
-                            $obj->nullable === true,
-                            $obj->type
+                            SchemaTypeResolver::acceptsNull($obj),
+                            SchemaTypeResolver::baseType($obj)
                         ),
                     ];
                 } elseif ($obj instanceof Schema) {
@@ -122,7 +125,7 @@ trait RequestRuleGeneratorTrait
                     if ($parameter->name !== Generator::UNDEFINED) {    /** @phpstan-ignore-line */
                         // If the Schema is an array, assign the parameter names without [].
                         // (Because a [] at the end will cause a validation error)
-                        $schema->title = $schema->type === 'array'
+                        $schema->title = SchemaTypeResolver::is($schema, 'array')
                             ? str_replace('[]', '', $parameter->name)
                             : $parameter->name;
                     }
@@ -140,8 +143,8 @@ trait RequestRuleGeneratorTrait
                     ...$errorMessages,
                     ...$this->checkDiffInPropertyAndSchema(
                         $phpProperty,
-                        $schema->nullable === true,
-                        $schema->type
+                        SchemaTypeResolver::acceptsNull($schema),
+                        SchemaTypeResolver::baseType($schema)
                     ),
                 ];
             }
@@ -198,13 +201,13 @@ trait RequestRuleGeneratorTrait
      *
      * @param ReflectionProperty $property The property to compare with the schema.
      * @param bool $schemaNullable Indicates whether the schema definition is nullable or not.
-     * @param string|non-empty-array<string> $schemaTypeName The type definition of the schema.
+     * @param string|non-empty-array<string>|null $schemaTypeName The type definition of the schema. null when undefined or null-only; the type check is skipped.
      * @return list<string> An array of error messages indicating the discrepancies between the property and the schema.
      */
     private function checkDiffInPropertyAndSchema(
         ReflectionProperty $property,
         bool $schemaNullable,
-        string|array $schemaTypeName,
+        string|array|null $schemaTypeName,
     ): array {
         /** @var ReflectionNamedType $propertyType */
         $propertyType = $property->getType();
@@ -218,8 +221,11 @@ trait RequestRuleGeneratorTrait
         }
 
         if (
-            ($propertyTypeName === 'array' && !in_array($schemaTypeName, ['array', 'object'], true))
-            || (is_string($schemaTypeName) && $propertyTypeName !== 'array' && !str_starts_with($schemaTypeName, $propertyTypeName))
+            $schemaTypeName !== null
+            && (
+                ($propertyTypeName === 'array' && !in_array($schemaTypeName, ['array', 'object'], true))
+                || (is_string($schemaTypeName) && $propertyTypeName !== 'array' && !str_starts_with($schemaTypeName, $propertyTypeName))
+            )
         ) {
             $errorMessages[] = "{$property->getName()}: Type definitions are different in property and schema. ";
         }
@@ -241,7 +247,7 @@ trait RequestRuleGeneratorTrait
     {
         $result = [];
 
-        if ($schema->type === 'array') {
+        if (SchemaTypeResolver::is($schema, 'array')) {
             // arraySet your own rules
             $required = in_array($this->getPropertyName($schema), $requires, true);
             $result += $this->convertRule($schema, $parentNames, $required);
@@ -258,7 +264,7 @@ trait RequestRuleGeneratorTrait
                 $ruleName = implode('.', $parentNames + [$this->getPropertyName($schema)]);
                 $result[$ruleName] = array_values($this->convertRule($schema->items))[0];
             }
-        } elseif ($schema->type === 'object') {
+        } elseif (SchemaTypeResolver::is($schema, 'object')) {
             $propertyName = $this->getPropertyName($schema);
             $result += $this->convertRule($schema, $parentNames, in_array($propertyName, $requires, true));
             $parentNames[] = $propertyName;
@@ -311,22 +317,22 @@ trait RequestRuleGeneratorTrait
     {
         $rules = [];
 
-        // Check if the schema value is nullable or not
-        if ($schema->nullable === true) {
+        // Check if the schema value accepts null (enum-aware in OpenAPI 3.1)
+        $nullable = SchemaTypeResolver::acceptsNull($schema);
+        $type = SchemaTypeResolver::baseType($schema);
+        if ($nullable) {
             $rules[] = 'nullable';
-        } elseif ($schema->nullable === false) {
-            // nop
         }
 
         // Check if the field is required. If it is, ensure the key is present.
         if ($required) {
-            if ($schema->type === 'object') {
+            if ($type === 'object') {
                 $rules[] = 'present';
             } else {
                 // The path parameter etc. is treated as true for required, but the value may be null in some cases.
-                if ($schema->nullable === false || $schema->nullable === Generator::UNDEFINED) {
+                if (!$nullable) {
                     // If type is array, set to `present`.
-                    $requireRule = $schema->type === 'array' ? 'present' : 'required';
+                    $requireRule = $type === 'array' ? 'present' : 'required';
                     // In the case of a nested structure, it is required only when the parent element exists.
                     $rules[] = $names !== [] ? 'required_with:' . implode('.', $names) : $requireRule;
                 }
@@ -334,17 +340,17 @@ trait RequestRuleGeneratorTrait
         }
 
         // Specify the type of the schema
-        if (in_array($schema->type, ['string', 'number', 'integer', 'boolean', 'array', 'object'], true)) {
-            if ($schema->type === 'number') {
+        if (in_array($type, ['string', 'number', 'integer', 'boolean', 'array', 'object'], true)) {
+            if ($type === 'number') {
                 $rules[] = 'numeric';
-            } elseif ($schema->type === 'object') {
+            } elseif ($type === 'object') {
                 $rules[] = 'array';
-            } elseif ($schema->type === 'integer') {
+            } elseif ($type === 'integer') {
 
                 $rules[] = new Integer();
                 $rules[] = 'integer';
             } else {
-                $rules[] = $schema->type;
+                $rules[] = $type;
             }
         }
 
@@ -397,7 +403,21 @@ trait RequestRuleGeneratorTrait
             if (is_string($schema->enum)) {
                 $rules[] = new Enum($schema->enum);
             } else {
-                $rules[] = Rule::in($schema->enum);
+                $values = [];
+                foreach ($schema->enum as $value) {
+                    // null cannot be expressed by the `in` rule; it is handled by the `nullable` rule.
+                    if ($value === null) {
+                        continue;
+                    }
+                    if (is_string($value) && enum_exists($value)) {
+                        foreach ($value::cases() as $case) {
+                            $values[] = $case instanceof BackedEnum ? $case->value : $case->name;
+                        }
+                    } else {
+                        $values[] = $value;
+                    }
+                }
+                $rules[] = Rule::in($values);
             }
         }
 

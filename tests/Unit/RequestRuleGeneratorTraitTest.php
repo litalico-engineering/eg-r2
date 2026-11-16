@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException;
@@ -64,6 +65,13 @@ class RequestRuleGeneratorTraitTest extends TestCase
         return [
             'nullable-true' => [new Property('key', nullable: true), ['key' => ['nullable']]],
             'nullable-false' => [new Property('key', nullable: false), ['key' => []]],
+            'nullable-type-array|string' => [new Property('key', type: ['string', 'null']), ['key' => ['nullable', 'string']]],
+            'nullable-type-array|integer' => [new Property('key', type: ['null', 'integer']), ['key' => ['nullable', new Integer(), 'integer']]],
+            'nullable-type-array|array' => [new Property('key', type: ['array', 'null']), ['key' => ['nullable', 'array']]],
+            'nullable-type-array|object' => [new Property('key', type: ['object', 'null']), ['key' => ['nullable', 'array']]],
+            'type-array null with enum excluding null' => [new Property('key', type: ['string', 'null'], enum: ['a', 'b']), ['key' => ['string', Rule::in(['a', 'b'])]]],
+            'type-array null with enum class excluding null' => [new Property('key', type: ['string', 'null'], enum: [Status::class]), ['key' => ['string', Rule::in(['available', 'pending', 'sold'])]]],
+            'type-array without null' => [new Property('key', type: ['string']), ['key' => ['string']]],
             'string' => [new Property('key', type: 'string'), ['key' => ['string']]],
             'number' => [new Property('key', type: 'number'), ['key' => ['numeric']]],
             'integer' => [new Property('key', type: 'integer'), ['key' => [new Integer(), 'integer']]],
@@ -77,6 +85,14 @@ class RequestRuleGeneratorTraitTest extends TestCase
             'object' => [new Property('key', type: 'object'), ['key' => ['array']]],
             'enum' => [new Property('key', enum: [1, 2, 3]), ['key' => [Rule::in([1, 2,3])]]],
             'enum-class-string' => [new Property('key', enum: Status::class), ['key' => [new Enum(Status::class)]]],
+            'enum-class-array' => [new Property('key', enum: [Status::class]), ['key' => [Rule::in(['available', 'pending', 'sold'])]]],
+            'nullable-enum-class-array' => [new Property('key', type: ['string', 'null'], enum: [Status::class, null]), ['key' => ['nullable', 'string', Rule::in(['available', 'pending', 'sold'])]]],
+            'legacy-nullable-enum-class-array' => [new Property('key', type: 'string', nullable: true, enum: [Status::class, null]), ['key' => ['nullable', 'string', Rule::in(['available', 'pending', 'sold'])]]],
+            'enum-integer-class-array' => [new Property('key', enum: [EnumArrayNumberStatus::class, null]), ['key' => [Rule::in([0, 1])]]],
+            'enum-unit-class-array' => [new Property('key', enum: [EnumArrayUnitStatus::class, null]), ['key' => [Rule::in(['AVAILABLE', 'PENDING'])]]],
+            'enum-mixed-array' => [new Property('key', enum: [Status::class, EnumArrayNumberStatus::class, 'legacy', null]), ['key' => [Rule::in(['available', 'pending', 'sold', 0, 1, 'legacy'])]]],
+            'enum-case-array' => [new Property('key', enum: [Status::AVAILABLE, null]), ['key' => [Rule::in([Status::AVAILABLE])]]],
+            'enum-non-enum-class-array' => [new Property('key', enum: [FormRequest::class, 'UnknownEnumClass']), ['key' => [Rule::in([FormRequest::class, 'UnknownEnumClass'])]]],
             'maximum' => [new Property('key', maximum: 5), ['key' => ['max:5']]],
             'maxLength' => [new Property('key', maxLength: 5), ['key' => ['max:5']]],
             'minimum' => [new Property('key', minimum: 5), ['key' => ['min:5']]],
@@ -175,6 +191,44 @@ class RequestRuleGeneratorTraitTest extends TestCase
     }
 
     #[Test]
+    public function nullableTypeArrayIsTreatedAsNullableInRules(): void
+    {
+        setup:
+        $class = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+
+            #[Property(
+                'parent',
+                required: ['key1', 'key2'],
+                properties: [
+                    new Property('key1', type: ['string', 'null']),
+                    new Property('key2', type: 'string'),
+                ],
+                type: ['object', 'null']
+            )]
+            public ?array $parent = null;
+
+            #[Property('list', type: ['array', 'null'], items: new Items(type: 'string'))]
+            public ?array $list = null;
+        };
+
+        $expected = [
+            'parent.key1' => ['nullable', 'string'],
+            'parent.key2' => ['required_with:parent', 'string'],
+            'parent' => ['nullable', 'array'],
+            'list' => ['nullable', 'array'],
+            'list.*' => ['string'],
+        ];
+
+        when:
+        $actual = $class->rules();
+
+        then:
+        self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
     #[DataProvider('schemaDefinitionPropertyPattern')]
     #[DataProvider('schemaDefinitionParameterPattern')]
     public function errorOccursIfThereIsAConflictBetweenPropertyAndSchemaDefinition(FormRequest $instance, string $expectedMessage): void
@@ -200,6 +254,46 @@ class RequestRuleGeneratorTraitTest extends TestCase
                     public string $status;
                 },
                 '["status: Nullable definitions are different in property and schema. "]',
+            ],
+            'property|schema:nullable type array, property:required' => [
+                new class() extends FormRequest
+                {
+                    use RequestRuleGeneratorTrait;
+
+                    #[Property('status', type: ['string', 'null'], example: Status::AVAILABLE, enum: [Status::class, null])]
+                    public string $status;
+                },
+                '["status: Nullable definitions are different in property and schema. "]',
+            ],
+            'property|schema:nullable type array with enum class (null not in enum), property:nullable' => [
+                new class() extends FormRequest
+                {
+                    use RequestRuleGeneratorTrait;
+
+                    #[Property('status', type: ['string', 'null'], example: Status::AVAILABLE, enum: Status::class)]
+                    public ?string $status = null;
+                },
+                '["status: Nullable definitions are different in property and schema. "]',
+            ],
+            'property|schema:required, property:nullable type array' => [
+                new class() extends FormRequest
+                {
+                    use RequestRuleGeneratorTrait;
+
+                    #[Property('status', type: 'string', example: Status::AVAILABLE, enum: Status::class)]
+                    public ?string $status = null;
+                },
+                '["status: Nullable definitions are different in property and schema. "]',
+            ],
+            'property|schema:integer nullable type array, property:string' => [
+                new class() extends FormRequest
+                {
+                    use RequestRuleGeneratorTrait;
+
+                    #[Property('status', type: ['integer', 'null'], example: Status::AVAILABLE, enum: [Status::class, null])]
+                    public ?string $status = null;
+                },
+                '["status: Type definitions are different in property and schema. "]',
             ],
             'property|schema:required, property:nullable' => [
                 new class() extends FormRequest
@@ -626,6 +720,78 @@ class RequestRuleGeneratorTraitTest extends TestCase
         then:
         self::assertEquals($expected, $actual);
     }
+
+    #[Test]
+    #[DataProvider('nullableEnumArrayValues')]
+    public function nullableEnumArraysValidateExpandedValues(mixed $value, bool $expected): void
+    {
+        $request = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+
+            #[Property('status', type: ['string', 'null'], enum: [Status::class, 'legacy', null])]
+            public ?string $status = null;
+        };
+
+        $validator = Validator::make(['status' => $value], $request->rules());
+
+        self::assertSame($expected, $validator->passes());
+    }
+
+    public static function nullableEnumArrayValues(): iterable
+    {
+        return [
+            'first enum value' => ['available', true],
+            'second enum value' => ['pending', true],
+            'third enum value' => ['sold', true],
+            'literal value' => ['legacy', true],
+            'null' => [null, true],
+            'invalid value' => ['invalid', false],
+            'enum class is not a value' => [Status::class, false],
+            'wrong type' => [1, false],
+        ];
+    }
+
+    #[Test]
+    public function nullOnlyOrOmittedTypeDoesNotThrowInConsistencyCheck(): void
+    {
+        $request = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+
+            #[Property('nullOnly', type: ['null'])]
+            public ?string $nullOnly = null;
+
+            #[Property('omitted', nullable: true)]
+            public ?string $omitted = null;
+        };
+
+        self::assertSame(['nullOnly' => ['nullable'], 'omitted' => ['nullable']], $request->rules());
+    }
+
+    #[Test]
+    public function nullableEnumArraysValidateNestedIntegerItems(): void
+    {
+        $request = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+
+            #[Property(
+                'statuses',
+                type: 'array',
+                items: new Items(type: ['integer', 'null'], enum: [EnumArrayNumberStatus::class, null])
+            )]
+            public array $statuses;
+        };
+
+        $rules = $request->rules();
+
+        self::assertTrue(Validator::make(['statuses' => [0, 1, null]], $rules)->passes());
+        self::assertSame(
+            ['statuses.1'],
+            Validator::make(['statuses' => [0, 2, null]], $rules)->errors()->keys()
+        );
+    }
 }
 
 // This is a test class for "Property/Schema combination can be converted". Because it cannot be defined in the class attribute anonymous class
@@ -688,6 +854,18 @@ enum Status: string
     case AVAILABLE = 'available';
     case PENDING = 'pending';
     case SOLD = 'sold';
+}
+
+enum EnumArrayNumberStatus: int
+{
+    case AVAILABLE = 0;
+    case PENDING = 1;
+}
+
+enum EnumArrayUnitStatus
+{
+    case AVAILABLE;
+    case PENDING;
 }
 
 #[\OpenApi\Attributes\Schema(

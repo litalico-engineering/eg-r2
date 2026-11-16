@@ -6,6 +6,7 @@ namespace Litalico\EgR2\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use InvalidArgumentException;
+use Litalico\EgR2\Services\SchemaTypeResolver;
 use OpenApi\Attributes\Property;
 use OpenApi\Generator;
 use ReflectionAttribute;
@@ -108,7 +109,7 @@ trait FormRequestPropertyHandlerTrait
         }
 
         $instance = $attributes[0]->newInstance();
-        if ($instance->nullable === true) {
+        if (SchemaTypeResolver::isNullable($instance)) {
             return $instance->default;
         }
 
