@@ -13,6 +13,16 @@ jobs:
       - name: Check out source code
         uses: actions/checkout@v4
 
+      - name: Get PHP version
+        run: |
+          echo "PHP_VERSION=$(jq -r '.config.ci.php' composer.json)" >> "$GITHUB_ENV"
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          tools: composer:v2
+
       - id: tagpr
         name: Run tagpr
         uses: Songmu/tagpr@v1
