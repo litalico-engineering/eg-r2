@@ -207,7 +207,7 @@ graham-campbell/result-type
 ----------------------------------------------------------------
 The MIT License (MIT)
 
-Copyright (c) 2020-2024 Graham Campbell <hello@gjcampbell.co.uk>
+Copyright (c) 2020-2026 Graham Campbell <hello@gjcampbell.co.uk>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -680,7 +680,7 @@ THE SOFTWARE.
 ================================================================
 
 nette/php-generator
-https://nette.org
+https://doc.nette.org/php-generator
 ----------------------------------------------------------------
 Licenses
 ========
@@ -746,7 +746,7 @@ you URLs with full text:
 ================================================================
 
 nette/schema
-https://nette.org
+https://doc.nette.org/schema
 ----------------------------------------------------------------
 Licenses
 ========
@@ -1406,33 +1406,6 @@ THE SOFTWARE.
 
 ================================================================
 
-ralouphie/getallheaders
-
-----------------------------------------------------------------
-The MIT License (MIT)
-
-Copyright (c) 2014 Ralph Khattar
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-================================================================
-
 ramsey/collection
 
 ----------------------------------------------------------------
@@ -1461,7 +1434,7 @@ THE SOFTWARE.
 ramsey/uuid
 
 ----------------------------------------------------------------
-Copyright (c) 2012-2025 Ben Ramsey <ben@benramsey.com>
+Copyright © 2012-2026 Ben Ramsey <ben@benramsey.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1933,7 +1906,7 @@ THE SOFTWARE.
 
 ================================================================
 
-symfony/polyfill-php83
+symfony/polyfill-php82
 https://symfony.com
 ----------------------------------------------------------------
 Copyright (c) 2022-present Fabien Potencier
@@ -1987,6 +1960,56 @@ symfony/polyfill-php85
 https://symfony.com
 ----------------------------------------------------------------
 Copyright (c) 2025-present Fabien Potencier
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is furnished
+to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+================================================================
+
+symfony/polyfill-php86
+https://symfony.com
+----------------------------------------------------------------
+Copyright (c) 2025-present Fabien Potencier
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is furnished
+to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+================================================================
+
+symfony/polyfill-time
+https://symfony.com
+----------------------------------------------------------------
+Copyright (c) 2026-present Fabien Potencier
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
