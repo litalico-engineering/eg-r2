@@ -23,6 +23,7 @@ use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
 use ReflectionProperty;
+use function array_key_exists;
 use function count;
 use function enum_exists;
 use function in_array;
@@ -93,7 +94,7 @@ trait RequestRuleGeneratorTrait
                                 $nestedSchemaProperty->property = FieldNameResolver::resolve($innerProperty);
                             }
 
-                            $rules += $this->parseSchema($nestedSchemaProperty, $parentNames, $nestedRequires);
+                            $rules = $this->mergeRules($rules, $this->parseSchema($nestedSchemaProperty, $parentNames, $nestedRequires));
                         }
                     }
 
@@ -112,7 +113,7 @@ trait RequestRuleGeneratorTrait
                     if ($obj->property === Generator::UNDEFINED || $obj->property === '') { /** @phpstan-ignore-line */
                         $obj->property = FieldNameResolver::resolve($phpProperty);
                     }
-                    $rules += $this->parseSchema($obj, requires: $requires);
+                    $rules = $this->mergeRules($rules, $this->parseSchema($obj, requires: $requires));
                     $errorMessages = [
                         ...$errorMessages,
                         ...$this->checkDiffInPropertyAndSchema(
@@ -140,7 +141,7 @@ trait RequestRuleGeneratorTrait
                     }
                     $schema->merge([$parameter]);
                 }
-                $rules += $this->parseSchema($schema, requires: $requires);
+                $rules = $this->mergeRules($rules, $this->parseSchema($schema, requires: $requires));
                 $errorMessages = [
                     ...$errorMessages,
                     ...$this->checkDiffInPropertyAndSchema(
@@ -158,6 +159,22 @@ trait RequestRuleGeneratorTrait
         }
 
         return $rules;
+    }
+
+    /**
+     * @param array<string, list<ValidationRule|Enum|In|int|string>> $rules
+     * @param array<string, list<ValidationRule|Enum|In|int|string>> $newRules
+     * @return array<string, list<ValidationRule|Enum|In|int|string>>
+     */
+    private function mergeRules(array $rules, array $newRules): array
+    {
+        foreach ($newRules as $name => $_) {
+            if (array_key_exists($name, $rules)) {
+                throw new InvalidOpenApiDefinitionException(["$name: Duplicate field definition."]);
+            }
+        }
+
+        return $rules + $newRules;
     }
 
     /**

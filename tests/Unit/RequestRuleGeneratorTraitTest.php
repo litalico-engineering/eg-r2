@@ -32,6 +32,26 @@ use Tests\TestCase;
 #[CoversClass(Integer::class)]
 class RequestRuleGeneratorTraitTest extends TestCase
 {
+    #[Test]
+    public function duplicateInputNamesAreRejected(): void
+    {
+        $request = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+
+            #[Property(property: 'code', title: 'Label', type: 'string')]
+            public string $displayCode;
+
+            #[Parameter(name: 'code', in: 'query', required: true)]
+            #[\OpenApi\Attributes\Schema(type: 'string', maxLength: 3)]
+            public string $queryCode;
+        };
+
+        $this->expectException(InvalidOpenApiDefinitionException::class);
+        $this->expectExceptionMessage('code: Duplicate field definition.');
+        $request->rules();
+    }
+
     public static function setUpBeforeClass(): void
     {
     }
