@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Litalico\EgR2\Http\Requests;
 
 use Litalico\EgR2\Services\AttributeMessageService;
+use Litalico\EgR2\Services\FieldNameResolver;
 use Litalico\EgR2\Services\SchemaTypeResolver;
 use OpenApi\Annotations\Schema as AnnotationSchema;
 use OpenApi\Attributes\Parameter;
@@ -134,7 +135,7 @@ trait RequestAttributesGeneratorTrait
         }
 
         $result = [];
-        $parentNames = [$phpProperty->getName()];
+        $parentNames = [FieldNameResolver::resolve($phpProperty)];
         foreach ($nestedClass->getProperties() as $innerProperty) {
             $attributeProperties = $innerProperty->getAttributes(Property::class, ReflectionAttribute::IS_INSTANCEOF);
             if ($attributeProperties !== []) {
@@ -143,7 +144,7 @@ trait RequestAttributesGeneratorTrait
                 $result += iterator_to_array($this->flattenSchema(
                     $nestedSchemaProperty,
                     $messageService,
-                    $innerProperty->getName(),
+                    FieldNameResolver::resolve($innerProperty),
                     $this->resolveDescription($nestedSchemaProperty),
                     $parentNames,
                     false,
@@ -159,7 +160,7 @@ trait RequestAttributesGeneratorTrait
      * Pattern 2: Property has #[Property] attribute.
      *
      * The Property attribute is self-contained with field name, description, and type.
-     * The PHP property name is used as the field name.
+     * The request field name is used as the attribute key.
      *
      * @param ReflectionProperty $phpProperty
      * @param AttributeMessageService $messageService
@@ -178,7 +179,7 @@ trait RequestAttributesGeneratorTrait
         return iterator_to_array($this->flattenSchema(
             $property,
             $messageService,
-            $phpProperty->getName(),
+            FieldNameResolver::resolve($phpProperty),
             $this->resolveDescription($property),
             [],
             false,
@@ -190,8 +191,7 @@ trait RequestAttributesGeneratorTrait
      * Pattern 3: Property has #[Schema] with an optional #[Parameter].
      *
      * Schema provides structural info (type, maxLength, etc.).
-     * Parameter provides the display name and description.
-     * When both are present, Parameter values take priority for name/description.
+     * Parameter provides the field name and a fallback description.
      *
      * @param ReflectionProperty $phpProperty
      * @param AttributeMessageService $messageService
@@ -207,7 +207,7 @@ trait RequestAttributesGeneratorTrait
         /** @var Schema $schema */
         $schema = $schemaAttributes[0]->newInstance();
 
-        $propertyName = $this->resolvePropertyName($schema);
+        $propertyName = FieldNameResolver::resolve($phpProperty);
         $description = $this->resolveDescription($schema);
 
         $parameterAttributes = $phpProperty->getAttributes(Parameter::class);
@@ -215,11 +215,6 @@ trait RequestAttributesGeneratorTrait
             /** @var Parameter $parameter */
             $parameter = $parameterAttributes[0]->newInstance();
 
-            if ($this->isDefined($parameter->name)) {    /** @phpstan-ignore-line */
-                $propertyName = SchemaTypeResolver::is($schema, 'array')
-                    ? str_replace('[]', '', $parameter->name)
-                    : $parameter->name;
-            }
             if (!$this->isDefined($schema->description) && $this->isDefined($parameter->description)) {  /** @phpstan-ignore-line */
                 $description = $parameter->description;
             }

@@ -332,7 +332,7 @@ class RequestAttributesGeneratorTraitTest extends TestCase
     }
 
     #[Test]
-    public function reflectedPropertyNameHasPriorityOverAttributePropertyName(): void
+    public function attributePropertyNameHasPriorityOverReflectedPropertyName(): void
     {
         $class = new class extends FormRequest
         {
@@ -347,12 +347,54 @@ class RequestAttributesGeneratorTraitTest extends TestCase
         };
 
         $expected = [
-            'reflectedPropertyName' => 'display name',
+            'attributePropertyName' => 'display name',
         ];
 
         $actual = $class->generatedAttributes();
 
         self::assertEquals($expected, $actual);
+    }
+
+    #[Test]
+    public function propertyFieldNameIsUsedForAttributeLabel(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(property: 'user_name', description: 'User name', type: 'string')]
+            public string $userName;
+        };
+
+        self::assertSame(['user_name' => 'User name'], $class->generatedAttributes());
+    }
+
+    #[Test]
+    public function schemaTitleIsLabelRatherThanFieldName(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Schema(title: 'User name', type: 'string')]
+            public string $userName;
+        };
+
+        self::assertSame(['userName' => 'User name'], $class->generatedAttributes());
+    }
+
+    #[Test]
+    public function nestedPropertyFieldNamesAreUsedForAttributeLabels(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use RequestAttributesGeneratorTrait;
+
+            #[Property(property: 'user_details')]
+            public NamedNestedSchema $userDetails;
+        };
+
+        self::assertSame(['user_details.user_name' => 'User name'], $class->generatedAttributes());
     }
 
     #[Test]
@@ -915,6 +957,13 @@ class RequestAttributesGeneratorTraitTest extends TestCase
 
         self::assertEquals($expected, $actual);
     }
+}
+
+#[Schema(schema: 'NamedNestedSchema')]
+class NamedNestedSchema
+{
+    #[Property(property: 'user_name', description: 'User name', type: 'string')]
+    public string $userName;
 }
 
 #[Schema(schema: 'NestedSchemaClassWithPropertySubclass')]

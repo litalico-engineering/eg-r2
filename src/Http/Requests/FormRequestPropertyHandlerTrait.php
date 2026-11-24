@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Litalico\EgR2\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 use InvalidArgumentException;
+use Litalico\EgR2\Services\FieldNameResolver;
 use Litalico\EgR2\Services\SchemaTypeResolver;
 use OpenApi\Attributes\Property;
 use OpenApi\Generator;
@@ -36,8 +38,9 @@ trait FormRequestPropertyHandlerTrait
      */
     protected function passedValidation(): void
     {
+        $validator = $this->validator ?? app('validator')->make(request()->all(), []);
         foreach ($this->getOwnPublicProperties() as $property) {
-            $value = $this->getDefaultValueFromProperty($property);
+            $value = $this->getDefaultValueFromProperty($property, $validator);
             $property->setValue($this, $value);
         }
     }
@@ -66,9 +69,10 @@ trait FormRequestPropertyHandlerTrait
      * @param ReflectionProperty $property
      * @throws ReflectionException
      */
-    private function getDefaultValueFromProperty(ReflectionProperty $property): mixed
+    private function getDefaultValueFromProperty(ReflectionProperty $property, Validator $validator): mixed
     {
-        $requestValue = request($property->getName());
+        $fieldName = FieldNameResolver::resolve($property);
+        $requestValue = $this->requestFieldValue($validator, $fieldName);
         $propertyType = $property->getType();
 
         if (
@@ -76,7 +80,7 @@ trait FormRequestPropertyHandlerTrait
             $propertyType !== null &&
             !$propertyType->isBuiltin()
         ) {
-            return $this->initializationFormRequest($propertyType->getName(), $requestValue);
+            return $this->initializationFormRequest($propertyType->getName(), $validator, $fieldName);
         }
 
         if ($requestValue !== null) {
@@ -93,6 +97,21 @@ trait FormRequestPropertyHandlerTrait
         }
 
         return $this->initialValue($propertyType);
+    }
+
+    private function requestFieldValue(Validator $validator, string $fieldName): mixed
+    {
+        $rules = app('validator')->make([], [$fieldName => []])->getRules();
+        if ($rules === []) {
+            return null;
+        }
+
+        $value = $validator->getValue(array_key_first($rules));
+        if (is_array($value)) {
+            return app('validator')->make(['value' => $value], ['value' => []])->validated()['value'];
+        }
+
+        return $value;
     }
 
     /**
@@ -183,12 +202,14 @@ trait FormRequestPropertyHandlerTrait
 
     /**
      * @param class-string<FormRequest> $class
-     * @param array $requestValues
+     * @param Validator|null $validator
+     * @param string $parentName
      * @return FormRequest
      * @throws ReflectionException
      */
-    private function initializationFormRequest(string $class, array $requestValues = []): FormRequest
+    private function initializationFormRequest(string $class, ?Validator $validator = null, string $parentName = ''): FormRequest
     {
+        $validator ??= app('validator')->make([], []);
         $instance = new $class();
 
         if (!($instance instanceof FormRequest)) {
@@ -207,11 +228,12 @@ trait FormRequestPropertyHandlerTrait
         foreach ($filteredProperties as $property) {
             $type = $property->getType();
 
-            $propertyName = $property->getName();
-            if (!isset($requestValues[$propertyName])) {
+            $propertyName = FieldNameResolver::resolve($property);
+            $fieldName = $parentName === '' ? $propertyName : $parentName . '.' . $propertyName;
+            $rawValue = $this->requestFieldValue($validator, $fieldName);
+            if ($rawValue === null) {
                 $value = $this->initialValue($type);
             } else {
-                $rawValue = $requestValues[$propertyName];
                 $value = $this->normalizeValueToType($rawValue, $type);
             }
 

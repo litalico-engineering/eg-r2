@@ -5,11 +5,14 @@ namespace Tests\Unit;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException;
 use Litalico\EgR2\Http\Requests\FormRequestPropertyHandlerTrait;
+use Litalico\EgR2\Http\Requests\RequestRuleGeneratorTrait;
 use Litalico\EgR2\Rules\Integer;
 use Mockery;
 use OpenApi\Attributes\Property;
+use OpenApi\Attributes\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\Test;
@@ -231,6 +234,178 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
      * @throws
      */
     #[Test]
+    public function requestFieldNameHydratesProperty(): void
+    {
+        $this->app->instance('request', Request::create('/', 'POST', ['user_name' => 'taro']));
+        $class = new class extends FormRequest
+        {
+            use FormRequestPropertyHandlerTrait;
+
+            #[Property(property: 'user_name', type: 'string')]
+            public string $userName;
+        };
+        $instance = new FullAccessWrapper($class);
+        $instance->passedValidation();
+
+        self::assertSame('taro', $instance->userName);
+    }
+
+    #[Test]
+    public function requestFieldNameHydratesPropertyAndOverridesDefault(): void
+    {
+        $class = new class extends FormRequest
+        {
+            use FormRequestPropertyHandlerTrait;
+
+            #[Property(property: 'user_name', type: 'string', nullable: true, default: 'guest')]
+            public string $userName;
+        };
+        $instance = new FullAccessWrapper($class);
+
+        $this->app->instance('request', Request::create('/', 'POST', ['userName' => 'ignored']));
+        $instance->passedValidation();
+        self::assertSame('guest', $instance->userName);
+
+        $this->app->instance('request', Request::create('/', 'POST', ['user_name' => 'taro']));
+        $instance->passedValidation();
+        self::assertSame('taro', $instance->userName);
+    }
+
+    #[Test]
+    public function nestedRequestFieldNamesHydrateProperties(): void
+    {
+        $this->app->instance('request', Request::create('/', 'POST', [
+            'user_details' => ['user_name' => 'taro'],
+        ]));
+        $class = new class extends FormRequest
+        {
+            use FormRequestPropertyHandlerTrait;
+
+            #[Property(property: 'user_details')]
+            public NamedNestedRequest $userDetails;
+        };
+        $instance = new FullAccessWrapper($class);
+        $instance->passedValidation();
+
+        self::assertSame('taro', $instance->userDetails->userName);
+    }
+
+    #[Test]
+    public function hydrationUsesValidatedNestedPathInsteadOfLiteralDotKey(): void
+    {
+        $input = ['profile' => ['role' => 'safe'], 'profile.role' => 'unsafe'];
+        $request = Request::create('/', 'POST', $input);
+        $this->app->instance('request', $request);
+        $form = new class extends FormRequest
+        {
+            use FormRequestPropertyHandlerTrait;
+            use RequestRuleGeneratorTrait;
+
+            #[Property(property: 'profile.role', type: 'string', enum: ['safe'])]
+            public string $role;
+        };
+        FormRequest::createFrom($request, $form);
+        $form->setContainer($this->app);
+        $form->setValidator(Validator::make($form->validationData(), $form->rules()));
+        $form->validateResolved();
+
+        self::assertSame(['profile' => ['role' => 'safe']], $form->validated());
+        self::assertSame('safe', $form->role);
+    }
+
+    #[Test]
+    public function nestedHydrationUsesValidatedPathInsteadOfLiteralDotKey(): void
+    {
+        $input = ['details' => ['profile' => ['role' => 'safe'], 'profile.role' => 'unsafe']];
+        $request = Request::create('/', 'POST', $input);
+        $this->app->instance('request', $request);
+        $form = new class extends FormRequest
+        {
+            use FormRequestPropertyHandlerTrait;
+            use RequestRuleGeneratorTrait;
+
+            public DotPathNestedRequest $details;
+        };
+        FormRequest::createFrom($request, $form);
+        $form->setContainer($this->app);
+        $form->setValidator(Validator::make($form->validationData(), $form->rules()));
+        $form->validateResolved();
+
+        self::assertSame(['details' => ['profile' => ['role' => 'safe']]], $form->validated());
+        self::assertSame('safe', $form->details->role);
+    }
+
+    #[Test]
+    public function escapedDotFieldHydratesTheValidatedLiteralKey(): void
+    {
+        $input = ['profile' => ['role' => 'unsafe'], 'profile.role' => 'safe'];
+        $request = Request::create('/', 'POST', $input);
+        $this->app->instance('request', $request);
+        $form = new class extends FormRequest
+        {
+            use FormRequestPropertyHandlerTrait;
+            use RequestRuleGeneratorTrait;
+
+            #[Property(property: 'profile\\.role', type: 'string', enum: ['safe'])]
+            public string $role;
+        };
+        FormRequest::createFrom($request, $form);
+        $form->setContainer($this->app);
+        $form->setValidator(Validator::make($form->validationData(), $form->rules()));
+        $form->validateResolved();
+
+        self::assertSame(['profile.role' => 'safe'], $form->validated());
+        self::assertSame('safe', $form->role);
+    }
+
+    #[Test]
+    public function nestedEscapedDotFieldsHydrateValidatedLiteralKeys(): void
+    {
+        $input = ['user.details' => ['profile.role' => 'safe', 'profile' => ['role' => 'unsafe']]];
+        $request = Request::create('/', 'POST', $input);
+        $this->app->instance('request', $request);
+        $form = new class extends FormRequest
+        {
+            use FormRequestPropertyHandlerTrait;
+            use RequestRuleGeneratorTrait;
+
+            #[Property(property: 'user\\.details')]
+            public EscapedDotNestedRequest $details;
+        };
+        FormRequest::createFrom($request, $form);
+        $form->setContainer($this->app);
+        $form->setValidator(Validator::make($form->validationData(), $form->rules()));
+        $form->validateResolved();
+
+        self::assertSame(['user.details' => ['profile.role' => 'safe']], $form->validated());
+        self::assertSame('safe', $form->details->role);
+    }
+
+    #[Test]
+    public function hydrationPreservesLiteralDotsAndAsterisksInArrayKeys(): void
+    {
+        $value = ['a.b' => ['c*d' => 'value']];
+        $request = Request::create('/', 'POST', ['metadata' => $value, 'details' => ['metadata' => $value]]);
+        $this->app->instance('request', $request);
+        $form = new class extends FormRequest
+        {
+            use FormRequestPropertyHandlerTrait;
+
+            #[Property(property: 'metadata', type: 'array')]
+            public array $metadata;
+
+            public ArrayNestedRequest $details;
+        };
+        FormRequest::createFrom($request, $form);
+        $form->setContainer($this->app);
+        $form->setValidator(Validator::make($form->validationData(), ['metadata' => ['array'], 'details.metadata' => ['array']]));
+        $form->validateResolved();
+
+        self::assertSame($value, $form->metadata);
+        self::assertSame($value, $form->details->metadata);
+    }
+
+    #[Test]
     public function getPropertiesOfNestedObject(): void
     {
         setup:
@@ -389,7 +564,33 @@ class FormRequestPropertyHandlerTraitTest extends TestCase
     }
 }
 
-#[\OpenApi\Attributes\Schema(
+class NamedNestedRequest extends FormRequest
+{
+    #[Property(property: 'user_name', type: 'string')]
+    public string $userName;
+}
+
+#[Schema(schema: 'DotPathNestedRequest')]
+class DotPathNestedRequest extends FormRequest
+{
+    #[Property(property: 'profile.role', type: 'string', enum: ['safe'])]
+    public string $role;
+}
+
+class ArrayNestedRequest extends FormRequest
+{
+    #[Property(property: 'metadata', type: 'array')]
+    public array $metadata;
+}
+
+#[Schema(schema: 'EscapedDotNestedRequest')]
+class EscapedDotNestedRequest extends FormRequest
+{
+    #[Property(property: 'profile\\.role', type: 'string', enum: ['safe'])]
+    public string $role;
+}
+
+#[Schema(
     schema: 'NestedObject2',
     required: ['id']
 )]
