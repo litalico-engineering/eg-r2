@@ -10,6 +10,7 @@ use Illuminate\Validation\Rules\Enum;
 use Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException;
 use Litalico\EgR2\Http\Requests\RequestRuleGeneratorTrait;
 use Litalico\EgR2\Rules\Integer;
+use Litalico\EgR2\Services\FieldNameResolver;
 use OpenApi\Annotations\Schema;
 use OpenApi\Attributes\Items;
 use OpenApi\Attributes\Parameter;
@@ -18,6 +19,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use ReflectionClass;
 use ReflectionException;
 use Tests\Fixtures\Attributes\ExtendedProperty;
 use Tests\FullAccessWrapper;
@@ -528,6 +530,127 @@ class RequestRuleGeneratorTraitTest extends TestCase
     }
 
     #[Test]
+    public function propertyNameRatherThanTitleIdentifiesRequiredInput(): void
+    {
+        setup:
+        $request = new FieldNameRequiredRequest();
+
+        when:
+        $rules = $request->rules();
+
+        then:
+        self::assertSame(['code' => ['required', 'string']], $rules);
+        self::assertFalse(Validator::make([], $rules)->passes());
+        self::assertTrue(Validator::make(['code' => 'abc'], $rules)->passes());
+    }
+
+    #[Test]
+    public function propertyWithoutNameUsesPhpNameRatherThanTitle(): void
+    {
+        setup:
+        $request = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+
+            #[Property(title: 'label', type: 'string')]
+            public string $realName;
+        };
+
+        when:
+        $rules = $request->rules();
+
+        then:
+        self::assertSame(['realName' => ['string']], $rules);
+    }
+
+    #[Test]
+    public function schemaWithoutParameterUsesPhpName(): void
+    {
+        setup:
+        $request = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+
+            #[\OpenApi\Attributes\Schema(type: 'string', maxLength: 3)]
+            public string $code;
+        };
+
+        when:
+        $rules = $request->rules();
+
+        then:
+        self::assertSame(['code' => ['string', 'max:3']], $rules);
+        self::assertFalse(Validator::make(['code' => 'long'], $rules)->passes());
+        self::assertTrue(Validator::make(['code' => 'abc'], $rules)->passes());
+    }
+
+    #[Test]
+    public function arrayParameterUsesNameWithoutTrailingBrackets(): void
+    {
+        setup:
+        $request = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+
+            #[Parameter(name: 'ids[]', in: 'query'), \OpenApi\Attributes\Schema(type: 'array', items: new Items(type: 'integer'))]
+            public array $values;
+        };
+
+        when:
+        $rules = $request->rules();
+
+        then:
+        self::assertEquals(['ids' => ['array'], 'ids.*' => [new Integer(), 'integer']], $rules);
+    }
+
+    #[Test]
+    public function nestedPropertiesUseInputNamesInsteadOfTitles(): void
+    {
+        setup:
+        $request = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+
+            #[Property(property: 'parent', ref: '#/components/schemas/FieldNameNestedObject')]
+            public FieldNameNestedObject $otherName;
+        };
+
+        when:
+        $rules = $request->rules();
+
+        then:
+        self::assertSame([
+            'parent.code' => ['required_with:parent', 'string'],
+            'parent.realName' => ['string'],
+        ], $rules);
+    }
+
+    #[Test]
+    public function fieldNameResolutionHonorsNamesAndFallbacks(): void
+    {
+        setup:
+        $request = new class
+        {
+            #[ExtendedProperty(property: 'explicit'), Parameter(name: 'other')]
+            public string $subclass;
+
+            #[Property(property: '', type: 'string'), Parameter(name: 'part[]name[]')]
+            public string $emptyProperty;
+
+            #[Parameter]
+            public string $unnamedParameter;
+        };
+
+        when:
+        $class = new ReflectionClass($request);
+
+        then:
+        self::assertSame('explicit', FieldNameResolver::resolve($class->getProperty('subclass')));
+        self::assertSame('part[]name', FieldNameResolver::resolve($class->getProperty('emptyProperty')));
+        self::assertSame('unnamedParameter', FieldNameResolver::resolve($class->getProperty('unnamedParameter')));
+    }
+
+    #[Test]
     public function allowsRulesToBeSpecifiedForAllElementsOfAChildElementOfAnArrayOmittingThePropertyName(): void
     {
         setup:
@@ -792,6 +915,25 @@ class RequestRuleGeneratorTraitTest extends TestCase
             Validator::make(['statuses' => [0, 2, null]], $rules)->errors()->keys()
         );
     }
+}
+
+#[\OpenApi\Attributes\Schema(required: ['code'])]
+class FieldNameRequiredRequest extends FormRequest
+{
+    use RequestRuleGeneratorTrait;
+
+    #[Property(property: 'code', title: 'Facility code', type: 'string')]
+    public string $code;
+}
+
+#[\OpenApi\Attributes\Schema(required: ['code'])]
+class FieldNameNestedObject
+{
+    #[Property(property: 'code', title: 'Label', type: 'string')]
+    public string $code;
+
+    #[Property(title: 'label', type: 'string')]
+    public string $realName;
 }
 
 // This is a test class for "Property/Schema combination can be converted". Because it cannot be defined in the class attribute anonymous class

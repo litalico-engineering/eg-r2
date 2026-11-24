@@ -11,6 +11,7 @@ use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Rules\In;
 use Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException;
 use Litalico\EgR2\Rules\Integer;
+use Litalico\EgR2\Services\FieldNameResolver;
 use Litalico\EgR2\Services\SchemaTypeResolver;
 use OpenApi\Annotations\Schema as AnnotationSchema;
 use OpenApi\Attributes\Parameter;
@@ -81,12 +82,16 @@ trait RequestRuleGeneratorTrait
                     /** @var Schema $nestedSchema */
                     $nestedSchema = $reflectionAttributes[0]->newInstance();
 
-                    $parentNames = [$phpProperty->getName()];
+                    $parentNames = [FieldNameResolver::resolve($phpProperty)];
                     foreach ($nestedClass->getProperties() as $innerProperty) {
                         $attributeProperties = $innerProperty->getAttributes(Property::class, ReflectionAttribute::IS_INSTANCEOF);
                         if ($attributeProperties !== []) {
                             /** @var Property $nestedSchemaProperty */
                             $nestedSchemaProperty = $attributeProperties[0]->newInstance();
+
+                            if ($nestedSchemaProperty->property === Generator::UNDEFINED || $nestedSchemaProperty->property === '') { /** @phpstan-ignore-line */
+                                $nestedSchemaProperty->property = FieldNameResolver::resolve($innerProperty);
+                            }
 
                             $rules += $this->parseSchema($nestedSchemaProperty, $parentNames, $nestedRequires);
                         }
@@ -104,6 +109,9 @@ trait RequestRuleGeneratorTrait
                 $obj = $attribute->newInstance();
 
                 if ($obj instanceof Property) {
+                    if ($obj->property === Generator::UNDEFINED || $obj->property === '') { /** @phpstan-ignore-line */
+                        $obj->property = FieldNameResolver::resolve($phpProperty);
+                    }
                     $rules += $this->parseSchema($obj, requires: $requires);
                     $errorMessages = [
                         ...$errorMessages,
@@ -120,15 +128,9 @@ trait RequestRuleGeneratorTrait
                 }
             }
             if ($schema !== null) {
+                $schema->title = FieldNameResolver::resolve($phpProperty);
                 // Combination of Schema and Parameter is processed after merging.
                 if ($parameter !== null) {
-                    if ($parameter->name !== Generator::UNDEFINED) {    /** @phpstan-ignore-line */
-                        // If the Schema is an array, assign the parameter names without [].
-                        // (Because a [] at the end will cause a validation error)
-                        $schema->title = SchemaTypeResolver::is($schema, 'array')
-                            ? str_replace('[]', '', $parameter->name)
-                            : $parameter->name;
-                    }
                     if ($parameter->required === true) {
                         $requires[] = $schema->title;
                     }
@@ -283,9 +285,7 @@ trait RequestRuleGeneratorTrait
 
     /**
      * Retrieves the property name from the given Schema.
-     * If the Schema is of type Property and has a defined title, the title is returned.
-     * If the title is not defined, the property of the Schema is returned.
-     * If the Schema is not of type Property, the title of the Schema is returned.
+     * Property schemas use their property; other schemas store the resolved name in title.
      *
      * @param AnnotationSchema $schema The schema to retrieve the property name from.
      * @return string The property name retrieved from the Schema.
@@ -293,10 +293,6 @@ trait RequestRuleGeneratorTrait
     private function getPropertyName(AnnotationSchema $schema): string
     {
         if ($schema instanceof Property) {
-            if ($schema->title !== Generator::UNDEFINED) {  /** @phpstan-ignore-line */
-                return $schema->title;
-            }
-
             return $schema->property;
         }
 
