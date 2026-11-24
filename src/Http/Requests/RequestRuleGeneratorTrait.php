@@ -276,7 +276,7 @@ trait RequestRuleGeneratorTrait
                 foreach ($schema->items->properties as $innerProperty) {
                     /** @phpstan-ignore-next-line To determine the default value Generator::UNDEFINED */
                     $requires = is_array($schema->items->required) ? $schema->items->required : [];
-                    $result += $this->parseSchema($innerProperty, $parentNames, $requires);
+                    $result = $this->mergeRules($result, $this->parseSchema($innerProperty, $parentNames, $requires));
                 }
                 /** @phpstan-ignore-next-line To determine the default value Generator::UNDEFINED */
             } else {
@@ -290,7 +290,7 @@ trait RequestRuleGeneratorTrait
             foreach ($schema->properties as $innerProperty) {
                 /** @phpstan-ignore-next-line To determine the default value Generator::UNDEFINED */
                 $requires = is_array($schema->required) ? $schema->required : [];
-                $result += $this->parseSchema($innerProperty, $parentNames, $requires);
+                $result = $this->mergeRules($result, $this->parseSchema($innerProperty, $parentNames, $requires));
             }
         } else {
             $required = in_array($this->getPropertyName($schema), $requires, true);

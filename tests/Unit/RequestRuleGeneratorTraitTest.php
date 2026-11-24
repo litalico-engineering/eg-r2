@@ -52,6 +52,44 @@ class RequestRuleGeneratorTraitTest extends TestCase
         $request->rules();
     }
 
+    #[Test]
+    public function duplicateInlineObjectFieldsAreRejected(): void
+    {
+        $request = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+
+            #[Property('parent', properties: [
+                new Property(property: 'code', title: 'Label', type: 'string'),
+                new Property(property: 'code', type: 'string', maxLength: 3),
+            ], type: 'object', required: ['code'])]
+            public array $parent;
+        };
+
+        $this->expectException(InvalidOpenApiDefinitionException::class);
+        $this->expectExceptionMessage('parent.code: Duplicate field definition.');
+        $request->rules();
+    }
+
+    #[Test]
+    public function duplicateInlineArrayItemFieldsAreRejected(): void
+    {
+        $request = new class extends FormRequest
+        {
+            use RequestRuleGeneratorTrait;
+
+            #[Property('parent', type: 'array', items: new Items(required: ['code'], properties: [
+                new Property(property: 'code', title: 'Label', type: 'string'),
+                new Property(property: 'code', type: 'string', maxLength: 3),
+            ], type: 'object'))]
+            public array $parent;
+        };
+
+        $this->expectException(InvalidOpenApiDefinitionException::class);
+        $this->expectExceptionMessage('parent.*.code: Duplicate field definition.');
+        $request->rules();
+    }
+
     public static function setUpBeforeClass(): void
     {
     }
