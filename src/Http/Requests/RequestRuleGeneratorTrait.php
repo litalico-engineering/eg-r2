@@ -11,6 +11,7 @@ use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Rules\In;
 use Litalico\EgR2\Exceptions\InvalidOpenApiDefinitionException;
 use Litalico\EgR2\Rules\Integer;
+use Litalico\EgR2\Services\FieldNameResolver;
 use Litalico\EgR2\Services\SchemaTypeResolver;
 use OpenApi\Annotations\Schema as AnnotationSchema;
 use OpenApi\Attributes\Parameter;
@@ -22,6 +23,7 @@ use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
 use ReflectionProperty;
+use function array_key_exists;
 use function count;
 use function enum_exists;
 use function in_array;
@@ -81,14 +83,18 @@ trait RequestRuleGeneratorTrait
                     /** @var Schema $nestedSchema */
                     $nestedSchema = $reflectionAttributes[0]->newInstance();
 
-                    $parentNames = [$phpProperty->getName()];
+                    $parentNames = [FieldNameResolver::resolve($phpProperty)];
                     foreach ($nestedClass->getProperties() as $innerProperty) {
                         $attributeProperties = $innerProperty->getAttributes(Property::class, ReflectionAttribute::IS_INSTANCEOF);
                         if ($attributeProperties !== []) {
                             /** @var Property $nestedSchemaProperty */
                             $nestedSchemaProperty = $attributeProperties[0]->newInstance();
 
-                            $rules += $this->parseSchema($nestedSchemaProperty, $parentNames, $nestedRequires);
+                            if ($nestedSchemaProperty->property === Generator::UNDEFINED || $nestedSchemaProperty->property === '') { /** @phpstan-ignore-line */
+                                $nestedSchemaProperty->property = FieldNameResolver::resolve($innerProperty);
+                            }
+
+                            $rules = $this->mergeRules($rules, $this->parseSchema($nestedSchemaProperty, $parentNames, $nestedRequires));
                         }
                     }
 
@@ -104,7 +110,10 @@ trait RequestRuleGeneratorTrait
                 $obj = $attribute->newInstance();
 
                 if ($obj instanceof Property) {
-                    $rules += $this->parseSchema($obj, requires: $requires);
+                    if ($obj->property === Generator::UNDEFINED || $obj->property === '') { /** @phpstan-ignore-line */
+                        $obj->property = FieldNameResolver::resolve($phpProperty);
+                    }
+                    $rules = $this->mergeRules($rules, $this->parseSchema($obj, requires: $requires));
                     $errorMessages = [
                         ...$errorMessages,
                         ...$this->checkDiffInPropertyAndSchema(
@@ -120,15 +129,9 @@ trait RequestRuleGeneratorTrait
                 }
             }
             if ($schema !== null) {
+                $schema->title = FieldNameResolver::resolve($phpProperty);
                 // Combination of Schema and Parameter is processed after merging.
                 if ($parameter !== null) {
-                    if ($parameter->name !== Generator::UNDEFINED) {    /** @phpstan-ignore-line */
-                        // If the Schema is an array, assign the parameter names without [].
-                        // (Because a [] at the end will cause a validation error)
-                        $schema->title = SchemaTypeResolver::is($schema, 'array')
-                            ? str_replace('[]', '', $parameter->name)
-                            : $parameter->name;
-                    }
                     if ($parameter->required === true) {
                         $requires[] = $schema->title;
                     }
@@ -138,7 +141,7 @@ trait RequestRuleGeneratorTrait
                     }
                     $schema->merge([$parameter]);
                 }
-                $rules += $this->parseSchema($schema, requires: $requires);
+                $rules = $this->mergeRules($rules, $this->parseSchema($schema, requires: $requires));
                 $errorMessages = [
                     ...$errorMessages,
                     ...$this->checkDiffInPropertyAndSchema(
@@ -156,6 +159,22 @@ trait RequestRuleGeneratorTrait
         }
 
         return $rules;
+    }
+
+    /**
+     * @param array<string, list<ValidationRule|Enum|In|int|string>> $rules
+     * @param array<string, list<ValidationRule|Enum|In|int|string>> $newRules
+     * @return array<string, list<ValidationRule|Enum|In|int|string>>
+     */
+    private function mergeRules(array $rules, array $newRules): array
+    {
+        foreach ($newRules as $name => $_) {
+            if (array_key_exists($name, $rules)) {
+                throw new InvalidOpenApiDefinitionException(["$name: Duplicate field definition."]);
+            }
+        }
+
+        return $rules + $newRules;
     }
 
     /**
@@ -257,7 +276,7 @@ trait RequestRuleGeneratorTrait
                 foreach ($schema->items->properties as $innerProperty) {
                     /** @phpstan-ignore-next-line To determine the default value Generator::UNDEFINED */
                     $requires = is_array($schema->items->required) ? $schema->items->required : [];
-                    $result += $this->parseSchema($innerProperty, $parentNames, $requires);
+                    $result = $this->mergeRules($result, $this->parseSchema($innerProperty, $parentNames, $requires));
                 }
                 /** @phpstan-ignore-next-line To determine the default value Generator::UNDEFINED */
             } else {
@@ -271,7 +290,7 @@ trait RequestRuleGeneratorTrait
             foreach ($schema->properties as $innerProperty) {
                 /** @phpstan-ignore-next-line To determine the default value Generator::UNDEFINED */
                 $requires = is_array($schema->required) ? $schema->required : [];
-                $result += $this->parseSchema($innerProperty, $parentNames, $requires);
+                $result = $this->mergeRules($result, $this->parseSchema($innerProperty, $parentNames, $requires));
             }
         } else {
             $required = in_array($this->getPropertyName($schema), $requires, true);
@@ -283,9 +302,7 @@ trait RequestRuleGeneratorTrait
 
     /**
      * Retrieves the property name from the given Schema.
-     * If the Schema is of type Property and has a defined title, the title is returned.
-     * If the title is not defined, the property of the Schema is returned.
-     * If the Schema is not of type Property, the title of the Schema is returned.
+     * Property schemas use their property; other schemas store the resolved name in title.
      *
      * @param AnnotationSchema $schema The schema to retrieve the property name from.
      * @return string The property name retrieved from the Schema.
@@ -293,10 +310,6 @@ trait RequestRuleGeneratorTrait
     private function getPropertyName(AnnotationSchema $schema): string
     {
         if ($schema instanceof Property) {
-            if ($schema->title !== Generator::UNDEFINED) {  /** @phpstan-ignore-line */
-                return $schema->title;
-            }
-
             return $schema->property;
         }
 

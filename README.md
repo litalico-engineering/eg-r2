@@ -210,6 +210,14 @@ For each property, the trait uses:
 2. **Title field** - if description is not set
 3. **Property name** - if neither description nor title is set
 
+Validation rule keys use `Property.property` when provided, then `Parameter.name`
+with a trailing `[]` removed, and otherwise the PHP property name. `title` is a
+display label, not a rule key. Duplicate generated rule keys, including those
+within inline objects and arrays, are rejected with an
+`InvalidOpenApiDefinitionException` instead of discarding validation rules.
+Applying both `Property` and `Schema` to the same PHP property also raises this
+exception when they generate the same rule key.
+
 #### Custom Attributes Extending `Property`
 
 Attribute classes that extend `OpenApi\Attributes\Property` are resolved as
